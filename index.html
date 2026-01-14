@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Student - Hệ sinh thái E-TECH</title>
+    <title>Giviso Student - E-TECH Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -19,17 +19,17 @@
         .lesson-item:hover { background: #f0f9ff; border-color: #bae6fd; }
         .lesson-item.active { background: #e0f2fe; border-color: #0ea5e9; color: #0369a1; font-weight: 700; }
         .neo-card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
+        .neo-card:hover { border-color: #0ea5e9; transform: translateY(-2px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05); }
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .animate-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        const { useState, useEffect, useRef } = React;
 
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
@@ -40,25 +40,20 @@
             appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
         };
 
-        // DỮ LIỆU BÀI HỌC THEO KHỐI
         const COURSE_DATABASE = {
             "10": [
-                { id: "10-1", title: "Bài 1: Nhập môn Công nghệ 10", content: "Tìm hiểu về thế giới công nghệ khối 10...", file: "" },
-                { id: "10-2", title: "Bài 2: Hệ thống kỹ thuật 10", content: "Cấu trúc hệ thống kỹ thuật cơ bản...", file: "" }
+                { id: "10-1", title: "Bài 1: Nhập môn Công nghệ 10", content: "Nội dung bài học khối 10...", file: "" },
             ],
             "11": [
-                { id: "11-1", title: "Bài 1: Cơ khí chế tạo 11", content: "Khám phá ngành cơ khí chế tạo...", file: "" },
-                { id: "11-2", title: "Bài 2: Vật liệu cơ khí", content: "Tính chất của các loại vật liệu...", file: "" }
+                { id: "11-1", title: "Bài 1: Cơ khí chế tạo 11", content: "Nội dung bài học khối 11...", file: "" },
             ],
             "12": [
-                { id: "12-1", title: "Bài 1: Điện tử dân dụng 12", content: "Các linh kiện điện tử cơ bản...", file: "" },
-                { id: "12-2", title: "Bài 2: Mạch điện xoay chiều", content: "Cách lắp đặt mạch điện trong gia đình...", file: "" }
+                { id: "12-1", title: "Bài 1: Điện tử dân dụng 12", content: "Nội dung bài học khối 12...", file: "" },
             ]
         };
 
         const MENU = [
             { id: 'baigiang', name: 'Bài học', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
-            { id: 'ghichep', name: 'Ghi chép', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
             { id: 'luyentap', name: 'Luyện tập', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
             { id: 'kiemtra', name: 'Kiểm tra', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' }
         ];
@@ -71,20 +66,19 @@
         function App() {
             const [user, setUser] = useState(null);
             const [activeTab, setActiveTab] = useState('baigiang');
-            const [selectedGrade, setSelectedGrade] = useState("10"); // Quản lý khối lớp
-            const [selectedLesson, setSelectedLesson] = useState(COURSE_DATABASE["10"][0]);
-            const [notes, setNotes] = useState([]);
-            const [text, setText] = useState("");
-            const [file, setFile] = useState(null);
+            const [selectedGrade, setSelectedGrade] = useState("12");
+            const [selectedLesson, setSelectedLesson] = useState(null);
+            const [dataList, setDataList] = useState([]);
             const [uploading, setUploading] = useState(false);
             const [selectedFile, setSelectedFile] = useState(null);
             const fileInputRef = useRef(null);
+
+            const scriptURL = "https://script.google.com/macros/s/AKfycbxddSRc8zNGV3Qco8qmRC4bkERse1c38WkZrtcZLx39FPr7hmiyzbN4ucZ5wYINDFEw/exec";
 
             useEffect(() => {
                 return auth.onAuthStateChanged((u) => setUser(u));
             }, []);
 
-            // Tự động chọn bài đầu tiên khi đổi khối lớp
             useEffect(() => {
                 setSelectedLesson(COURSE_DATABASE[selectedGrade][0]);
             }, [selectedGrade]);
@@ -94,31 +88,57 @@
                 return db.collection("giviso_student").where("userId", "==", user.uid)
                     .onSnapshot((s) => {
                         const docs = s.docs.map(d => ({ id: d.id, ...d.data() }));
-                        setNotes(docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
+                        setDataList(docs);
                     });
             }, [user]);
 
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                if ((!text.trim() && !file) || !user) return;
+            const handleFileUpload = async (e) => {
+                const file = e.target.files[0];
+                if (!file || !user) return;
                 setUploading(true);
-                // (Logic upload Firebase/Drive giữ nguyên như trước...)
-                setUploading(false); setText(""); setFile(null);
+                try {
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(file);
+                    });
+                    const res = await fetch(scriptURL, {
+                        method: "POST",
+                        body: JSON.stringify({ base64, contentType: file.type, fileName: file.name })
+                    });
+                    const result = await res.json();
+                    
+                    const now = new Date();
+                    await db.collection("giviso_student").add({
+                        userId: user.uid,
+                        category: activeTab,
+                        fileUrl: result.url,
+                        fileName: file.name,
+                        displayDate: `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (err) { alert("Lỗi tải lên: " + err.message); }
+                finally { setUploading(false); }
+            };
+
+            const formatDriveUrl = (url) => {
+                const idMatch = url?.match(/id=([^&]+)/);
+                return idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : url;
             };
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-sky-600">
-                    <button onClick={() => auth.signInWithPopup(provider)} className="px-10 py-4 bg-white text-sky-600 rounded-full font-bold shadow-2xl">Đăng nhập</button>
+                    <button onClick={() => auth.signInWithPopup(provider)} className="px-10 py-4 bg-white text-sky-600 rounded-full font-bold shadow-2xl transition-all active:scale-95">Đăng nhập Học sinh</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
                     {/* SIDEBAR */}
-                    <aside className="w-72 bg-white border-r flex flex-col p-6 z-50">
-                        <div className="mb-10 flex items-center gap-3 px-2">
-                            <div className="w-10 h-10 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg">S</div>
-                            <span className="font-extrabold text-xl text-slate-800 tracking-tight">Student Pro</span>
+                    <aside className="w-72 bg-white border-r border-slate-200 flex flex-col p-6 shadow-sm">
+                        <div className="mb-10 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">S</div>
+                            <span className="font-extrabold text-xl text-slate-800 tracking-tight italic">E-TECH Hub</span>
                         </div>
                         <nav className="flex-1 space-y-3">
                             {MENU.map(s => (
@@ -129,10 +149,10 @@
                             ))}
                         </nav>
                         <div className="mt-auto p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-full border" />
+                            <img src={user.photoURL} className="w-8 h-8 rounded-full border border-white" />
                             <div className="overflow-hidden">
                                 <p className="text-[10px] font-bold text-slate-900 truncate uppercase">{user.displayName}</p>
-                                <button onClick={() => auth.signOut()} className="text-[9px] text-rose-500 font-bold uppercase">Thoát</button>
+                                <button onClick={() => auth.signOut()} className="text-[9px] text-rose-500 font-bold uppercase hover:underline">Thoát</button>
                             </div>
                         </div>
                     </aside>
@@ -140,25 +160,20 @@
                     {/* MAIN CONTENT */}
                     <main className="flex-1 flex flex-col bg-white overflow-hidden relative">
                         {activeTab === 'baigiang' ? (
-                            <div className="flex h-full animate-in">
-                                {/* CỘT DANH SÁCH BÀI HỌC */}
+                            /* TAB BÀI HỌC */
+                            <div className="flex h-full">
                                 <div className="w-80 bg-slate-50 border-r p-6 flex flex-col">
-                                    {/* HỘP CHỌN KHỐI LỚP */}
-                                    <div className="mb-6">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">Chương trình học</label>
-                                        <select 
-                                            value={selectedGrade}
-                                            onChange={(e) => setSelectedGrade(e.target.value)}
-                                            className="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 ring-sky-500/20 shadow-sm"
-                                        >
-                                            <option value="10">Công nghệ 10</option>
-                                            <option value="11">Công nghệ 11</option>
-                                            <option value="12">Công nghệ 12</option>
-                                        </select>
-                                    </div>
-                                    
+                                    <select 
+                                        value={selectedGrade}
+                                        onChange={(e) => setSelectedGrade(e.target.value)}
+                                        className="w-full p-4 mb-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold shadow-sm outline-none"
+                                    >
+                                        <option value="10">Lớp 10</option>
+                                        <option value="11">Lớp 11</option>
+                                        <option value="12">Lớp 12</option>
+                                    </select>
                                     <div className="flex-1 overflow-y-auto custom-scroll space-y-2">
-                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1">Danh sách bài</h3>
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1">Danh sách bài học</h3>
                                         {COURSE_DATABASE[selectedGrade].map(l => (
                                             <div key={l.id} onClick={() => setSelectedLesson(l)} className={`lesson-item p-4 text-sm font-bold ${selectedLesson?.id === l.id ? 'active' : 'text-slate-600'}`}>
                                                 {l.title}
@@ -166,14 +181,11 @@
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* NỘI DUNG CHI TIẾT */}
                                 <div className="flex-1 p-12 overflow-y-auto custom-scroll">
                                     <div className="max-w-4xl mx-auto">
                                         <h2 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">{selectedLesson?.title}</h2>
-                                        <div className="bg-blue-50/50 p-8 rounded-3xl border border-blue-100 mb-10">
-                                            <h4 className="text-[10px] font-black text-blue-600 uppercase mb-4 tracking-widest italic">Hướng dẫn học tập</h4>
-                                            <p className="text-slate-700 leading-relaxed font-medium text-lg">{selectedLesson?.content}</p>
+                                        <div className="bg-sky-50 p-8 rounded-3xl border border-sky-100 mb-10 text-lg leading-relaxed font-medium text-slate-700 italic">
+                                            {selectedLesson?.content}
                                         </div>
                                         {selectedLesson?.file && (
                                             <div className="aspect-video bg-white rounded-3xl border shadow-xl overflow-hidden">
@@ -183,37 +195,59 @@
                                     </div>
                                 </div>
                             </div>
-                        ) : activeTab === 'ghichep' ? (
-                            /* GHI CHÉP (TIMELINE) - GIỮ NGUYÊN */
-                            <div className="flex flex-col h-full animate-in p-12 overflow-y-auto custom-scroll pb-60">
-                                <div className="max-w-3xl mx-auto w-full">
-                                    <h2 className="text-3xl font-black text-slate-900 mb-10 tracking-tight">Sổ tay ghi chép</h2>
-                                    <div className="space-y-6">
-                                        {notes.filter(n => n.category === 'ghichep').map(note => (
-                                            <div key={note.id} className="neo-card p-8">
-                                                <p className="text-slate-700 font-semibold text-lg">{note.content}</p>
-                                                <span className="text-[10px] font-bold text-slate-300 mt-4 block">{note.time} • {note.displayDate}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                {/* Input bar ở dưới */}
-                            </div>
                         ) : (
-                            /* LUYỆN TẬP & KIỂM TRA (KHO LƯU TRỮ) - GIỮ NGUYÊN */
-                            <div className="p-12 h-full overflow-y-auto custom-scroll animate-in bg-slate-50">
-                                <h2 className="text-3xl font-black text-slate-900 mb-10 tracking-tight">Kho tài liệu {activeTab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                                    {notes.filter(n => n.category === activeTab).map(note => (
-                                        <div key={note.id} className="neo-card p-6 h-48 flex flex-col justify-between group cursor-pointer" onClick={() => setSelectedFile(note)}>
-                                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-sky-500 group-hover:text-white transition-all">📄</div>
-                                            <h4 className="text-sm font-bold text-slate-800 line-clamp-2">{note.fileName || "Tài liệu"}</h4>
+                            /* TAB LUYỆN TẬP & KIỂM TRA (KHO LƯU TRỮ) */
+                            <div className="p-12 h-full overflow-y-auto custom-scroll bg-slate-50">
+                                <header className="flex justify-between items-center mb-12 max-w-5xl mx-auto">
+                                    <div>
+                                        <h2 className="text-4xl font-black text-slate-900 tracking-tight">{activeTab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'}</h2>
+                                        <p className="text-slate-400 font-bold mt-2">Nơi lưu trữ tài liệu cá nhân của bạn</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        {uploading && <div className="animate-spin rounded-full h-5 w-5 border-2 border-sky-500 border-t-transparent"></div>}
+                                        <button 
+                                            onClick={() => fileInputRef.current.click()} 
+                                            disabled={uploading}
+                                            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 shadow-xl active:scale-95 transition-all"
+                                        >
+                                            {uploading ? 'Đang tải...' : 'Tải tài liệu mới'}
+                                        </button>
+                                        <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+                                    </div>
+                                </header>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                                    {dataList.filter(n => n.category === activeTab).map(note => (
+                                        <div key={note.id} className="neo-card p-8 flex flex-col justify-between h-56 cursor-pointer" onClick={() => setSelectedFile(note)}>
+                                            <div className="flex justify-between items-start">
+                                                <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-bold text-2xl group-hover:bg-sky-500 transition-all">📄</div>
+                                                <span className="text-[10px] font-black text-slate-300 uppercase">{note.displayDate}</span>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-base font-extrabold text-slate-800 line-clamp-2 mb-1">{note.fileName}</h4>
+                                                <span className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Bấm để xem nhanh</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
                     </main>
+
+                    {/* MODAL VIEW */}
+                    {selectedFile && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 modal-overlay" onClick={() => setSelectedFile(null)}>
+                            <div className="bg-white w-full max-w-6xl h-full rounded-[3rem] overflow-hidden shadow-2xl flex flex-col" onClick={e=>e.stopPropagation()}>
+                                <div className="h-20 bg-white border-b flex items-center justify-between px-10">
+                                    <span className="font-extrabold text-slate-800 truncate">{selectedFile.fileName}</span>
+                                    <button onClick={() => setSelectedFile(null)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-full font-bold text-xl transition-all">✕</button>
+                                </div>
+                                <div className="flex-1 bg-slate-100 p-4">
+                                    <iframe src={formatDriveUrl(selectedFile.fileUrl)} className="w-full h-full rounded-2xl border-none"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
