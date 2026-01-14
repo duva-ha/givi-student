@@ -21,8 +21,6 @@
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #0ea5e9; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .modal-overlay { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -40,11 +38,11 @@
             appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
         };
 
+        // CHỈ CÒN 3 MỤC CHÍNH THEO YÊU CẦU
         const STUDENT_SECTIONS = [
             { id: 'baigiang', name: 'Bài học', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', color: 'bg-sky-500' },
-            { id: 'luyentap', name: 'Luyện tập', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'bg-emerald-500' },
-            { id: 'thuvien', name: 'Tài liệu', icon: 'M8 14v20h24V14H8zm4 4h16v12H12V18z', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', color: 'bg-indigo-500' },
-            { id: 'nhatky', name: 'Nhật ký học', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'bg-rose-500' }
+            { id: 'luyentap', name: 'Luyện tập', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'bg-emerald-500' },
+            { id: 'kiemtra', name: 'Kiểm tra', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'bg-rose-500' }
         ];
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -71,7 +69,6 @@
 
             useEffect(() => {
                 if (!user) return;
-                // Sử dụng collection giviso_student để tách biệt hoàn toàn
                 return db.collection("giviso_student").where("userId", "==", user.uid)
                     .onSnapshot((s) => {
                         const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -96,7 +93,7 @@
                 e.preventDefault();
                 if ((!text.trim() && !file) || !user) return;
                 setUploading(true);
-                let fileUrl = null, fileName = null, fileType = null;
+                let fileUrl = null, fileName = null;
                 try {
                     if (file) {
                         const base64 = await new Promise((resolve) => {
@@ -109,18 +106,18 @@
                             body: JSON.stringify({ base64, contentType: file.type, fileName: file.name })
                         });
                         const result = await response.json();
-                        fileUrl = result.url; fileName = file.name; fileType = file.type;
+                        fileUrl = result.url; fileName = file.name;
                     }
                     const now = new Date();
                     await db.collection("giviso_student").add({
                         content: text, userId: user.uid, category: activeTab,
-                        fileUrl, fileName, fileType,
-                        displayDate: `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`,
+                        fileUrl, fileName,
+                        displayDate: `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`,
                         time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     setText(""); setFile(null);
-                } catch (err) { alert("Lỗi tải lên: " + err.message); } finally { setUploading(false); }
+                } catch (err) { alert("Lỗi: " + err.message); } finally { setUploading(false); }
             };
 
             const formatDriveUrl = (url) => {
@@ -131,18 +128,18 @@
             if (!user) return (
                 <div className="h-screen w-full flex flex-col items-center justify-center bg-sky-500 text-white p-6">
                     <h1 className="text-5xl font-black mb-4 tracking-tighter">GIVISO STUDENT</h1>
-                    <p className="text-sky-100 mb-10 text-center max-w-sm font-medium">Không gian tự học thông minh, lưu trữ mọi tri thức của riêng bạn.</p>
-                    <button onClick={() => auth.signInWithPopup(provider)} className="px-12 py-5 bg-white text-sky-600 rounded-[2rem] font-bold shadow-2xl hover:scale-105 transition-all active:scale-95">Bắt đầu hành trình</button>
+                    <p className="text-sky-100 mb-10 text-center font-medium">Không gian tự học thông minh cho học sinh</p>
+                    <button onClick={() => auth.signInWithPopup(provider)} className="px-12 py-5 bg-white text-sky-600 rounded-[2rem] font-bold shadow-2xl hover:scale-105 transition-all">Đăng nhập</button>
                 </div>
             );
 
             return (
                 <div className="flex min-h-screen">
-                    {/* SIDEBAR DÀNH CHO HỌC SINH */}
+                    {/* SIDEBAR TỐI GIẢN 3 MỤC */}
                     <aside className="w-80 bg-white border-r border-sky-100 fixed h-full z-40 hidden lg:flex flex-col p-10">
                         <div className="flex items-center gap-4 mb-16">
                             <div className="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-sky-200">S</div>
-                            <h2 className="font-extrabold text-2xl tracking-tight text-sky-900 leading-none">Giviso<br/><span className="text-sm font-bold text-sky-400">STUDENT</span></h2>
+                            <h2 className="font-extrabold text-2xl tracking-tight text-sky-900 leading-none">Giviso<br/><span className="text-sm font-bold text-sky-400 text-[10px] uppercase">Học sinh</span></h2>
                         </div>
                         
                         <nav className="flex-1 space-y-4">
@@ -160,59 +157,52 @@
 
                         <div className="pt-10 border-t border-sky-50">
                             <div className="flex items-center gap-4 p-4 bg-sky-50 rounded-2xl">
-                                <img src={user.photoURL} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
+                                <img src={user.photoURL} className="w-10 h-10 rounded-full border-2 border-white" />
                                 <div className="overflow-hidden">
                                     <p className="text-xs font-black text-sky-900 truncate">{user.displayName}</p>
-                                    <button onClick={() => auth.signOut()} className="text-[10px] font-bold text-rose-500 uppercase hover:underline">Thoát</button>
+                                    <button onClick={() => auth.signOut()} className="text-[10px] font-bold text-rose-500 uppercase hover:underline">Đăng xuất</button>
                                 </div>
                             </div>
                         </div>
                     </aside>
 
-                    {/* VÙNG NỘI DUNG CHÍNH */}
+                    {/* CONTENT */}
                     <main className="flex-1 lg:ml-80 p-6 lg:p-14 pb-80">
                         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
                             <div>
                                 <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{STUDENT_SECTIONS.find(m => m.id === activeTab).name}</h2>
-                                <p className="text-slate-400 font-semibold mt-2">Dữ liệu tự học ngày {new Date().toLocaleDateString('vi-VN')}</p>
+                                <p className="text-slate-400 font-semibold mt-2 italic text-sm">Tra cứu bài học theo tên hoặc ngày (vd: 14-01)</p>
                             </div>
                             <div className="relative w-full md:w-96">
                                 <input 
                                     type="text" 
-                                    placeholder="Tìm tài liệu, ngày học..." 
+                                    placeholder="Tìm kiếm nhanh..." 
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white border border-sky-100 rounded-[2rem] py-4 pl-14 pr-6 outline-none focus:ring-4 ring-sky-500/10 transition-all text-sm font-bold shadow-sm placeholder-slate-300"
+                                    className="w-full bg-white border border-sky-100 rounded-[2rem] py-4 pl-14 pr-6 outline-none focus:ring-4 ring-sky-500/10 transition-all text-sm font-bold shadow-sm"
                                 />
                                 <svg className="w-6 h-6 text-sky-200 absolute left-5 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </div>
                         </header>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            {filteredContent.length === 0 ? (
-                                <div className="col-span-full py-32 text-center">
-                                    <div className="w-24 h-24 bg-sky-50 rounded-full mx-auto flex items-center justify-center mb-6">
-                                        <svg className="w-10 h-10 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                                    </div>
-                                    <p className="text-slate-400 font-bold italic">Chưa có bài học nào trong mục này</p>
-                                </div>
-                            ) : filteredContent.map(note => (
+                            {filteredContent.map(note => (
                                 <div key={note.id} className="neo-card p-10 flex flex-col justify-between h-full">
                                     <div>
                                         <div className="flex justify-between items-start mb-8">
                                             <span className="text-[11px] font-black text-sky-500 bg-sky-50 px-4 py-2 rounded-xl uppercase tracking-widest">{note.displayDate}</span>
-                                            <button onClick={() => confirm('Xóa bài học này?') && db.collection("giviso_student").doc(note.id).delete()} className="p-2 text-slate-200 hover:text-rose-500 transition-all">✕</button>
+                                            <button onClick={() => confirm('Xóa?') && db.collection("giviso_student").doc(note.id).delete()} className="p-2 text-slate-200 hover:text-rose-500 transition-all">✕</button>
                                         </div>
                                         <p className="text-slate-800 text-lg font-bold leading-relaxed mb-10 whitespace-pre-wrap">{note.content}</p>
                                     </div>
                                     {note.fileUrl && (
                                         <div onClick={() => setSelectedFile(note)} className="p-5 bg-sky-50 rounded-[2rem] border border-sky-100 flex items-center gap-5 cursor-pointer hover:bg-sky-500 hover:text-white transition-all group shadow-inner">
                                             <div className="w-14 h-14 bg-white text-sky-500 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                                             </div>
                                             <div className="flex-1 overflow-hidden">
                                                 <p className="text-sm font-black truncate">{note.fileName}</p>
-                                                <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">Bấm để học ngay bài giảng này</span>
+                                                <span className="text-[10px] font-bold opacity-60 uppercase">Bấm để mở tài liệu</span>
                                             </div>
                                         </div>
                                     )}
@@ -221,41 +211,37 @@
                         </div>
                     </main>
 
-                    {/* MODAL HỌC TẬP TẬP TRUNG */}
+                    {/* MODAL PREVIEW */}
                     {selectedFile && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay animate-in" onClick={() => setSelectedFile(null)}>
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay" onClick={() => setSelectedFile(null)}>
                             <div className="bg-white w-full max-w-7xl h-[92vh] rounded-[3.5rem] overflow-hidden shadow-2xl relative flex flex-col" onClick={e => e.stopPropagation()}>
-                                <div className="p-8 border-b border-sky-50 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center font-black italic">!</div>
-                                        <h3 className="font-black text-base text-slate-800 tracking-tight">{selectedFile.fileName}</h3>
-                                    </div>
-                                    <button onClick={() => setSelectedFile(null)} className="p-3 hover:bg-slate-100 rounded-full transition-colors font-black text-2xl leading-none">✕</button>
+                                <div className="p-8 border-b flex items-center justify-between">
+                                    <h3 className="font-black text-slate-800 tracking-tight">{selectedFile.fileName}</h3>
+                                    <button onClick={() => setSelectedFile(null)} className="p-3 hover:bg-slate-100 rounded-full font-black text-2xl">✕</button>
                                 </div>
                                 <div className="flex-1 bg-slate-100 overflow-hidden">
-                                    <iframe src={formatDriveUrl(selectedFile.fileUrl)} className="w-full h-full border-none shadow-inner" title="Learning Preview"></iframe>
+                                    <iframe src={formatDriveUrl(selectedFile.fileUrl)} className="w-full h-full border-none" title="Student Preview"></iframe>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* KHU VỰC TẢI LÊN (VÙNG NHẬP LIỆU) */}
+                    {/* INPUT AREA */}
                     <div className="fixed bottom-0 lg:left-80 left-0 right-0 p-10 glass-header z-30">
                         <div className="max-w-4xl mx-auto">
                             <form onSubmit={handleSubmit} className="bg-white shadow-2xl rounded-[3rem] p-4 border border-sky-100 flex flex-col md:flex-row items-center gap-4">
-                                {file && <div className="px-6 py-3 bg-sky-600 text-white rounded-2xl text-[11px] font-black animate-in flex items-center gap-3 shadow-lg shadow-sky-200">📎 {file.name.slice(0, 15)}...</div>}
+                                {file && <div className="px-6 py-3 bg-sky-600 text-white rounded-2xl text-[11px] font-black flex items-center gap-3">📎 {file.name.slice(0, 15)}...</div>}
                                 <textarea 
                                     value={text} onChange={(e) => setText(e.target.value)} 
-                                    placeholder={uploading ? "Đang xử lý tải lên..." : `Thêm tài liệu vào mục ${STUDENT_SECTIONS.find(m => m.id === activeTab).name}...`} 
-                                    className="w-full p-5 outline-none resize-none text-[16px] font-bold h-14 bg-transparent custom-scroll" 
+                                    placeholder={uploading ? "Đang xử lý..." : `Thêm nội dung vào mục ${STUDENT_SECTIONS.find(m => m.id === activeTab).name}...`} 
+                                    className="w-full p-5 outline-none resize-none text-[16px] font-bold h-14 bg-transparent" 
                                     disabled={uploading} 
                                 />
                                 <div className="flex items-center gap-4 pr-4 w-full md:w-auto justify-between md:justify-end">
                                     <input type="file" className="hidden" ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} />
-                                    <button type="button" onClick={() => fileInputRef.current.click()} className="p-4 text-slate-300 hover:text-sky-500 hover:bg-sky-50 rounded-2xl transition-all">📎</button>
-                                    <button disabled={uploading || (!text.trim() && !file)} className="h-14 w-14 md:h-14 md:w-56 rounded-[1.75rem] flex items-center justify-center text-white font-black text-xs bg-sky-600 hover:bg-sky-700 shadow-2xl shadow-sky-200 transition-all active:scale-95 uppercase tracking-widest">
-                                        {uploading ? <div className="loader"></div> : <span className="hidden md:block">Lưu tri thức</span>}
-                                        {!uploading && <span className="md:hidden text-2xl">➤</span>}
+                                    <button type="button" onClick={() => fileInputRef.current.click()} className="p-4 text-slate-300 hover:text-sky-500 transition-all">📎</button>
+                                    <button disabled={uploading || (!text.trim() && !file)} className="h-14 w-full md:w-56 rounded-[1.75rem] flex items-center justify-center text-white font-black text-xs bg-sky-600 hover:bg-sky-700 shadow-2xl transition-all uppercase tracking-widest">
+                                        {uploading ? <div className="loader"></div> : "Lưu vào bài học"}
                                     </button>
                                 </div>
                             </form>
@@ -265,8 +251,7 @@
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
