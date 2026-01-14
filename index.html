@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub - Student Pro</title>
+    <title>E-TECH Hub 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -17,19 +17,18 @@
         .sidebar-active { background: #0ea5e9; color: white; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3); }
         .lesson-item { border-radius: 12px; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; }
         .lesson-item.active { background: #e0f2fe; border-color: #0ea5e9; color: #0369a1; font-weight: 700; }
-        .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .modal-overlay { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); }
         .neo-card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .timer-flash { animation: pulse 1s infinite; color: #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // 1. CẤU HÌNH FIREBASE - KIỂM TRA KỸ THÔNG TIN NÀY
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
             authDomain: "qlhs10a7.firebaseapp.com",
@@ -39,186 +38,149 @@
             appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
         };
 
-        // Khởi tạo Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
-        // 2. DỮ LIỆU BÀI TẬP & KIỂM TRA
-        const MOCK_TESTS = [
+        const DATA = {
+            "12": [
+                { id: "12-1", title: "Bài 1: Khái quát về hệ thống điện", content: "Môn Công nghệ lớp 12 đòi hỏi sự kết hợp giữa lý thuyết và thực hành..." },
+                { id: "12-2", title: "Bài 2: Máy điện ba pha", content: "Khám phá nguyên lý hoạt động của các máy điện ba pha thông dụng..." }
+            ],
+            "11": [{ id: "11-1", title: "Bài 1: Cơ khí chế tạo", content: "Tìm hiểu vai trò của ngành cơ khí trong đời sống..." }],
+            "10": [{ id: "10-1", title: "Bài 1: Khái quát về công nghệ", content: "Khám phá mối quan hệ giữa khoa học, kỹ thuật và công nghệ..." }]
+        };
+
+        const QUIZZES = [
             {
-                id: "t1", title: "Kiểm tra 5 phút - Công nghệ Lớp 12", duration: 300,
+                id: "q1", title: "Kiểm tra nhanh - 5 phút", time: 300,
                 questions: [
-                    { q: "Linh kiện nào dùng để khuếch đại tín hiệu?", a: ["Điện trở", "Tụ điện", "Transistor", "Cuộn cảm"], correct: 2 },
-                    { q: "Đơn vị của điện trở là gì?", a: ["Ampe", "Ohm", "Volt", "Farad"], correct: 1 },
-                    { q: "Trình tự thiết kế kỹ thuật gồm mấy bước chính?", a: ["3 bước", "4 bước", "5 bước", "6 bước"], correct: 2 }
+                    { q: "Linh kiện nào dùng để khuếch đại?", a: ["Điện trở", "Tụ điện", "Transistor", "Diode"], correct: 2 },
+                    { q: "Đơn vị của tụ điện là gì?", a: ["Ohm", "Farad", "Volt", "Ampe"], correct: 1 }
                 ]
             }
         ];
 
-        const COURSE_DATA = {
-            "12": [
-                { id: "12-1", title: "Bài 1: Khái niệm hệ thống kỹ thuật", content: "Hệ thống kỹ thuật là tập hợp các phần tử liên kết với nhau để thực hiện một nhiệm vụ nhất định..." },
-                { id: "12-2", title: "Bài 2: Ngành nghề kỹ thuật công nghệ", content: "Tìm hiểu về các nhóm ngành nghề trong lĩnh vực điện, điện tử và cơ khí..." }
-            ]
-        };
-
-        // 3. COMPONENT LÀM BÀI KIỂM TRA
-        function TestModule({ test, onClose }) {
-            const [timeLeft, setTimeLeft] = useState(test.duration);
-            const [answers, setAnswers] = useState({});
-            const [result, setResult] = useState(null);
+        function QuizModal({ quiz, onClose }) {
+            const [sec, setSec] = useState(quiz.time);
+            const [ans, setAns] = useState({});
+            const [done, setDone] = useState(null);
 
             useEffect(() => {
-                if (timeLeft <= 0) { submit(); return; }
-                const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-                return () => clearInterval(timer);
-            }, [timeLeft]);
+                if (sec <= 0) { finish(); return; }
+                const t = setInterval(() => setSec(s => s - 1), 1000);
+                return () => clearInterval(t);
+            }, [sec]);
 
-            const submit = () => {
-                let score = 0;
-                test.questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
-                setResult(score);
+            const finish = () => {
+                let s = 0;
+                quiz.questions.forEach((q, i) => { if (ans[i] === q.correct) s++; });
+                setDone(s);
             };
 
             return (
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-                        <div className="p-8 border-b bg-slate-50 flex justify-between items-center">
-                            <h3 className="font-black text-xl">{test.title}</h3>
-                            {!result && <div className="text-2xl font-black text-sky-600">
-                                {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}
-                            </div>}
+                    <div className="bg-white w-full max-w-xl rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl">
+                        <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
+                            <h3 className="font-bold">{quiz.title}</h3>
+                            {!done && <div className={`text-xl font-black ${sec < 60 ? 'timer-flash' : 'text-sky-600'}`}>{Math.floor(sec/60)}:{(sec%60).toString().padStart(2,'0')}</div>}
                         </div>
-                        <div className="flex-1 overflow-y-auto p-8 custom-scroll">
-                            {result === null ? (
-                                test.questions.map((q, i) => (
-                                    <div key={i} className="mb-8">
-                                        <p className="font-bold text-lg mb-4">{i+1}. {q.q}</p>
-                                        <div className="space-y-2">
-                                            {q.a.map((opt, oi) => (
-                                                <button key={oi} onClick={() => setAnswers({...answers, [i]: oi})} 
-                                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${answers[i] === oi ? 'border-sky-500 bg-sky-50' : 'border-slate-100 hover:bg-slate-50'}`}>
-                                                    {opt}
-                                                </button>
+                        <div className="p-8 flex-1 overflow-y-auto max-h-[70vh]">
+                            {done === null ? (
+                                quiz.questions.map((q, i) => (
+                                    <div key={i} className="mb-6">
+                                        <p className="font-bold mb-3">{i+1}. {q.q}</p>
+                                        <div className="grid gap-2">
+                                            {q.a.map((o, oi) => (
+                                                <button key={oi} onClick={() => setAns({...ans, [i]: oi})} className={`text-left p-3 rounded-xl border-2 transition-all ${ans[i] === oi ? 'border-sky-500 bg-sky-50' : 'border-slate-100'}`}>{o}</button>
                                             ))}
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-10">
-                                    <div className="text-6xl mb-4">🏆</div>
-                                    <h2 className="text-3xl font-black mb-2">Kết quả bài làm</h2>
-                                    <p className="text-4xl font-black text-sky-600 mb-6">{result} / {test.questions.length}</p>
-                                    <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold uppercase">Đóng</button>
+                                <div className="text-center py-6">
+                                    <div className="text-5xl mb-4">🎯</div>
+                                    <h2 className="text-2xl font-black mb-1">Kết quả: {done}/{quiz.questions.length}</h2>
+                                    <p className="text-slate-400 font-bold mb-6">Điểm: {((done/quiz.questions.length)*10).toFixed(1)}</p>
+                                    <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold">HOÀN TẤT</button>
                                 </div>
                             )}
                         </div>
-                        {result === null && <div className="p-6 border-t"><button onClick={submit} className="w-full py-4 bg-sky-600 text-white rounded-2xl font-black uppercase shadow-lg">Nộp bài</button></div>}
+                        {done === null && <div className="p-6 border-t"><button onClick={finish} className="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold uppercase">Nộp bài</button></div>}
                     </div>
                 </div>
             );
         }
 
-        // 4. CHƯƠNG TRÌNH CHÍNH
         function App() {
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
-            const [lesson, setLesson] = useState(COURSE_DATA["12"][0]);
-            const [test, setTest] = useState(null);
+            const [grade, setGrade] = useState('12');
+            const [ls, setLs] = useState(null);
+            const [qz, setQz] = useState(null);
 
             useEffect(() => {
-                const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
-                return () => unsubscribe();
+                const unsub = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsub();
             }, []);
 
+            useEffect(() => { setLs(DATA[grade][0]); }, [grade]);
+
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-sky-600 p-6 text-center">
-                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full">
-                        <div className="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">S</div>
-                        <h1 className="text-2xl font-black mb-2 tracking-tighter">E-TECH HUB</h1>
-                        <p className="text-slate-400 text-sm mb-8 font-medium uppercase tracking-widest">Học sinh đăng nhập</p>
-                        <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-100 active:scale-95 transition-all">Đăng nhập bằng Google</button>
-                    </div>
+                <div className="h-screen flex items-center justify-center bg-sky-600">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-bold shadow-2xl">ĐĂNG NHẬP E-TECH</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen">
-                    {/* SIDEBAR */}
-                    <aside className="w-72 bg-white border-r flex flex-col p-6 shadow-sm z-50">
-                        <div className="mb-10 flex items-center gap-3 px-2">
-                            <div className="w-10 h-10 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg">S</div>
-                            <span className="font-extrabold text-xl tracking-tight">E-TECH Hub</span>
-                        </div>
-                        <nav className="flex-1 space-y-2">
-                            {['baigiang', 'luyentap', 'kiemtra'].map(id => (
-                                <button key={id} onClick={() => setTab(id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${tab === id ? 'sidebar-active' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                    {id === 'baigiang' ? '📖 Bài học' : id === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
-                                </button>
-                            ))}
+                    <aside className="w-64 bg-white border-r flex flex-col p-6 shadow-sm">
+                        <div className="mb-10 font-black text-xl text-sky-600 italic">E-TECH PRO</div>
+                        <nav className="flex-1 space-y-2 text-sm font-bold">
+                            <button onClick={()=>setTab('baigiang')} className={`w-full flex p-4 rounded-2xl ${tab==='baigiang'?'sidebar-active':'text-slate-400'}`}>📖 Bài học</button>
+                            <button onClick={()=>setTab('luyentap')} className={`w-full flex p-4 rounded-2xl ${tab==='luyentap'?'sidebar-active':'text-slate-400'}`}>📝 Luyện tập</button>
+                            <button onClick={()=>setTab('kiemtra')} className={`w-full flex p-4 rounded-2xl ${tab==='kiemtra'?'sidebar-active':'text-slate-400'}`}>🎯 Kiểm tra</button>
                         </nav>
-                        <div className="mt-auto flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-full border border-white" />
-                            <div className="overflow-hidden">
-                                <p className="text-[10px] font-black truncate">{user.displayName}</p>
-                                <button onClick={() => auth.signOut()} className="text-[9px] font-bold text-rose-500 uppercase">Đăng xuất</button>
-                            </div>
-                        </div>
+                        <button onClick={()=>auth.signOut()} className="text-[10px] font-bold text-rose-500 uppercase mt-auto">Đăng xuất</button>
                     </aside>
 
-                    {/* MAIN AREA */}
-                    <main className="flex-1 bg-white overflow-hidden relative">
+                    <main className="flex-1 bg-white relative">
                         {tab === 'baigiang' ? (
                             <div className="flex h-full">
-                                <div className="w-80 bg-slate-50 border-r p-6 flex flex-col">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Mục lục Lớp 12</h3>
-                                    <div className="space-y-2 overflow-y-auto custom-scroll">
-                                        {COURSE_DATA["12"].map(l => (
-                                            <div key={l.id} onClick={() => setLesson(l)} className={`lesson-item p-4 text-sm font-bold ${lesson?.id === l.id ? 'active' : 'text-slate-600'}`}>{l.title}</div>
+                                <div className="w-72 bg-slate-50 border-r p-6">
+                                    <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-3 mb-6 bg-white border rounded-xl font-bold outline-none">
+                                        <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
+                                    </select>
+                                    <div className="space-y-2">
+                                        {DATA[grade].map(l => (
+                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-item p-4 text-[13px] font-bold ${ls?.id===l.id?'active':'text-slate-500'}`}>{l.title}</div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="flex-1 p-12 overflow-y-auto custom-scroll">
-                                    <div className="max-w-4xl mx-auto">
-                                        <h2 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">{lesson?.title}</h2>
-                                        <div className="bg-sky-50 p-10 rounded-[2.5rem] border border-sky-100 text-lg leading-relaxed font-medium text-slate-700 italic shadow-inner">
-                                            {lesson?.content}
-                                        </div>
-                                    </div>
+                                <div className="flex-1 p-12 overflow-y-auto">
+                                    <h2 className="text-3xl font-black mb-6">{ls?.title}</h2>
+                                    <div className="bg-sky-50 p-8 rounded-[2rem] border border-sky-100 italic leading-relaxed">{ls?.content}</div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-12 h-full overflow-y-auto custom-scroll bg-slate-50">
-                                <div className="max-w-5xl mx-auto">
-                                    <h2 className="text-4xl font-black mb-2 tracking-tight">Học phần {tab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'}</h2>
-                                    <p className="text-slate-400 font-bold mb-12">Học sinh hoàn thành các yêu cầu dưới đây</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        {MOCK_TESTS.map(t => (
-                                            <div key={t.id} onClick={() => setTest(t)} className="neo-card p-8 h-64 flex flex-col justify-between cursor-pointer group">
-                                                <div className="w-14 h-14 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-sky-600 group-hover:text-white transition-all shadow-inner">📝</div>
-                                                <div>
-                                                    <h4 className="text-lg font-black group-hover:text-sky-600 transition-colors mb-1">{t.title}</h4>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.questions.length} câu hỏi • {t.duration/60} phút</p>
-                                                </div>
-                                                <div className="text-[10px] font-black text-sky-500 uppercase">Bắt đầu ngay →</div>
-                                            </div>
-                                        ))}
-                                    </div>
+                            <div className="p-12 bg-slate-50 h-full">
+                                <h2 className="text-3xl font-black mb-10 tracking-tight">Học phần {tab==='luyentap'?'Luyện tập':'Kiểm tra'}</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {QUIZZES.map(q => (
+                                        <div key={q.id} onClick={()=>setQz(q)} className="neo-card p-8 h-56 flex flex-col justify-between cursor-pointer group">
+                                            <div className="text-2xl">📝</div>
+                                            <div><h4 className="font-black group-hover:text-sky-600">{q.title}</h4><p className="text-[10px] text-slate-400 uppercase font-bold">{q.questions.length} câu • {q.time/60} phút</p></div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
                     </main>
-
-                    {test && <TestModule test={test} onClose={() => setTest(null)} />}
+                    {qz && <QuizModal quiz={qz} onClose={()=>setQz(null)} />}
                 </div>
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
