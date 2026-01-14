@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giviso Student - E-TECH Hub</title>
+    <title>E-TECH Hub - Student Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -13,101 +13,94 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; height: 100vh; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
         .sidebar-active { background: #0ea5e9; color: white; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3); }
         .lesson-item { border-radius: 12px; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; }
-        .lesson-item:hover { background: #f0f9ff; border-color: #bae6fd; }
         .lesson-item.active { background: #e0f2fe; border-color: #0ea5e9; color: #0369a1; font-weight: 700; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
         .neo-card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
-        .neo-card:hover { border-color: #0ea5e9; transform: translateY(-2px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05); }
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
-        .timer-red { color: #ef4444; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useMemo } = React;
 
-        // DỮ LIỆU MẪU CHO CÁC BÀI KIỂM TRA (Bạn có thể đưa lên Firebase sau)
+        // 1. CẤU HÌNH FIREBASE - KIỂM TRA KỸ THÔNG TIN NÀY
+        const firebaseConfig = {
+            apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
+            authDomain: "qlhs10a7.firebaseapp.com",
+            projectId: "qlhs10a7",
+            storageBucket: "qlhs10a7.firebasestorage.app",
+            messagingSenderId: "584229565603",
+            appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
+        };
+
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 2. DỮ LIỆU BÀI TẬP & KIỂM TRA
         const MOCK_TESTS = [
             {
-                id: "t1", title: "Kiểm tra 15 phút - Linh kiện điện tử", duration: 300, // 5 phút
+                id: "t1", title: "Kiểm tra 5 phút - Công nghệ Lớp 12", duration: 300,
                 questions: [
-                    { q: "Điện trở dùng để làm gì trong mạch điện?", a: ["Cản trở dòng điện", "Lưu trữ điện năng", "Tăng điện áp"], correct: 0 },
-                    { q: "Linh kiện nào sau đây là linh kiện tích cực?", a: ["Điện trở", "Tụ điện", "Transistor"], correct: 2 },
-                    { q: "Đơn vị của Điện dung là gì?", a: ["Ohm", "Farad", "Henry"], correct: 1 }
+                    { q: "Linh kiện nào dùng để khuếch đại tín hiệu?", a: ["Điện trở", "Tụ điện", "Transistor", "Cuộn cảm"], correct: 2 },
+                    { q: "Đơn vị của điện trở là gì?", a: ["Ampe", "Ohm", "Volt", "Farad"], correct: 1 },
+                    { q: "Trình tự thiết kế kỹ thuật gồm mấy bước chính?", a: ["3 bước", "4 bước", "5 bước", "6 bước"], correct: 2 }
                 ]
             }
         ];
 
-        const COURSE_DATABASE = {
+        const COURSE_DATA = {
             "12": [
-                { id: "12-1", title: "Bài 1: Khái niệm về hệ thống thông tin", content: "Hệ thống thông tin là hệ thống dùng các biện pháp để thông báo cho nhau những thông tin cần thiết..." },
-                { id: "12-2", title: "Bài 2: Máy tăng âm", content: "Máy tăng âm là thiết bị khuếch đại tín hiệu âm thanh..." }
+                { id: "12-1", title: "Bài 1: Khái niệm hệ thống kỹ thuật", content: "Hệ thống kỹ thuật là tập hợp các phần tử liên kết với nhau để thực hiện một nhiệm vụ nhất định..." },
+                { id: "12-2", title: "Bài 2: Ngành nghề kỹ thuật công nghệ", content: "Tìm hiểu về các nhóm ngành nghề trong lĩnh vực điện, điện tử và cơ khí..." }
             ]
         };
 
-        const MENU = [
-            { id: 'baigiang', name: 'Bài học', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
-            { id: 'luyentap', name: 'Luyện tập', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-            { id: 'kiemtra', name: 'Kiểm tra', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' }
-        ];
-
-        function QuickTest({ test, onUpdate, onClose }) {
+        // 3. COMPONENT LÀM BÀI KIỂM TRA
+        function TestModule({ test, onClose }) {
             const [timeLeft, setTimeLeft] = useState(test.duration);
             const [answers, setAnswers] = useState({});
-            const [isFinished, setIsFinished] = useState(false);
-            const [score, setScore] = useState(0);
+            const [result, setResult] = useState(null);
 
             useEffect(() => {
-                if (timeLeft <= 0) { handleFinish(); return; }
-                const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                if (timeLeft <= 0) { submit(); return; }
+                const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
                 return () => clearInterval(timer);
             }, [timeLeft]);
 
-            const handleFinish = () => {
-                let correctCount = 0;
-                test.questions.forEach((q, idx) => {
-                    if (answers[idx] === q.correct) correctCount++;
-                });
-                setScore(correctCount);
-                setIsFinished(true);
+            const submit = () => {
+                let score = 0;
+                test.questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
+                setResult(score);
             };
-
-            const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
             return (
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 border-b flex justify-between items-center bg-slate-50">
-                            <div>
-                                <h3 className="font-black text-xl text-slate-800">{test.title}</h3>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Quick Test Mode</p>
-                            </div>
-                            {!isFinished && (
-                                <div className={`text-2xl font-black ${timeLeft < 60 ? 'timer-red' : 'text-sky-600'}`}>
-                                    {formatTime(timeLeft)}
-                                </div>
-                            )}
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                        <div className="p-8 border-b bg-slate-50 flex justify-between items-center">
+                            <h3 className="font-black text-xl">{test.title}</h3>
+                            {!result && <div className="text-2xl font-black text-sky-600">
+                                {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}
+                            </div>}
                         </div>
-
                         <div className="flex-1 overflow-y-auto p-8 custom-scroll">
-                            {!isFinished ? (
-                                test.questions.map((q, idx) => (
-                                    <div key={idx} className="mb-10 animate-in">
-                                        <p className="font-bold text-slate-800 mb-4 text-lg">{idx + 1}. {q.q}</p>
-                                        <div className="space-y-3">
-                                            {q.a.map((opt, oIdx) => (
-                                                <button 
-                                                    key={oIdx}
-                                                    onClick={() => setAnswers({...answers, [idx]: oIdx})}
-                                                    className={`w-full text-left p-4 rounded-2xl border-2 font-bold transition-all ${answers[idx] === oIdx ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-100 hover:border-slate-200 text-slate-500'}`}
-                                                >
+                            {result === null ? (
+                                test.questions.map((q, i) => (
+                                    <div key={i} className="mb-8">
+                                        <p className="font-bold text-lg mb-4">{i+1}. {q.q}</p>
+                                        <div className="space-y-2">
+                                            {q.a.map((opt, oi) => (
+                                                <button key={oi} onClick={() => setAnswers({...answers, [i]: oi})} 
+                                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${answers[i] === oi ? 'border-sky-500 bg-sky-50' : 'border-slate-100 hover:bg-slate-50'}`}>
                                                     {opt}
                                                 </button>
                                             ))}
@@ -115,129 +108,102 @@
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-center py-10 animate-in">
-                                    <div className="text-7xl mb-6">🎯</div>
-                                    <h2 className="text-3xl font-black text-slate-900 mb-2">Hoàn thành bài tập!</h2>
-                                    <p className="text-slate-400 font-bold mb-8 text-lg uppercase tracking-widest">Kết quả của bạn</p>
-                                    <div className="flex justify-center gap-6 mb-10">
-                                        <div className="bg-sky-50 p-6 rounded-3xl border border-sky-100 min-w-[140px]">
-                                            <p className="text-[10px] font-black text-sky-500 uppercase">Câu đúng</p>
-                                            <p className="text-4xl font-black text-sky-700">{score}/{test.questions.length}</p>
-                                        </div>
-                                        <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 min-w-[140px]">
-                                            <p className="text-[10px] font-black text-emerald-500 uppercase">Điểm số</p>
-                                            <p className="text-4xl font-black text-emerald-700">{((score/test.questions.length)*10).toFixed(1)}</p>
-                                        </div>
-                                    </div>
-                                    <button onClick={onClose} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold uppercase tracking-widest active:scale-95 transition-all">Đóng giao diện</button>
+                                <div className="text-center py-10">
+                                    <div className="text-6xl mb-4">🏆</div>
+                                    <h2 className="text-3xl font-black mb-2">Kết quả bài làm</h2>
+                                    <p className="text-4xl font-black text-sky-600 mb-6">{result} / {test.questions.length}</p>
+                                    <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold uppercase">Đóng</button>
                                 </div>
                             )}
                         </div>
-
-                        {!isFinished && (
-                            <div className="p-8 border-t bg-white">
-                                <button 
-                                    onClick={handleFinish}
-                                    className="w-full py-5 bg-sky-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100 hover:bg-sky-700 transition-all active:scale-95"
-                                >
-                                    Nộp bài ngay
-                                </button>
-                            </div>
-                        )}
+                        {result === null && <div className="p-6 border-t"><button onClick={submit} className="w-full py-4 bg-sky-600 text-white rounded-2xl font-black uppercase shadow-lg">Nộp bài</button></div>}
                     </div>
                 </div>
             );
         }
 
+        // 4. CHƯƠNG TRÌNH CHÍNH
         function App() {
             const [user, setUser] = useState(null);
-            const [activeTab, setActiveTab] = useState('baigiang');
-            const [selectedGrade, setSelectedGrade] = useState("12");
-            const [selectedLesson, setSelectedLesson] = useState(null);
-            const [activeTest, setActiveTest] = useState(null);
+            const [tab, setTab] = useState('baigiang');
+            const [lesson, setLesson] = useState(COURSE_DATA["12"][0]);
+            const [test, setTest] = useState(null);
 
             useEffect(() => {
-                const auth = firebase.auth();
-                const provider = new firebase.auth.GoogleAuthProvider();
-                return auth.onAuthStateChanged((u) => setUser(u));
+                const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsubscribe();
             }, []);
 
-            useEffect(() => {
-                setSelectedLesson(COURSE_DATABASE[selectedGrade]?.[0]);
-            }, [selectedGrade]);
-
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-sky-600 p-6">
-                    <button onClick={() => firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="px-10 py-5 bg-white text-sky-600 rounded-full font-black shadow-2xl tracking-tight">ĐĂNG NHẬP E-TECH HUB</button>
+                <div className="h-screen flex items-center justify-center bg-sky-600 p-6 text-center">
+                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full">
+                        <div className="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">S</div>
+                        <h1 className="text-2xl font-black mb-2 tracking-tighter">E-TECH HUB</h1>
+                        <p className="text-slate-400 text-sm mb-8 font-medium uppercase tracking-widest">Học sinh đăng nhập</p>
+                        <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold shadow-lg shadow-sky-100 active:scale-95 transition-all">Đăng nhập bằng Google</button>
+                    </div>
                 </div>
             );
 
             return (
-                <div className="flex h-screen overflow-hidden">
+                <div className="flex h-screen">
                     {/* SIDEBAR */}
-                    <aside className="w-72 bg-white border-r flex flex-col p-6 z-50">
+                    <aside className="w-72 bg-white border-r flex flex-col p-6 shadow-sm z-50">
                         <div className="mb-10 flex items-center gap-3 px-2">
                             <div className="w-10 h-10 bg-sky-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg">S</div>
-                            <span className="font-extrabold text-xl text-slate-800 tracking-tight italic">E-TECH Hub</span>
+                            <span className="font-extrabold text-xl tracking-tight">E-TECH Hub</span>
                         </div>
-                        <nav className="flex-1 space-y-3">
-                            {MENU.map(s => (
-                                <button key={s.id} onClick={() => setActiveTab(s.id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${activeTab === s.id ? 'sidebar-active' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2" d={s.icon}/></svg>
-                                    {s.name}
+                        <nav className="flex-1 space-y-2">
+                            {['baigiang', 'luyentap', 'kiemtra'].map(id => (
+                                <button key={id} onClick={() => setTab(id)} className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all ${tab === id ? 'sidebar-active' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                    {id === 'baigiang' ? '📖 Bài học' : id === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-50 rounded-2xl flex items-center gap-3 border">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-full" />
+                        <div className="mt-auto flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <img src={user.photoURL} className="w-8 h-8 rounded-full border border-white" />
                             <div className="overflow-hidden">
-                                <p className="text-[10px] font-black text-slate-900 truncate uppercase">{user.displayName}</p>
-                                <button onClick={() => firebase.auth().signOut()} className="text-[9px] text-rose-500 font-bold uppercase">Thoát</button>
+                                <p className="text-[10px] font-black truncate">{user.displayName}</p>
+                                <button onClick={() => auth.signOut()} className="text-[9px] font-bold text-rose-500 uppercase">Đăng xuất</button>
                             </div>
                         </div>
                     </aside>
 
-                    {/* MAIN */}
-                    <main className="flex-1 flex flex-col bg-white overflow-hidden relative">
-                        {activeTab === 'baigiang' ? (
+                    {/* MAIN AREA */}
+                    <main className="flex-1 bg-white overflow-hidden relative">
+                        {tab === 'baigiang' ? (
                             <div className="flex h-full">
                                 <div className="w-80 bg-slate-50 border-r p-6 flex flex-col">
-                                    <select value={selectedGrade} onChange={(e) => setSelectedGrade(e.target.value)} className="w-full p-4 mb-6 bg-white border rounded-2xl text-sm font-bold outline-none shadow-sm">
-                                        <option value="12">Lớp 12 - Công nghệ</option>
-                                    </select>
-                                    <div className="flex-1 overflow-y-auto custom-scroll space-y-2">
-                                        {COURSE_DATABASE[selectedGrade]?.map(l => (
-                                            <div key={l.id} onClick={() => setSelectedLesson(l)} className={`lesson-item p-4 text-sm font-bold ${selectedLesson?.id === l.id ? 'active' : 'text-slate-600'}`}>{l.title}</div>
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Mục lục Lớp 12</h3>
+                                    <div className="space-y-2 overflow-y-auto custom-scroll">
+                                        {COURSE_DATA["12"].map(l => (
+                                            <div key={l.id} onClick={() => setLesson(l)} className={`lesson-item p-4 text-sm font-bold ${lesson?.id === l.id ? 'active' : 'text-slate-600'}`}>{l.title}</div>
                                         ))}
                                     </div>
                                 </div>
                                 <div className="flex-1 p-12 overflow-y-auto custom-scroll">
                                     <div className="max-w-4xl mx-auto">
-                                        <h2 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">{selectedLesson?.title}</h2>
-                                        <div className="bg-sky-50 p-8 rounded-[2rem] border border-sky-100 text-lg leading-relaxed font-medium text-slate-700 italic">{selectedLesson?.content}</div>
+                                        <h2 className="text-4xl font-black text-slate-900 mb-8 tracking-tighter">{lesson?.title}</h2>
+                                        <div className="bg-sky-50 p-10 rounded-[2.5rem] border border-sky-100 text-lg leading-relaxed font-medium text-slate-700 italic shadow-inner">
+                                            {lesson?.content}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ) : (
                             <div className="p-12 h-full overflow-y-auto custom-scroll bg-slate-50">
                                 <div className="max-w-5xl mx-auto">
-                                    <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">{activeTab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'}</h2>
-                                    <p className="text-slate-400 font-bold mb-12">Danh sách các bài tập giáo viên đã giao</p>
-                                    
+                                    <h2 className="text-4xl font-black mb-2 tracking-tight">Học phần {tab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'}</h2>
+                                    <p className="text-slate-400 font-bold mb-12">Học sinh hoàn thành các yêu cầu dưới đây</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                        {MOCK_TESTS.map(test => (
-                                            <div key={test.id} onClick={() => setActiveTest(test)} className="neo-card p-8 flex flex-col justify-between h-64 cursor-pointer group">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="w-14 h-14 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-sky-600 group-hover:text-white transition-all shadow-inner">📝</div>
-                                                    <span className="text-[10px] font-black px-3 py-1 bg-slate-100 rounded-lg text-slate-400 uppercase tracking-widest">{test.duration/60} phút</span>
-                                                </div>
+                                        {MOCK_TESTS.map(t => (
+                                            <div key={t.id} onClick={() => setTest(t)} className="neo-card p-8 h-64 flex flex-col justify-between cursor-pointer group">
+                                                <div className="w-14 h-14 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-sky-600 group-hover:text-white transition-all shadow-inner">📝</div>
                                                 <div>
-                                                    <h4 className="text-lg font-black text-slate-800 mb-1 group-hover:text-sky-600 transition-colors">{test.title}</h4>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{test.questions.length} câu hỏi trắc nghiệm</p>
+                                                    <h4 className="text-lg font-black group-hover:text-sky-600 transition-colors mb-1">{t.title}</h4>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.questions.length} câu hỏi • {t.duration/60} phút</p>
                                                 </div>
-                                                <div className="pt-4 border-t flex items-center gap-2 text-sky-500 font-black text-[10px] uppercase">
-                                                    Bắt đầu làm bài <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                                                </div>
+                                                <div className="text-[10px] font-black text-sky-500 uppercase">Bắt đầu ngay →</div>
                                             </div>
                                         ))}
                                     </div>
@@ -246,18 +212,13 @@
                         )}
                     </main>
 
-                    {/* HIỂN THỊ QUICK TEST KHI CHỌN BÀI */}
-                    {activeTest && (
-                        <QuickTest 
-                            test={activeTest} 
-                            onClose={() => setActiveTest(null)} 
-                        />
-                    )}
+                    {test && <TestModule test={test} onClose={() => setTest(null)} />}
                 </div>
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
