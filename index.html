@@ -38,10 +38,11 @@
             appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
         };
 
-        // CHỈ CÒN 3 MỤC CHÍNH THEO YÊU CẦU
+        // CẤU TRÚC 4 MỤC THEO YÊU CẦU
         const STUDENT_SECTIONS = [
             { id: 'baigiang', name: 'Bài học', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', color: 'bg-sky-500' },
-            { id: 'luyentap', name: 'Luyện tập', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'bg-emerald-500' },
+            { id: 'ghichep', name: 'Ghi chép', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'bg-amber-500' },
+            { id: 'luyentap', name: 'Luyện tập', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', color: 'bg-emerald-500' },
             { id: 'kiemtra', name: 'Kiểm tra', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'bg-rose-500' }
         ];
 
@@ -128,18 +129,18 @@
             if (!user) return (
                 <div className="h-screen w-full flex flex-col items-center justify-center bg-sky-500 text-white p-6">
                     <h1 className="text-5xl font-black mb-4 tracking-tighter">GIVISO STUDENT</h1>
-                    <p className="text-sky-100 mb-10 text-center font-medium">Không gian tự học thông minh cho học sinh</p>
-                    <button onClick={() => auth.signInWithPopup(provider)} className="px-12 py-5 bg-white text-sky-600 rounded-[2rem] font-bold shadow-2xl hover:scale-105 transition-all">Đăng nhập</button>
+                    <p className="text-sky-100 mb-10 text-center font-medium">Hệ sinh thái tự học thông minh cho học sinh</p>
+                    <button onClick={() => auth.signInWithPopup(provider)} className="px-12 py-5 bg-white text-sky-600 rounded-[2rem] font-bold shadow-2xl hover:scale-105 transition-all">Đăng nhập ngay</button>
                 </div>
             );
 
             return (
                 <div className="flex min-h-screen">
-                    {/* SIDEBAR TỐI GIẢN 3 MỤC */}
+                    {/* SIDEBAR 4 MỤC CHUYÊN NGHIỆP */}
                     <aside className="w-80 bg-white border-r border-sky-100 fixed h-full z-40 hidden lg:flex flex-col p-10">
                         <div className="flex items-center gap-4 mb-16">
                             <div className="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-sky-200">S</div>
-                            <h2 className="font-extrabold text-2xl tracking-tight text-sky-900 leading-none">Giviso<br/><span className="text-sm font-bold text-sky-400 text-[10px] uppercase">Học sinh</span></h2>
+                            <h2 className="font-extrabold text-2xl tracking-tight text-sky-900 leading-none">Giviso<br/><span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Student Hub</span></h2>
                         </div>
                         
                         <nav className="flex-1 space-y-4">
@@ -166,17 +167,17 @@
                         </div>
                     </aside>
 
-                    {/* CONTENT */}
+                    {/* MAIN CONTENT AREA */}
                     <main className="flex-1 lg:ml-80 p-6 lg:p-14 pb-80">
                         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
                             <div>
                                 <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{STUDENT_SECTIONS.find(m => m.id === activeTab).name}</h2>
-                                <p className="text-slate-400 font-semibold mt-2 italic text-sm">Tra cứu bài học theo tên hoặc ngày (vd: 14-01)</p>
+                                <p className="text-slate-400 font-semibold mt-2 text-sm italic">Quản lý tri thức cá nhân ngày {new Date().toLocaleDateString('vi-VN')}</p>
                             </div>
                             <div className="relative w-full md:w-96">
                                 <input 
                                     type="text" 
-                                    placeholder="Tìm kiếm nhanh..." 
+                                    placeholder="Tìm tài liệu, ngày học..." 
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full bg-white border border-sky-100 rounded-[2rem] py-4 pl-14 pr-6 outline-none focus:ring-4 ring-sky-500/10 transition-all text-sm font-bold shadow-sm"
@@ -190,8 +191,10 @@
                                 <div key={note.id} className="neo-card p-10 flex flex-col justify-between h-full">
                                     <div>
                                         <div className="flex justify-between items-start mb-8">
-                                            <span className="text-[11px] font-black text-sky-500 bg-sky-50 px-4 py-2 rounded-xl uppercase tracking-widest">{note.displayDate}</span>
-                                            <button onClick={() => confirm('Xóa?') && db.collection("giviso_student").doc(note.id).delete()} className="p-2 text-slate-200 hover:text-rose-500 transition-all">✕</button>
+                                            <span className={`text-[11px] font-black px-4 py-2 rounded-xl uppercase tracking-widest ${activeTab === 'ghichep' ? 'text-amber-600 bg-amber-50' : 'text-sky-500 bg-sky-50'}`}>
+                                                {note.displayDate} • {note.time}
+                                            </span>
+                                            <button onClick={() => confirm('Xóa nội dung này?') && db.collection("giviso_student").doc(note.id).delete()} className="p-2 text-slate-200 hover:text-rose-500 transition-all">✕</button>
                                         </div>
                                         <p className="text-slate-800 text-lg font-bold leading-relaxed mb-10 whitespace-pre-wrap">{note.content}</p>
                                     </div>
@@ -202,7 +205,7 @@
                                             </div>
                                             <div className="flex-1 overflow-hidden">
                                                 <p className="text-sm font-black truncate">{note.fileName}</p>
-                                                <span className="text-[10px] font-bold opacity-60 uppercase">Bấm để mở tài liệu</span>
+                                                <span className="text-[10px] font-bold opacity-60 uppercase">Bấm để học ngay</span>
                                             </div>
                                         </div>
                                     )}
@@ -211,13 +214,13 @@
                         </div>
                     </main>
 
-                    {/* MODAL PREVIEW */}
+                    {/* MODAL TRÌNH CHIẾU TẬP TRUNG */}
                     {selectedFile && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay" onClick={() => setSelectedFile(null)}>
                             <div className="bg-white w-full max-w-7xl h-[92vh] rounded-[3.5rem] overflow-hidden shadow-2xl relative flex flex-col" onClick={e => e.stopPropagation()}>
-                                <div className="p-8 border-b flex items-center justify-between">
+                                <div className="p-8 border-b border-sky-50 flex items-center justify-between">
                                     <h3 className="font-black text-slate-800 tracking-tight">{selectedFile.fileName}</h3>
-                                    <button onClick={() => setSelectedFile(null)} className="p-3 hover:bg-slate-100 rounded-full font-black text-2xl">✕</button>
+                                    <button onClick={() => setSelectedFile(null)} className="p-3 hover:bg-slate-100 rounded-full font-black text-2xl leading-none">✕</button>
                                 </div>
                                 <div className="flex-1 bg-slate-100 overflow-hidden">
                                     <iframe src={formatDriveUrl(selectedFile.fileUrl)} className="w-full h-full border-none" title="Student Preview"></iframe>
@@ -226,22 +229,22 @@
                         </div>
                     )}
 
-                    {/* INPUT AREA */}
+                    {/* INPUT AREA (CỐ ĐỊNH DƯỚI) */}
                     <div className="fixed bottom-0 lg:left-80 left-0 right-0 p-10 glass-header z-30">
                         <div className="max-w-4xl mx-auto">
                             <form onSubmit={handleSubmit} className="bg-white shadow-2xl rounded-[3rem] p-4 border border-sky-100 flex flex-col md:flex-row items-center gap-4">
-                                {file && <div className="px-6 py-3 bg-sky-600 text-white rounded-2xl text-[11px] font-black flex items-center gap-3">📎 {file.name.slice(0, 15)}...</div>}
+                                {file && <div className="px-6 py-3 bg-sky-600 text-white rounded-2xl text-[11px] font-black flex items-center gap-3 shadow-lg">📎 {file.name.slice(0, 15)}...</div>}
                                 <textarea 
                                     value={text} onChange={(e) => setText(e.target.value)} 
-                                    placeholder={uploading ? "Đang xử lý..." : `Thêm nội dung vào mục ${STUDENT_SECTIONS.find(m => m.id === activeTab).name}...`} 
+                                    placeholder={uploading ? "Đang xử lý tải lên..." : `Nhập nội dung cho ${STUDENT_SECTIONS.find(m => m.id === activeTab).name}...`} 
                                     className="w-full p-5 outline-none resize-none text-[16px] font-bold h-14 bg-transparent" 
                                     disabled={uploading} 
                                 />
                                 <div className="flex items-center gap-4 pr-4 w-full md:w-auto justify-between md:justify-end">
                                     <input type="file" className="hidden" ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} />
-                                    <button type="button" onClick={() => fileInputRef.current.click()} className="p-4 text-slate-300 hover:text-sky-500 transition-all">📎</button>
-                                    <button disabled={uploading || (!text.trim() && !file)} className="h-14 w-full md:w-56 rounded-[1.75rem] flex items-center justify-center text-white font-black text-xs bg-sky-600 hover:bg-sky-700 shadow-2xl transition-all uppercase tracking-widest">
-                                        {uploading ? <div className="loader"></div> : "Lưu vào bài học"}
+                                    <button type="button" onClick={() => fileInputRef.current.click()} className="p-4 text-slate-300 hover:text-sky-500 transition-all text-xl">📎</button>
+                                    <button disabled={uploading || (!text.trim() && !file)} className="h-14 w-full md:w-56 rounded-[1.75rem] flex items-center justify-center text-white font-black text-xs bg-sky-600 hover:bg-sky-700 shadow-2xl transition-all uppercase tracking-widest active:scale-95">
+                                        {uploading ? <div className="loader"></div> : `Lưu vào ${STUDENT_SECTIONS.find(m => m.id === activeTab).name}`}
                                     </button>
                                 </div>
                             </form>
