@@ -16,8 +16,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overflow: hidden; color: #1e293b; }
         aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s ease; }
-        .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
-        .focus-toggle { background: white; border: 1px solid #e2e8f0; font-size: 9px; }
+        .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
+        .lesson-card { transition: all 0.3s; border: 1px solid transparent; cursor: pointer; }
+        .lesson-card.active { background: #eff6ff; border-color: #dbeafe; }
+        .active-dot { width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; position: absolute; left: 14px; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
@@ -43,6 +45,7 @@
 
         const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
+        // --- COMPONENT LÀM BÀI (MODAL) ---
         function QuizModal({ quiz, user, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
             const [answers, setAnswers] = useState({});
@@ -67,43 +70,40 @@
                 try {
                     await db.collection("quiz_results").add({
                         studentName: user.displayName,
-                        studentEmail: user.email,
                         quizTitle: quiz.title,
-                        correctAnswers: `${correctCount}/${quiz.questions.length}`,
                         score: finalScore,
+                        correctAnswers: `${correctCount}/${quiz.questions.length}`,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         date: new Date().toLocaleString('vi-VN')
                     });
-                } catch (e) { console.error("Lỗi nộp bài:", e); }
+                } catch (e) { console.error(e); }
             };
 
             return (
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
-                            <h3 className="font-extrabold text-slate-800 uppercase text-[10px] tracking-widest">{quiz.title}</h3>
-                            {!isSubmitted && <div className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full font-bold text-[10px]">⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>}
+                        <div className="p-5 bg-slate-50 border-b flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                            <span>{quiz.title}</span>
+                            {!isSubmitted && <span className="text-rose-600">⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>}
                         </div>
                         <div className="p-10 overflow-y-auto custom-scroll flex-1">
                             {!isSubmitted ? quiz.questions.map((q, i) => (
                                 <div key={i} className="mb-10">
-                                    <p className="font-bold text-lg text-slate-800 mb-6 flex gap-3"><span className="text-blue-500 font-black">{i+1}.</span> {q.q}</p>
+                                    <p className="font-bold text-lg mb-6"><span className="text-blue-500"># {i+1}</span> {q.q}</p>
                                     <div className="grid gap-2">
-                                        {q.a.map((opt, optIdx) => (
-                                            <button key={optIdx} onClick={() => setAnswers({...answers, [i]: opt})} className={`p-4 rounded-xl border-2 text-left transition-all font-semibold text-sm ${answers[i] === opt ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}>{opt}</button>
+                                        {q.a.map((opt, idx) => (
+                                            <button key={idx} onClick={() => setAnswers({...answers, [i]: opt})} className={`p-4 rounded-xl border-2 text-left font-semibold text-sm ${answers[i] === opt ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:bg-slate-50'}`}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
                             )) : (
                                 <div className="text-center py-12">
-                                    <div className="text-7xl mb-4">🎯</div>
-                                    <h2 className="text-2xl font-black mb-1 uppercase text-slate-900">Kết quả của bạn</h2>
-                                    <div className="text-7xl font-black text-blue-600 mb-8">{score}</div>
-                                    <button onClick={onClose} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm uppercase">Hoàn thành</button>
+                                    <div className="text-7xl font-black text-blue-600 mb-4">{score}</div>
+                                    <button onClick={onClose} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase">Đóng</button>
                                 </div>
                             )}
                         </div>
-                        {!isSubmitted && <div className="p-6 border-t bg-slate-50"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs shadow-md">Nộp bài</button></div>}
+                        {!isSubmitted && <div className="p-6 border-t"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs">Nộp bài</button></div>}
                     </div>
                 </div>
             );
@@ -115,116 +115,120 @@
             const [grade, setGrade] = useState('12');
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
-            const [firebaseQuizzes, setFirebaseQuizzes] = useState([]);
-            const [notes, setNotes] = useState([]);
+            
+            const [notes, setNotes] = useState([]); // Dữ liệu bài giảng từ Firebase
+            const [currentNote, setCurrentNote] = useState(null); // Bài giảng đang chọn xem
+            const [quizzes, setQuizzes] = useState([]); // Đề thi từ Firebase
 
             useEffect(() => {
-                const unsub = auth.onAuthStateChanged(u => setUser(u));
-                return () => unsub();
+                auth.onAuthStateChanged(u => setUser(u));
             }, []);
 
-            // 1. Lấy Bài giảng (Notes) từ Firebase
+            // 1. Lắng nghe Bài giảng (Notes)
             useEffect(() => {
                 if (!user) return;
-                const unsub = db.collection("notes")
-                    .onSnapshot(s => {
-                        setNotes(s.docs.map(d => ({id: d.id, ...d.data()})));
-                    });
-                return () => unsub;
+                return db.collection("notes").orderBy("timestamp", "desc").onSnapshot(s => {
+                    const data = s.docs.map(d => ({id: d.id, ...d.data()}));
+                    setNotes(data);
+                    if (data.length > 0) setCurrentNote(data[0]);
+                });
             }, [user]);
 
-            // 2. Lấy Đề kiểm tra (Quizzes) - ĐÃ XÓA ORDERBY ĐỂ TRÁNH LỖI INDEX
+            // 2. Lắng nghe Đề thi (Quizzes)
             useEffect(() => {
                 if (!user) return;
-                const unsub = db.collection("quizzes")
-                    .where("grade", "==", grade)
-                    .onSnapshot(snapshot => {
-                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        console.log("Dữ liệu nhận được:", data);
-                        setFirebaseQuizzes(data);
-                    }, err => {
-                        console.error("Lỗi Firebase:", err);
-                    });
-                return () => unsub();
+                return db.collection("quizzes").where("grade", "==", grade).onSnapshot(s => {
+                    setQuizzes(s.docs.map(d => ({ id: d.id, ...d.data() })));
+                });
             }, [user, grade]);
 
             const handleStartQuiz = (quiz) => {
-                let preparedQuestions = quiz.questions.map(q => ({
-                    ...q,
-                    correctText: q.a[q.correct] 
-                }));
-                if (quiz.shuffleQuestions) preparedQuestions = shuffleArray(preparedQuestions);
-                if (quiz.shuffleOptions) preparedQuestions = preparedQuestions.map(q => ({...q, a: shuffleArray(q.a)}));
-                setActiveQuiz({ ...quiz, questions: preparedQuestions });
+                let qs = quiz.questions.map(q => ({ ...q, correctText: q.a[q.correct] }));
+                if (quiz.shuffleQuestions) qs = shuffleArray(qs);
+                if (quiz.shuffleOptions) qs = qs.map(q => ({...q, a: shuffleArray(q.a)}));
+                setActiveQuiz({ ...quiz, questions: qs });
             };
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-[#0f172a]">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black shadow-xl text-slate-900 uppercase tracking-widest text-[10px]">Đăng nhập E-TECH Hub</button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest">Đăng nhập E-TECH Hub</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
+                    {/* SIDEBAR */}
                     <aside className={`flex flex-col py-8 px-5 ${isFocus ? 'hide-left' : ''}`}>
-                        <div className="mb-10 px-4 flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">E</div>
-                            <span className="font-black text-lg text-blue-400 uppercase italic">E-Tech</span>
-                        </div>
+                        <div className="mb-10 px-4 flex items-center gap-3 font-black text-lg text-blue-400 uppercase italic">E-Tech</div>
                         <nav className="flex-1 space-y-2">
-                            {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'active bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
-                                    {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
+                            {['baigiang', 'kiemtra'].map(t => (
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>
+                                    {t === 'baigiang' ? '📖 Bài giảng' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-800/40 rounded-2xl flex items-center gap-3">
+                        <div className="mt-auto flex items-center gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
                             <img src={user.photoURL} className="w-8 h-8 rounded-lg" />
-                            <div className="truncate">
-                                <p className="text-[9px] font-black text-white">{user.displayName}</p>
-                                <button onClick={()=>auth.signOut()} className="text-[8px] font-bold text-rose-400 uppercase opacity-60">Thoát</button>
-                            </div>
+                            <div className="truncate"><p className="text-[9px] font-black text-white">{user.displayName}</p></div>
                         </div>
                     </aside>
 
-                    <main className="flex-1 bg-white relative rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l">
-                        <div className="h-16 px-8 border-b flex items-center justify-between bg-white/90 backdrop-blur-md z-40">
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 bg-white rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l">
+                        <div className="h-16 px-8 border-b flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <span className="font-extrabold text-[11px] text-blue-600 uppercase italic">Khối {grade}</span>
                                 <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-slate-50 border p-1 rounded font-bold text-[10px] outline-none">
                                     <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
                                 </select>
                             </div>
-                            <button onClick={() => setIsFocus(!isFocus)} className="focus-toggle px-4 py-2 rounded-xl uppercase font-black shadow-sm">
-                                {isFocus ? '📂 Hiện Menu' : '🖥️ Tập trung'}
-                            </button>
+                            <button onClick={() => setIsFocus(!isFocus)} className="focus-toggle px-4 py-2 rounded-xl uppercase font-black">{isFocus ? '📂 Menu' : '🖥️ Focus'}</button>
                         </div>
 
-                        <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll">
-                            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {tab === 'baigiang' ? (
-                                    notes.length > 0 ? notes.map(n => (
-                                        <div key={n.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                            <div className="text-[9px] font-black text-blue-500 uppercase mb-2 tracking-widest">{n.category || 'Tài liệu'}</div>
-                                            <h4 className="text-sm font-bold text-slate-800 mb-3">{n.content}</h4>
-                                            {n.fileUrl && (
-                                                <a href={n.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">📄 Xem tài liệu</a>
-                                            )}
+                        <div className="flex-1 flex overflow-hidden">
+                            {tab === 'baigiang' ? (
+                                <React.Fragment>
+                                    {/* DANH SÁCH BÀI GIẢNG BÊN TRÁI (QUAN TRỌNG) */}
+                                    <div className={`w-72 border-r p-5 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
+                                        <div className="flex-1 overflow-y-auto custom-scroll space-y-1">
+                                            {notes.map((n, idx) => (
+                                                <div key={n.id} onClick={()=>setCurrentNote(n)} className={`lesson-card relative p-4 rounded-xl ${currentNote?.id === n.id ? 'active' : ''}`}>
+                                                    {currentNote?.id === n.id && <div className="active-dot" />}
+                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Bài {idx + 1}</div>
+                                                    <div className="font-bold text-[12px] leading-tight text-slate-700 ml-4 truncate">{n.content.split('\n')[0]}</div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase tracking-widest">Chưa có bài giảng nào...</div>
-                                ) : (
-                                    firebaseQuizzes.length > 0 ? firebaseQuizzes.map(q => (
+                                    </div>
+                                    {/* NỘI DUNG CHI TIẾT BÊN PHẢI */}
+                                    <div className="flex-1 p-12 overflow-y-auto custom-scroll">
+                                        {currentNote && (
+                                            <div className="max-w-3xl mx-auto space-y-6">
+                                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Nội dung bài học</h2>
+                                                <div className="bg-slate-50 p-10 rounded-[2rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic">
+                                                    {currentNote.content}
+                                                </div>
+                                                {currentNote.fileUrl && (
+                                                    <a href={currentNote.fileUrl} target="_blank" className="inline-flex items-center gap-3 p-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-xs">📄 XEM TÀI LIỆU ĐÍNH KÈM</a>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </React.Fragment>
+                            ) : (
+                                <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {quizzes.length > 0 ? quizzes.map(q => (
                                         <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
-                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">🎯</div>
+                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">🎯</div>
                                             <div>
-                                                <h4 className="text-lg font-extrabold mb-1 text-slate-800 group-hover:text-blue-600 transition-colors">{q.title}</h4>
+                                                <h4 className="text-lg font-extrabold mb-1 text-slate-800">{q.title}</h4>
                                                 <p className="text-[9px] text-slate-400 uppercase font-black">{q.questions.length} câu • {q.time/60} phút</p>
                                             </div>
-                                            <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
+                                            <div className="text-[9px] font-black text-blue-500 uppercase">Bắt đầu →</div>
                                         </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase tracking-widest">Chưa có đề nào cho Khối {grade}...</div>
-                                )}
-                            </div>
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black uppercase">Chưa có đề nào lớp {grade}...</div>}
+                                </div>
+                            )}
                         </div>
                     </main>
                     {activeQuiz && <QuizModal quiz={activeQuiz} user={user} onClose={() => setActiveQuiz(null)} />}
