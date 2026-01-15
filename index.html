@@ -18,6 +18,7 @@
     <script src="bai2-11.js" defer></script>
     <script src="bai1-12.js" defer></script>
     <script src="bai2-12.js" defer></script>
+    
     <script src="quizzes.js" defer></script>
     <script src="LTAP1.js" defer></script>
     <script src="LTAP2.js" defer></script>
@@ -31,6 +32,8 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
+        .lesson-item { cursor: pointer; transition: 0.3s; border: 1px solid transparent; border-radius: 1rem; }
+        .lesson-item.active { background: #f8fafc; border-color: #e2e8f0; }
     </style>
 </head>
 <body>
@@ -52,7 +55,7 @@
 
         const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
-        // --- MODAL LUYỆN TẬP (LÀM LẠI NHIỀU LẦN - KHÔNG GỬI ĐIỂM) ---
+        // --- MODAL LUYỆN TẬP (LÀM LẠI VÔ HẠN) ---
         function PracticeModal({ quiz, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
             const [answers, setAnswers] = useState({});
@@ -76,12 +79,12 @@
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
                         <div className="p-5 border-b bg-emerald-50 flex justify-between items-center">
-                            <span className="font-black text-[10px] text-emerald-700 uppercase">Luyện tập: {quiz.title}</span>
-                            {!isSubmitted && <span className="text-emerald-600 font-bold">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</span>}
+                            <span className="font-black text-[10px] text-emerald-700 uppercase">Chế độ luyện tập: {quiz.title}</span>
+                            {!isSubmitted && <span className="text-emerald-600 font-bold font-mono">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</span>}
                         </div>
                         <div className="p-10 overflow-y-auto custom-scroll flex-1">
                             {!isSubmitted ? quiz.questions.map((q, i) => (
-                                <div key={i} className="mb-8 border-b pb-6 border-slate-50">
+                                <div key={i} className="mb-8 border-b pb-6 border-slate-50 animate-in fade-in duration-500">
                                     <p className="font-bold text-lg mb-6">{i+1}. {q.q}</p>
                                     <div className="grid gap-2">
                                         {q.a.map((opt, idx) => (
@@ -92,21 +95,21 @@
                             )) : (
                                 <div className="text-center py-10">
                                     <div className="text-7xl font-black text-emerald-600 mb-4">{score}</div>
-                                    <p className="text-slate-400 font-bold uppercase text-[10px] mb-8">Kết quả luyện tập tự do</p>
+                                    <p className="text-slate-400 font-bold uppercase text-[10px] mb-8 tracking-widest">Kết quả luyện tập (Không lưu báo cáo)</p>
                                     <div className="flex flex-col gap-3 max-w-xs mx-auto">
-                                        <button onClick={() => { setIsSubmitted(false); setAnswers({}); setTimeLeft(quiz.time); }} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px]">Làm lại ngay</button>
+                                        <button onClick={() => { setIsSubmitted(false); setAnswers({}); setTimeLeft(quiz.time); }} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px]">Làm lại bài này</button>
                                         <button onClick={onClose} className="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px]">Thoát</button>
                                     </div>
                                 </div>
                             )}
                         </div>
-                        {!isSubmitted && <div className="p-6 border-t"><button onClick={submit} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-xs">Kết thúc</button></div>}
+                        {!isSubmitted && <div className="p-6 border-t"><button onClick={submit} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-xs">Nộp bài luyện tập</button></div>}
                     </div>
                 </div>
             );
         }
 
-        // --- MODAL KIỂM TRA (GỬI ĐIỂM VỀ FIREBASE) ---
+        // --- MODAL KIỂM TRA (GỬI ĐIỂM) ---
         function QuizModal({ quiz, user, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
             const [answers, setAnswers] = useState({});
@@ -139,8 +142,8 @@
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
                         <div className="p-6 border-b bg-slate-50 flex justify-between items-center">
-                            <span className="font-black text-[10px] uppercase">{quiz.title}</span>
-                            {!isSubmitted && <span className="text-rose-600 font-bold">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</span>}
+                            <span className="font-black text-[10px] uppercase tracking-widest text-slate-500">{quiz.title}</span>
+                            {!isSubmitted && <span className="text-rose-600 font-bold font-mono">⏱️ {Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</span>}
                         </div>
                         <div className="p-10 overflow-y-auto custom-scroll flex-1">
                             {!isSubmitted ? quiz.questions.map((q, i) => (
@@ -155,12 +158,12 @@
                             )) : (
                                 <div className="text-center py-10">
                                     <div className="text-7xl font-black text-blue-600 mb-4">{score}</div>
-                                    <p className="font-bold text-slate-400 uppercase text-[10px]">Đã nộp báo cáo cho giáo viên</p>
-                                    <button onClick={onClose} className="mt-8 px-10 py-3 bg-slate-900 text-white rounded-xl font-bold uppercase text-[10px]">Đóng</button>
+                                    <p className="font-bold text-slate-400 uppercase text-[10px]">Báo cáo đã gửi tới giáo viên</p>
+                                    <button onClick={onClose} className="mt-8 px-10 py-3 bg-slate-900 text-white rounded-xl font-bold uppercase text-[10px]">Quay lại</button>
                                 </div>
                             )}
                         </div>
-                        {!isSubmitted && <div className="p-6 border-t"><button onClick={handleFinalSubmit} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs">Nộp bài ngay</button></div>}
+                        {!isSubmitted && <div className="p-6 border-t"><button onClick={handleFinalSubmit} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs">Nộp bài chính thức</button></div>}
                     </div>
                 </div>
             );
@@ -180,6 +183,7 @@
             const [practiceData, setPracticeData] = useState([]);
 
             const scanData = useCallback(() => {
+                // Quét bài giảng
                 const resLessons = { "10": [], "11": [], "12": [] };
                 ["10", "11", "12"].forEach(g => {
                     for (let i = 1; i <= 20; i++) {
@@ -187,6 +191,7 @@
                         if (d) resLessons[g].push({ ...d, lessonIndex: i });
                     }
                 });
+                // Quét bài luyện tập độc lập (LTAP1, LTAP2, ...)
                 const resPractice = [];
                 for (let i = 1; i <= 10; i++) {
                     const p = window[`LTAP${i}`];
@@ -213,26 +218,27 @@
                 if (list && list.length > 0) setLs(list[0]); else setLs(null);
             }, [grade, localLessons]);
 
-            const startQuiz = (q) => {
+            const handleStartQuiz = (q) => {
                 let qs = shuffle(q.questions).map(item => ({ ...item, a: shuffle(item.a) }));
                 setActiveQuiz({ ...q, questions: qs });
             };
 
-            const startPractice = (p) => {
+            const handleStartPractice = (p) => {
                 let qs = shuffle(p.questions).map(item => ({ ...item, a: shuffle(item.a) }));
                 setActivePractice({ ...p, questions: qs });
             };
 
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-950 text-white font-bold">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-2xl shadow-2xl">ĐĂNG NHẬP E-TECH</button>
+                <div className="h-screen flex items-center justify-center bg-slate-900">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black">ĐĂNG NHẬP E-TECH</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    <aside className={`flex flex-col p-6 z-50 transition-all duration-500 ${isFocus ? 'hide-sidebar' : ''}`}>
-                        <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
+                    {/* SIDEBAR */}
+                    <aside className={`flex flex-col p-6 z-50 transition-all duration-500 shadow-xl ${isFocus ? 'hide-sidebar' : ''}`}>
+                        <div className="mb-12 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                         <nav className="flex-1 space-y-2">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
                                 <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active text-white' : 'text-slate-500 hover:text-white'}`}>
@@ -240,31 +246,32 @@
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-800/50 rounded-2xl flex items-center gap-3">
+                        <div className="mt-auto p-3 bg-slate-800/50 rounded-2xl flex items-center gap-3">
                             <img src={user.photoURL} className="w-8 h-8 rounded-full border border-blue-500" />
-                            <div className="truncate text-[9px] font-black text-white uppercase italic">{user.displayName}</div>
+                            <div className="truncate text-[9px] font-black text-white uppercase">{user.displayName}</div>
                         </div>
                     </aside>
 
-                    <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex border-l border-slate-100">
-                        <header className="h-14 px-8 border-b absolute top-0 left-0 right-0 flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
+                    {/* MAIN */}
+                    <main className="flex-1 bg-white relative rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l border-slate-100">
+                        <header className="h-14 px-8 border-b flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
                              <div className="flex items-center gap-4 font-black text-[10px] uppercase text-slate-400">
                                 <span>Khối lớp</span>
                                 <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-transparent font-black text-blue-600 outline-none cursor-pointer">
                                     <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
                                 </select>
                             </div>
-                            <button onClick={() => setIsFocus(!isFocus)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400">
+                            <button onClick={() => setIsFocus(!isFocus)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
                             </button>
                         </header>
 
-                        <div className="flex-1 pt-14 flex overflow-hidden">
+                        <div className="flex-1 flex overflow-hidden">
                             {tab === 'baigiang' ? (
                                 <React.Fragment>
-                                    <div className={`w-80 bg-slate-50/50 border-r p-6 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hide-sidebar' : ''}`}>
+                                    <div className={`w-80 bg-slate-50/50 border-r p-6 overflow-y-auto custom-scroll space-y-2 transition-all ${isFocus ? 'hide-sidebar' : ''}`}>
                                         {localLessons[grade].map((l, idx) => (
-                                            <div key={idx} onClick={()=>setLs(l)} className={`p-4 rounded-xl cursor-pointer transition-all border ${ls?.id === l.id ? 'bg-white border-blue-500 shadow-sm' : 'border-transparent hover:bg-white'}`}>
+                                            <div key={idx} onClick={()=>setLs(l)} className={`lesson-item p-4 ${ls?.id === l.id ? 'active' : 'hover:bg-white'}`}>
                                                 <div className="text-[8px] font-black text-slate-300 uppercase mb-1">Bài {l.lessonIndex}</div>
                                                 <div className="font-bold text-xs text-slate-700">{l.title}</div>
                                             </div>
@@ -272,8 +279,8 @@
                                     </div>
                                     <div className="flex-1 p-16 overflow-y-auto custom-scroll">
                                         {ls && <div className="max-w-3xl mx-auto animate-in fade-in duration-700">
-                                            <h2 className="text-4xl font-black mb-10 tracking-tighter leading-tight">{ls.title}</h2>
-                                            <div className="bg-slate-50 p-10 rounded-[2.5rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic shadow-inner">{ls.content}</div>
+                                            <h2 className="text-4xl font-black mb-10 tracking-tighter leading-tight text-slate-800">{ls.title}</h2>
+                                            <div className="bg-slate-50 p-10 rounded-[2.5rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic shadow-inner border border-slate-100">{ls.content}</div>
                                         </div>}
                                     </div>
                                 </React.Fragment>
@@ -282,8 +289,8 @@
                                     {practiceData.filter(p => p.grade === grade).map(item => (
                                         <div key={item.id} className="bg-white p-8 rounded-[2.5rem] border border-emerald-100 shadow-sm hover:shadow-xl transition-all h-80 flex flex-col justify-between group">
                                             <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-inner">📝</div>
-                                            <div><h4 className="text-xl font-black text-slate-800 mb-2 leading-tight">{item.title}</h4><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Làm lại vô hạn</p></div>
-                                            <button onClick={() => startPractice(item)} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all">Luyện tập ngay</button>
+                                            <div><h4 className="text-xl font-black text-slate-800 mb-2 leading-tight">{item.title}</h4><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Làm lại vô hạn • Chống gian lận</p></div>
+                                            <button onClick={() => handleStartPractice(item)} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-emerald-100">Luyện tập ngay</button>
                                         </div>
                                     ))}
                                 </div>
@@ -294,8 +301,8 @@
                                         return (
                                             <div key={quiz.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all h-80 flex flex-col justify-between">
                                                 <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl">🎯</div>
-                                                <div><h4 className="text-xl font-black text-slate-800 mb-2 leading-tight">{quiz.title}</h4><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{quiz.questions.length} câu • Gửi điểm về giáo viên</p></div>
-                                                {isDone ? (<div className="bg-slate-100 text-slate-400 py-4 rounded-2xl text-center font-black text-[10px] uppercase">Đã hoàn thành</div>) : (<button onClick={() => startQuiz(quiz)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all">Bắt đầu ngay</button>)}
+                                                <div><h4 className="text-xl font-black text-slate-800 mb-2 leading-tight">{quiz.title}</h4><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{quiz.questions.length} câu • Gửi điểm chính thức</p></div>
+                                                {isDone ? (<div className="bg-slate-100 text-slate-400 py-4 rounded-2xl text-center font-black text-[10px] uppercase">Đã hoàn thành</div>) : (<button onClick={() => handleStartQuiz(quiz)} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg">Bắt đầu thi</button>)}
                                             </div>
                                         );
                                     })}
@@ -313,5 +320,3 @@
     </script>
 </body>
 </html>
-
-
