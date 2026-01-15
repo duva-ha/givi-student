@@ -17,36 +17,21 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overflow: hidden; color: #1e293b; }
-        
-        /* Sidebar Glassmorphism */
         aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        
         .nav-btn { position: relative; transition: all 0.3s; border-radius: 1rem; overflow: hidden; }
         .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
-        
-        /* Nội dung chính */
         main { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .lesson-list-container { transition: all 0.5s ease; border-right: 1px solid #e2e8f0; background: #ffffff; }
-        
-        /* Card bài học tinh tế */
         .lesson-card { transition: all 0.3s ease; border: 1px solid transparent; }
         .lesson-card:hover { background: #f8fafc; transform: translateY(-2px); }
         .lesson-card.active { background: #eff6ff; border-color: #bfdbfe; }
         .active-dot { width: 6px; height: 6px; background: #3b82f6; border-radius: 50%; position: absolute; left: 12px; }
-
-        /* Nút Focus Mode tinh tế */
         .focus-toggle { background: white; border: 1px solid #e2e8f0; color: #64748b; transition: all 0.3s; }
         .focus-toggle:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
-        
-        /* Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-
         .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; transform: translateX(-50px); }
-        
-        /* Animation */
-        .fade-enter { opacity: 0; transform: translateY(10px); }
-        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
 <body>
@@ -160,11 +145,10 @@
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
                     <aside className={`flex flex-col py-10 px-6 ${isFocus ? 'hide-left' : ''}`}>
                         <div className="mb-14 px-4 flex items-center gap-4">
                             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
-                            <span className="font-black text-xl tracking-widest italic text-blue-400">E-TECH</span>
+                            <span className="font-black text-xl tracking-widest italic text-blue-400 uppercase">E-Tech</span>
                         </div>
                         <nav className="flex-1 space-y-3">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
@@ -182,9 +166,7 @@
                         </div>
                     </aside>
 
-                    {/* MAIN */}
                     <main className="flex-1 bg-white relative rounded-l-[3.5rem] shadow-2xl overflow-hidden flex flex-col border-l border-white/10">
-                        {/* TOP NAVIGATION BAR (New Dynamic Header) */}
                         <div className="h-24 px-10 border-b flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
                             <div className="flex items-center gap-6">
                                 <h3 className="font-black text-xs uppercase tracking-[0.4em] text-slate-400">
@@ -203,14 +185,13 @@
                                 >
                                     {isFocus ? '📂 Hiện Menu' : '🖥️ Chế độ tập trung'}
                                 </button>
-                                {user.photoURL && <img src={user.photoURL} className="w-9 h-9 rounded-full border border-slate-100 shadow-sm" />}
+                                {/* Đã loại bỏ hình đại diện ở đây để giao diện tinh tế hơn */}
                             </div>
                         </div>
 
                         <div className="flex flex-1 overflow-hidden">
                             {tab === 'baigiang' ? (
                                 <React.Fragment>
-                                    {/* DANH SÁCH BÀI HỌC */}
                                     <div className={`lesson-list-container w-80 p-6 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
                                         <div className="mb-6">
                                             <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-[1.25rem] font-black text-xs uppercase tracking-widest text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
@@ -230,7 +211,6 @@
                                         </div>
                                     </div>
 
-                                    {/* CHI TIẾT NỘI DUNG */}
                                     <div className="flex-1 p-14 overflow-y-auto custom-scroll bg-white relative">
                                         {ls && (
                                             <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
@@ -238,12 +218,10 @@
                                                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em]">Education Hub</span>
                                                     <h2 className="text-6xl font-black text-slate-900 tracking-tighter leading-none">{ls.title}</h2>
                                                 </div>
-                                                
                                                 <div className="bg-slate-50/50 border border-slate-100 p-12 rounded-[3rem] text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap shadow-inner italic">
                                                     {ls.content}
                                                 </div>
-                                                
-                                                <div className="bg-emerald-50/50 p-10 rounded-[2.5rem] border border-emerald-100 flex gap-8 items-start">
+                                                <div className="bg-emerald-50/50 p-10 rounded-[2.5rem] border border-emerald-100 flex gap-8 items-start shadow-sm">
                                                     <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 text-2xl flex-shrink-0">💡</div>
                                                     <div>
                                                         <h4 className="font-black text-[10px] uppercase text-emerald-600 mb-3 tracking-[0.3em]">Hướng dẫn học tập</h4>
@@ -255,7 +233,6 @@
                                     </div>
                                 </React.Fragment>
                             ) : (
-                                /* GIAO DIỆN KIỂM TRA */
                                 <div className="flex-1 p-14 bg-slate-50/30 overflow-y-auto custom-scroll">
                                     <div className="max-w-6xl mx-auto">
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -271,7 +248,7 @@
                                                                 <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{q.time/60} phút</span>
                                                             </div>
                                                         </div>
-                                                        <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 group-hover:translate-x-2 transition-transform">Bắt đầu bài thi <span className="text-xl">→</span></div>
+                                                        <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 group-hover:translate-x-2 transition-transform">Bắt đầu bài thi <span className="text-lg">→</span></div>
                                                     </div>
                                                 ))
                                             ) : <div className="col-span-full py-40 text-center opacity-30 italic font-black text-2xl uppercase tracking-[0.3em]">Đang đợi dữ liệu quizzes.js</div>}
