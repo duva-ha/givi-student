@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Student Hub Official</title>
+    <title>E-TECH Hub 2026 - Student Official</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -22,15 +22,34 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
-        aside { background: #0f172a; width: 280px; flex-shrink: 0; transition: all 0.4s ease; }
-        .sidebar-active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-radius: 1rem; }
-        .lesson-item { cursor: pointer; transition: 0.3s; border: 1px solid transparent; margin-bottom: 8px; position: relative; }
-        .lesson-item.active { background: #eff6ff; border-color: #3b82f6; border-radius: 1rem; transform: translateX(5px); }
-        .active-line { width: 4px; height: 20px; background: #3b82f6; border-radius: 2px; position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        :root {
+            --bg-warm: #fdfdfb;
+            --sidebar-dark: #1e293b;
+            --primary-accent: #334155;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-warm); margin: 0; overflow: hidden; color: #334155; }
+        
+        /* Sidebar tinh tế */
+        aside { background: var(--sidebar-dark); width: 260px; flex-shrink: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-active { background: rgba(255,255,255,0.1); border-left: 3px solid #60a5fa; color: white; }
+        
+        /* Lesson Card hiện đại */
+        .lesson-item { cursor: pointer; transition: all 0.3s; border: 1px solid #f1f5f9; margin-bottom: 8px; border-radius: 1rem; background: white; }
+        .lesson-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .lesson-item.active { background: #f8fafc; border-color: #cbd5e1; }
+        
+        /* Scrollbar mảnh */
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
+        .content-shadow { box-shadow: -10px 0 30px rgba(0,0,0,0.02); }
+        
+        /* Hiệu ứng chuyển cảnh mượt */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s; }
     </style>
 </head>
 <body>
@@ -48,17 +67,15 @@
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
         function App() {
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
-            const [grade, setGrade] = useState('11'); // Mặc định khối 11
+            const [grade, setGrade] = useState('11');
             const [ls, setLs] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
             const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
 
-            // Hàm quét dữ liệu từ các file .js (D10_B1, D11_B2...)
             const scanData = useCallback(() => {
                 const results = { "10": [], "11": [], "12": [] };
                 ["10", "11", "12"].forEach(g => {
@@ -72,12 +89,10 @@
 
             useEffect(() => {
                 const unsub = auth.onAuthStateChanged(u => setUser(u));
-                // Quét dữ liệu liên tục 1s/lần để đảm bảo nhận được file khi tải xong
                 const timer = setInterval(scanData, 1000);
                 return () => { unsub(); clearInterval(timer); };
             }, [scanData]);
 
-            // Tự động chọn bài đầu tiên khi chuyển khối
             useEffect(() => {
                 const list = localLessons[grade];
                 if (list && list.length > 0) setLs(list[0]);
@@ -85,88 +100,108 @@
             }, [grade, localLessons]);
 
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-950">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-2xl font-black shadow-2xl uppercase tracking-widest text-xs">Đăng nhập E-TECH Hub</button>
+                <div className="h-screen flex items-center justify-center bg-slate-900">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold text-slate-900 shadow-xl hover:scale-105 transition-all text-xs tracking-widest">ĐĂNG NHẬP E-TECH</button>
                 </div>
             );
 
             return (
-                <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800">
-                    <aside className={`flex flex-col p-6 z-50 shadow-2xl transition-all duration-500 ${isFocus ? 'hide-sidebar' : ''}`}>
-                        <div className="mb-12 px-4 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
-                            <span className="font-black text-2xl tracking-tighter text-blue-500 uppercase italic">E-Tech</span>
+                <div className="flex h-screen overflow-hidden">
+                    {/* SIDEBAR TRẦM ẤM */}
+                    <aside className={`flex flex-col py-6 px-4 z-50 ${isFocus ? 'hide-sidebar' : ''}`}>
+                        <div className="mb-10 px-4 flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-black italic shadow-lg shadow-blue-500/20">E</div>
+                            <span className="font-bold text-lg tracking-tight text-white opacity-90 uppercase">Hub 2026</span>
                         </div>
-                        <nav className="flex-1 space-y-3">
-                            {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'sidebar-active text-white' : 'text-slate-500 hover:text-blue-500'}`}>
-                                    {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
+                        <nav className="flex-1 space-y-1">
+                            {[
+                                {id: 'baigiang', label: 'Bài giảng', icon: '📖'},
+                                {id: 'luyentap', label: 'Luyện tập', icon: '📝'},
+                                {id: 'kiemtra', label: 'Kiểm tra', icon: '🎯'}
+                            ].map(item => (
+                                <button key={item.id} onClick={() => setTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold uppercase tracking-widest transition-all rounded-lg ${tab === item.id ? 'nav-active' : 'text-slate-400 hover:text-slate-200'}`}>
+                                    <span className="text-base">{item.icon}</span> {item.label}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-full border border-blue-500" />
-                            <div className="truncate text-[9px] font-black text-white uppercase italic">{user.displayName}</div>
+                        <div className="mt-auto flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                            <img src={user.photoURL} className="w-8 h-8 rounded-lg opacity-80" />
+                            <div className="truncate"><p className="text-[10px] font-bold text-slate-300">{user.displayName}</p></div>
                         </div>
                     </aside>
 
-                    <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex border-l border-slate-200">
-                        {tab === 'baigiang' ? (
-                            <React.Fragment>
-                                <div className={`w-80 bg-slate-50/50 border-r p-6 flex flex-col transition-all duration-500 ${isFocus ? 'hide-sidebar' : ''}`}>
-                                    <div className="mb-6">
-                                        <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none shadow-sm focus:ring-2 focus:ring-blue-500">
-                                            <option value="12">Công nghệ 12</option>
-                                            <option value="11">Công nghệ 11</option>
-                                            <option value="10">Công nghệ 10</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
-                                        {localLessons[grade].length > 0 ? localLessons[grade].map(l => (
-                                            <div key={l.id} onClick={() => setLs(l)} className={`lesson-item p-5 ${ls?.id === l.id ? 'active' : ''}`}>
-                                                {ls?.id === l.id && <div className="active-line" />}
-                                                <div className="text-[9px] font-black text-slate-300 uppercase mb-1 ml-4 tracking-widest">BÀI {l.lessonIndex}</div>
-                                                <div className="font-bold text-xs leading-tight text-slate-700 ml-4">{l.title}</div>
-                                            </div>
-                                        )) : <p className="text-center py-20 text-slate-300 font-bold text-[10px] uppercase italic">Đang tải bài giảng...</p>}
-                                    </div>
-                                </div>
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 bg-white relative rounded-l-[2rem] content-shadow overflow-hidden flex flex-col">
+                        {/* HEADER NHỎ GỌN TINH TẾ */}
+                        <header className="h-14 px-8 flex items-center justify-between border-b border-slate-50">
+                            <div className="flex items-center gap-4">
+                                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Hệ thống học tập /</span>
+                                <select value={grade} onChange={e => setGrade(e.target.value)} className="bg-transparent font-bold text-slate-700 outline-none text-xs cursor-pointer hover:text-blue-600 transition-colors">
+                                    <option value="12">Lớp 12</option>
+                                    <option value="11">Lớp 11</option>
+                                    <option value="10">Lớp 10</option>
+                                </select>
+                            </div>
+                            
+                            {/* NÚT TOÀN MÀN HÌNH (THU GỌN CHỈ ICON) */}
+                            <button onClick={() => setIsFocus(!isFocus)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all text-slate-400 hover:text-slate-900 group" title="Chế độ tập trung">
+                                {isFocus ? 
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg> : 
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                                }
+                            </button>
+                        </header>
 
-                                <div className="flex-1 p-12 overflow-y-auto relative custom-scroll">
-                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-10 left-10 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl font-black text-[10px] z-50 hover:scale-110 active:scale-95 transition-all uppercase tracking-widest">
-                                        {isFocus ? "📂 Hiện Menu" : "🖥️ Focus"}
-                                    </button>
-                                    
-                                    <div className={`transition-all duration-700 ${isFocus ? "max-w-4xl mx-auto" : ""}`}>
-                                        {ls ? (
-                                            <div className="animate-in fade-in duration-700">
-                                                <h2 className="text-5xl font-black mb-10 tracking-tighter text-slate-900 leading-tight">{ls.title}</h2>
-                                                <div className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm mb-10 text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic">
-                                                    {ls.content}
+                        <div className="flex-1 flex overflow-hidden">
+                            {tab === 'baigiang' ? (
+                                <React.Fragment>
+                                    {/* DANH SÁCH BÀI HỌC TRÁI */}
+                                    <div className={`w-72 border-r border-slate-50 p-6 flex flex-col transition-all duration-500 bg-slate-50/30 ${isFocus ? 'hide-sidebar' : ''}`}>
+                                        <div className="flex-1 overflow-y-auto pr-2 custom-scroll space-y-1">
+                                            {localLessons[grade].length > 0 ? localLessons[grade].map(l => (
+                                                <div key={l.id} onClick={() => setLs(l)} className={`lesson-item p-4 ${ls?.id === l.id ? 'active' : ''}`}>
+                                                    <div className="text-[8px] font-bold text-slate-300 uppercase mb-1">Bài học {l.lessonIndex}</div>
+                                                    <div className="font-bold text-[11px] text-slate-600 line-clamp-1">{l.title}</div>
                                                 </div>
-                                                <div className="bg-blue-50 p-8 rounded-[2.5rem] border border-blue-100 flex gap-6 items-center shadow-sm">
-                                                    <div className="text-3xl">💡</div>
-                                                    <div>
-                                                        <h4 className="font-black text-[10px] uppercase text-blue-600 mb-1 tracking-widest">Hướng dẫn học tập</h4>
-                                                        <p className="italic text-slate-700 font-bold text-lg">{ls.instruction}</p>
+                                            )) : <div className="text-center py-20 text-[10px] font-bold text-slate-300 uppercase italic">Đang tải...</div>}
+                                        </div>
+                                    </div>
+
+                                    {/* NỘI DUNG CHÍNH */}
+                                    <div className="flex-1 p-12 overflow-y-auto relative custom-scroll bg-white">
+                                        <div className={`transition-all duration-700 ${isFocus ? "max-w-4xl mx-auto" : ""}`}>
+                                            {ls ? (
+                                                <div className="animate-in fade-in duration-700">
+                                                    <h1 className="text-4xl font-extrabold mb-8 tracking-tight text-slate-800 leading-tight">{ls.title}</h1>
+                                                    <div className="text-lg text-slate-500 leading-relaxed font-normal whitespace-pre-wrap mb-12">
+                                                        {ls.content}
+                                                    </div>
+                                                    
+                                                    {/* Khu vực hướng dẫn trầm ấm */}
+                                                    <div className="bg-slate-50 p-8 rounded-2xl border-l-4 border-slate-300">
+                                                        <div className="flex items-center gap-3 mb-4">
+                                                            <span className="text-xl">💡</span>
+                                                            <h4 className="font-bold text-[10px] uppercase text-slate-500 tracking-widest">Ghi chú quan trọng</h4>
+                                                        </div>
+                                                        <p className="italic text-slate-600 font-medium text-base leading-relaxed">{ls.instruction}</p>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="h-full flex flex-col items-center justify-center opacity-10 py-40">
-                                                <div className="text-8xl mb-4">📖</div>
-                                                <p className="font-black text-2xl uppercase italic tracking-widest text-center leading-none">Vui lòng chọn một bài học</p>
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <div className="h-full flex flex-col items-center justify-center opacity-10">
+                                                    <div className="text-7xl mb-4 text-slate-400">📖</div>
+                                                    <p className="font-bold text-xl uppercase tracking-widest text-slate-400">Hãy chọn một bài học</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+                                </React.Fragment>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center opacity-30">
+                                    <div className="text-6xl mb-4">🎯</div>
+                                    <h2 className="text-2xl font-bold uppercase tracking-[0.2em] text-slate-800">Dữ liệu nạp từ quizzes.js</h2>
                                 </div>
-                            </React.Fragment>
-                        ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center opacity-20">
-                                <div className="text-9xl mb-4">🎯</div>
-                                <h2 className="text-3xl font-black uppercase tracking-[0.3em]">Hệ thống {tab === 'kiemtra' ? 'Kiểm tra' : 'Luyện tập'}</h2>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </main>
                 </div>
             );
