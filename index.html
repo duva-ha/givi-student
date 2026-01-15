@@ -41,7 +41,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Hàm trộn mảng ngẫu nhiên
         const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
         function QuizModal({ quiz, user, onClose }) {
@@ -59,9 +58,7 @@
             const submitQuiz = async () => {
                 if (isSubmitted) return;
                 let correctCount = 0;
-                
                 quiz.questions.forEach((q, i) => {
-                    // Kiểm tra dựa trên nội dung text của đáp án để không bị sai khi đảo vị trí
                     if (answers[i] === q.correctText) correctCount++;
                 });
 
@@ -121,39 +118,42 @@
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
             const [firebaseQuizzes, setFirebaseQuizzes] = useState([]);
+            const [notes, setNotes] = useState([]);
 
             useEffect(() => {
                 const unsub = auth.onAuthStateChanged(u => setUser(u));
                 return () => unsub();
             }, []);
 
-            // Lấy đề thi Real-time từ Firebase
+            // 1. Lắng nghe Bài giảng/Tài liệu (Notes) từ Firebase
             useEffect(() => {
-                const unsubscribe = db.collection("quizzes")
-                    .where("grade", "==", grade)
-                    .orderBy("createdAt", "desc")
-                    .onSnapshot(snapshot => {
-                        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        setFirebaseQuizzes(list);
+                if (!user) return;
+                const unsub = db.collection("notes")
+                    .orderBy("timestamp", "desc")
+                    .onSnapshot(s => {
+                        setNotes(s.docs.map(d => ({id: d.id, ...d.data()})));
                     });
-                return () => unsubscribe();
-            }, [grade]);
+                return () => unsub;
+            }, [user]);
 
-            // Logic xử lý khi bấm vào làm đề (có đảo đề)
+            // 2. Lắng nghe Đề kiểm tra (Quizzes) từ Firebase
+            useEffect(() => {
+                if (!user) return;
+                const unsub = db.collection("quizzes")
+                    .where("grade", "==", grade)
+                    .onSnapshot(snapshot => {
+                        setFirebaseQuizzes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    });
+                return () => unsub();
+            }, [user, grade]);
+
             const handleStartQuiz = (quiz) => {
                 let preparedQuestions = quiz.questions.map(q => ({
                     ...q,
-                    correctText: q.a[q.correct] // Lưu lại nội dung đáp án đúng trước khi trộn
+                    correctText: q.a[q.correct] 
                 }));
-
                 if (quiz.shuffleQuestions) preparedQuestions = shuffleArray(preparedQuestions);
-                if (quiz.shuffleOptions) {
-                    preparedQuestions = preparedQuestions.map(q => ({
-                        ...q,
-                        a: shuffleArray(q.a)
-                    }));
-                }
-
+                if (quiz.shuffleOptions) preparedQuestions = preparedQuestions.map(q => ({...q, a: shuffleArray(q.a)}));
                 setActiveQuiz({ ...quiz, questions: preparedQuestions });
             };
 
@@ -201,17 +201,29 @@
 
                         <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll">
                             <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {firebaseQuizzes.length > 0 ? firebaseQuizzes.map(q => (
-                                    <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
-                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">🎯</div>
-                                        <div>
-                                            <h4 className="text-lg font-extrabold mb-1 text-slate-800 group-hover:text-blue-600 transition-colors">{q.title}</h4>
-                                            <p className="text-[9px] text-slate-400 uppercase font-black">{q.questions.length} câu • {q.time/60} phút</p>
+                                {tab === 'baigiang' ? (
+                                    notes.length > 0 ? notes.map(n => (
+                                        <div key={n.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                            <div className="text-[9px] font-black text-blue-500 uppercase mb-2 tracking-widest">{n.category || 'Tài liệu'}</div>
+                                            <h4 className="text-sm font-bold text-slate-800 mb-3">{n.content}</h4>
+                                            {n.fileUrl && (
+                                                <a href={n.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                                                    📄 Xem tài liệu
+                                                </a>
+                                            )}
                                         </div>
-                                        <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
-                                    </div>
-                                )) : (
-                                    <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có đề nào cho Khối {grade}...</div>
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có bài giảng nào...</div>
+                                ) : (
+                                    firebaseQuizzes.length > 0 ? firebaseQuizzes.map(q => (
+                                        <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
+                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">🎯</div>
+                                            <div>
+                                                <h4 className="text-lg font-extrabold mb-1 text-slate-800 group-hover:text-blue-600 transition-colors">{q.title}</h4>
+                                                <p className="text-[9px] text-slate-400 uppercase font-black">{q.questions.length} câu • {q.time/60} phút</p>
+                                            </div>
+                                            <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
+                                        </div>
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có đề nào cho Khối {grade}...</div>
                                 )}
                             </div>
                         </div>
