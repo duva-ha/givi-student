@@ -1,5 +1,5 @@
 // data12/bai2-12.js
-const D12_B2 = { 
+window.D12_B2 = { 
     id: "12-2", 
     title: "Bài 2: Nhập môn Công nghệ 12", 
     content: "Khoa học nghiên cứu quy luật tự nhiên, Công nghệ ứng dụng chúng vào đời sống...", 
