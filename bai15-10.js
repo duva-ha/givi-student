@@ -1,6 +1,5 @@
 window.D10_B15 = {
     id: "D10-B15",
-    grade: "10",
     title: "BÀI 15: MỘT SỐ CÔNG NGHỆ PHỔ BIẾN",
     content: `
 [ PHẦN 1: KHỞI ĐỘNG & MỤC TIÊU ]
