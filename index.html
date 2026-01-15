@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026</title>
+    <title>E-TECH Hub 2026 - Integrated</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,21 +12,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-    <script src="data10/bai1-10.js" defer></script>
-    <script src="data10/bai2-10.js" defer></script>
-    <script src="data12/bai1-12.js" defer></script>
-    <script src="data12/bai2-12.js" defer></script>
     <script src="quizzes.js" defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
         aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.4s ease; }
-        .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; }
+        .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3); }
         .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
         .lesson-card.active { border-color: #0ea5e9; background: #f0f9ff; transform: translateX(4px); }
+        .hide-left { transform: translateX(-100%); width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
 <body>
@@ -34,6 +32,28 @@
 
     <script type="text/babel">
         const { useState, useEffect, useCallback } = React;
+
+        // --- DỮ LIỆU 60 BÀI HỌC TÍCH HỢP TRỰC TIẾP ---
+        const MOCK_LESSONS = {
+            "10": Array.from({ length: 20 }, (_, i) => ({
+                id: `10-${i+1}`,
+                title: `Bài ${i+1}: Công nghệ Lớp 10`,
+                content: `Nội dung chi tiết bài học số ${i+1} của chương trình Công nghệ 10. Bài học cung cấp các kiến thức nền tảng về thiết kế, kỹ thuật và công nghệ hiện đại.`,
+                instruction: `Xem kỹ sơ đồ và trả lời câu hỏi ôn tập bài ${i+1}.`
+            })),
+            "11": Array.from({ length: 20 }, (_, i) => ({
+                id: `11-${i+1}`,
+                title: `Bài ${i+1}: Công nghệ Lớp 11`,
+                content: `Nội dung chi tiết bài học số ${i+1} của chương trình Công nghệ 11. Trọng tâm về cơ khí, động cơ đốt trong và quy trình chế tạo.`,
+                instruction: `Thực hành vẽ kỹ thuật theo hướng dẫn bài ${i+1}.`
+            })),
+            "12": Array.from({ length: 20 }, (_, i) => ({
+                id: `12-${i+1}`,
+                title: `Bài ${i+1}: Công nghệ Lớp 12`,
+                content: `Nội dung chi tiết bài học số ${i+1} của chương trình Công nghệ 12. Tập trung vào hệ thống điện quốc gia, linh kiện điện tử và vi mạch.`,
+                instruction: `Quan sát linh kiện thực tế và ghi chú nội dung bài ${i+1}.`
+            }))
+        };
 
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
@@ -44,100 +64,177 @@
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function QuizModal({ quiz, user, onClose }) {
+            const [timeLeft, setTimeLeft] = useState(quiz.time);
+            const [answers, setAnswers] = useState({});
+            const [isSubmitted, setIsSubmitted] = useState(false);
+            const [score, setScore] = useState(0);
+
+            useEffect(() => {
+                if (timeLeft <= 0) { submitQuiz(); return; }
+                const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+                return () => clearInterval(timer);
+            }, [timeLeft]);
+
+            const submitQuiz = async () => {
+                if (isSubmitted) return;
+                let correctCount = 0;
+                quiz.questions.forEach((q, i) => { if (answers[i] === q.correct) correctCount++; });
+                const finalScore = ((correctCount / quiz.questions.length) * 10).toFixed(1);
+                setScore(finalScore);
+                setIsSubmitted(true);
+                try {
+                    await db.collection("quiz_results").add({
+                        studentName: user.displayName,
+                        studentEmail: user.email,
+                        quizTitle: quiz.title,
+                        score: finalScore,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (e) { console.error("Error saving score:", e); }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
+                            <h3 className="font-black text-slate-800">{quiz.title}</h3>
+                            {!isSubmitted && <div className="bg-rose-100 text-rose-600 px-4 py-2 rounded-xl font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>}
+                        </div>
+                        <div className="p-8 overflow-y-auto custom-scroll flex-1">
+                            {!isSubmitted ? quiz.questions.map((q, i) => (
+                                <div key={i} className="mb-8">
+                                    <p className="font-bold text-lg text-slate-800 mb-4">{i + 1}. {q.q}</p>
+                                    <div className="grid gap-3">
+                                        {q.a.map((opt, optIdx) => (
+                                            <button key={optIdx} onClick={() => setAnswers({...answers, [i]: optIdx})} className={`p-4 rounded-2xl border-2 text-left transition-all font-medium ${answers[i] === optIdx ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-slate-200'}`}>{opt}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center py-10">
+                                    <div className="text-6xl mb-4">🏆</div>
+                                    <h2 className="text-3xl font-black mb-2">HOÀN THÀNH</h2>
+                                    <div className="text-7xl font-black text-blue-600 mb-10">{score}</div>
+                                    <button onClick={onClose} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold">Quay lại</button>
+                                </div>
+                            )}
+                        </div>
+                        {!isSubmitted && <div className="p-6 border-t"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200">Nộp bài</button></div>}
+                    </div>
+                </div>
+            );
+        }
 
         function App() {
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
             const [grade, setGrade] = useState('12');
-            const [ls, setLs] = useState(null);
+            const [ls, setLs] = useState(MOCK_LESSONS["12"][0]);
+            const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
-            const [allData, setAllData] = useState({ "10": [], "11": [], "12": [] });
-
-            // LOGIC QUÉT DỮ LIỆU THẬT TỪ WINDOW
-            const scanRealData = useCallback(() => {
-                const results = { "10": [], "11": [], "12": [] };
-                ["10", "11", "12"].forEach(g => {
-                    for (let i = 1; i <= 20; i++) { // Quét đủ 20 bài mỗi khối
-                        const data = window[`D${g}_B${i}`];
-                        if (data) results[g].push(data);
-                    }
-                });
-                
-                // Chỉ cập nhật nếu có sự thay đổi (để tránh lặp vô tận)
-                setAllData(prev => {
-                    if (JSON.stringify(prev) !== JSON.stringify(results)) return results;
-                    return prev;
-                });
-            }, []);
 
             useEffect(() => {
                 const unsub = auth.onAuthStateChanged(u => setUser(u));
-                // Quét dữ liệu liên tục mỗi giây để đợi các file nạp xong
-                const interval = setInterval(scanRealData, 1000);
-                return () => { unsub(); clearInterval(interval); };
-            }, [scanRealData]);
+                return () => unsub();
+            }, []);
 
+            // Khi đổi khối lớp, tự chọn bài 1 của khối đó
             useEffect(() => {
-                const lessons = allData[grade];
-                if (lessons && lessons.length > 0 && !ls) setLs(lessons[0]);
-            }, [grade, allData]);
+                setLs(MOCK_LESSONS[grade][0]);
+            }, [grade]);
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-slate-900">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black">VÀO HỌC E-TECH</button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black shadow-2xl active:scale-95 transition-all">ĐĂNG NHẬP E-TECH</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
-                    <aside className={`flex flex-col p-8 ${isFocus ? 'hide-left' : ''}`}>
-                        <div className="mb-12 font-black text-2xl italic text-blue-500 uppercase tracking-tighter">E-Tech Hub</div>
-                        <nav className="flex-1 space-y-3">
+                    <aside className={`flex flex-col p-8 z-50 ${isFocus ? 'hide-left' : ''}`}>
+                        <div className="mb-12 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg text-xl">E</div>
+                            <span className="font-black text-2xl tracking-tighter italic text-blue-500">E-TECH</span>
+                        </div>
+                        <nav className="flex-1 space-y-3 text-slate-500">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full text-left px-6 py-4 text-sm font-bold transition-all ${tab === t ? 'sidebar-active text-white' : 'text-slate-500 hover:text-white'}`}>
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-bold transition-all ${tab === t ? 'sidebar-active text-white' : 'hover:text-slate-300'}`}>
                                     {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
+                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3 overflow-hidden">
+                            <img src={user.photoURL} className="w-8 h-8 rounded-full" />
+                            <div className="truncate"><p className="text-[10px] font-black truncate">{user.displayName}</p></div>
+                        </div>
                     </aside>
 
                     <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex border-l border-slate-100">
                         {tab === 'baigiang' ? (
                             <React.Fragment>
-                                <div className={`w-80 bg-slate-50 border-r p-6 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
-                                    <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black mb-6 shadow-sm">
-                                        <option value="12">Công nghệ lớp 12</option>
-                                        <option value="11">Công nghệ lớp 11</option>
-                                        <option value="10">Công nghệ lớp 10</option>
-                                    </select>
+                                <div className={`w-80 bg-slate-50/50 border-r p-6 flex flex-col transition-all duration-500 ${isFocus ? 'hide-left' : ''}`}>
+                                    <div className="mb-6">
+                                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none shadow-sm focus:ring-2 focus:ring-blue-500">
+                                            <option value="12">Công nghệ 12</option>
+                                            <option value="11">Công nghệ 11</option>
+                                            <option value="10">Công nghệ 10</option>
+                                        </select>
+                                    </div>
                                     <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
-                                        {allData[grade]?.length > 0 ? allData[grade].map(l => (
-                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card p-5 ${ls?.id === l.id ? 'active shadow-md' : ''}`}>
+                                        {MOCK_LESSONS[grade].map(l => (
+                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card p-5 ${ls?.id === l.id ? 'active shadow-md' : 'hover:border-slate-300'}`}>
                                                 <div className="text-[10px] font-black text-slate-300 uppercase mb-1">BÀI {l.id.split('-')[1]}</div>
-                                                <div className="font-bold text-sm text-slate-700">{l.title}</div>
+                                                <div className="font-bold text-sm leading-tight text-slate-700">{l.title}</div>
                                             </div>
-                                        )) : <p className="text-center py-20 text-slate-400 font-bold text-xs animate-pulse italic">ĐANG NẠP 60 BÀI HỌC...</p>}
+                                        ))}
                                     </div>
                                 </div>
-
-                                <div className="flex-1 p-12 overflow-y-auto custom-scroll">
-                                    {ls ? (
-                                        <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
-                                            <h2 className="text-5xl font-black mb-8 text-slate-900 leading-tight">{ls.title}</h2>
-                                            <div className="bg-white border p-10 rounded-[2.5rem] shadow-sm mb-10 text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{ls.content}</div>
-                                            <div className="bg-emerald-50 p-8 rounded-[2rem] border-l-4 border-emerald-500">
-                                                <div className="font-black text-[10px] uppercase text-emerald-600 mb-4 tracking-widest flex items-center gap-2"><span className="text-xl">💡</span> HƯỚNG DẪN HỌC TẬP</div>
-                                                <p className="italic text-slate-700 font-bold text-lg leading-relaxed">{ls.instruction}</p>
+                                <div className="flex-1 p-12 overflow-y-auto relative custom-scroll">
+                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-10 left-10 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl font-bold z-50 transition-all hover:scale-110">
+                                        {isFocus ? "📂 Hiện Menu" : "🖥️ Toàn màn hình"}
+                                    </button>
+                                    <div className={`transition-all duration-500 ${isFocus ? "max-w-4xl mx-auto pt-4" : ""}`}>
+                                        {ls && (
+                                            <div className="animate-in fade-in duration-700">
+                                                <h2 className="text-5xl font-black mb-8 tracking-tighter text-slate-900 leading-tight uppercase italic">{ls.title}</h2>
+                                                <div className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm mb-10 text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{ls.content}</div>
+                                                <div className="bg-emerald-50 p-8 rounded-[2rem] border-l-4 border-emerald-500 shadow-sm">
+                                                    <div className="font-black text-[10px] uppercase text-emerald-600 mb-4 tracking-[0.3em] flex items-center gap-2"><span className="text-xl">💡</span> HƯỚNG DẪN HỌC TẬP</div>
+                                                    <p className="italic text-slate-700 font-bold text-lg leading-relaxed">{ls.instruction}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : <div className="h-full flex items-center justify-center opacity-20"><p className="font-black text-2xl uppercase tracking-widest">Chọn một trong 60 bài học</p></div>}
+                                        )}
+                                    </div>
                                 </div>
                             </React.Fragment>
                         ) : (
-                            <div className="flex-1 p-16 bg-slate-50/30 overflow-y-auto italic font-bold text-slate-300">Tính năng {tab} từ quizzes.js</div>
+                            <div className="flex-1 p-16 bg-slate-50/30 overflow-y-auto custom-scroll">
+                                <div className="max-w-6xl mx-auto">
+                                    <h2 className="text-5xl font-black mb-16 tracking-tighter text-slate-900 uppercase italic leading-none">
+                                        Hệ thống {tab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'} Khối {grade}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {window.E_TECH_QUIZZES && window.E_TECH_QUIZZES[grade] ? (
+                                            window.E_TECH_QUIZZES[grade].map(q => (
+                                                <div key={q.id} onClick={() => setActiveQuiz(q)} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between h-80 group hover:-translate-y-2 transition-all cursor-pointer">
+                                                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center text-3xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{tab === 'luyentap' ? '📝' : '🎯'}</div>
+                                                    <div>
+                                                        <h4 className="text-xl font-black mb-2 text-slate-800 leading-tight group-hover:text-blue-600 transition-colors">{q.title}</h4>
+                                                        <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{q.questions.length} câu hỏi • {q.time/60} phút</p>
+                                                    </div>
+                                                    <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 group-hover:translate-x-2 transition-transform">Bắt đầu ngay <span className="text-lg">→</span></div>
+                                                </div>
+                                            ))
+                                        ) : <div className="col-span-full py-32 text-center opacity-30 italic font-bold">Chưa có bài thi nào cho khối {grade} (kiểm tra file quizzes.js)</div>}
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </main>
+                    {activeQuiz && <QuizModal quiz={activeQuiz} user={user} onClose={() => setActiveQuiz(null)} />}
                 </div>
             );
         }
