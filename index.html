@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Digital Learning</title>
+    <title>E-TECH Hub 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -11,184 +11,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+    <script src="data10/bai1.js"></script>
+    <script src="data10/bai2.js"></script>
+    
+    <script src="data11/bai1.js"></script>
+    <script src="data11/bai2.js"></script>
+    
+    <script src="data12/bai1.js"></script>
+    <script src="data12/bai2.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
-        
         aside { background: #0f172a; color: #f8fafc; transition: all 0.4s ease; }
-        .sidebar-active { 
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); 
-            color: white; 
-            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.4);
-            border-radius: 1rem;
-        }
-
-        .lesson-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-        .lesson-card.active {
-            border-color: #0ea5e9;
-            background: #f0f9ff;
-            transform: translateX(4px);
-        }
-
-        .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .instruction-box {
-            background: #f0fdf4;
-            border-left: 4px solid #22c55e;
-            border-radius: 1rem;
-        }
-
-        /* Hiệu ứng ẩn mượt mà */
+        .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; }
+        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; cursor: pointer; transition: all 0.3s; }
+        .lesson-card.active { border-color: #0ea5e9; background: #f0f9ff; transform: translateX(4px); }
+        .instruction-box { background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 1rem; }
         .hide-left { transform: translateX(-100%); width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
     </style>
 </head>
-<body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
-            authDomain: "qlhs10a7.firebaseapp.com",
-            projectId: "qlhs10a7",
-            storageBucket: "qlhs10a7.firebasestorage.app",
-            messagingSenderId: "584229565603",
-            appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
-        };
-
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        const DATA = {
-            "12": [
-                { id: "12-1", title: "Bài 1: Hệ thống điện quốc gia", content: "Hệ thống điện quốc gia bao gồm: Nguồn điện, lưới điện và các hộ tiêu thụ điện trên toàn lãnh thổ quốc gia, được liên kết với nhau thành một hệ thống để thực hiện quá trình sản xuất, truyền tải và phân phối điện năng.", instruction: "Xem sơ đồ hình 1.1 SGK Công nghệ 12." },
-                { id: "12-2", title: "Bài 2: Hệ thống điện gia đình", content: "Mạng điện trong nhà có điện áp thấp, định mức thường là 220V. Gồm có: Công tơ điện, đường dây dẫn điện, các thiết bị đóng cắt, bảo vệ và các đồ dùng điện.", instruction: "Ghi nhớ các ký hiệu linh kiện điện tử cơ bản." }
-            ],
-            "11": [{ id: "11-1", title: "Bài 1: Cơ khí chế tạo", content: "Cơ khí chế tạo là ngành khoa học kỹ thuật nghiên cứu về thiết kế, chế tạo và vận hành các loại máy móc thiết bị phục vụ đời sống.", instruction: "Học thuộc 5 vật liệu cơ khí phổ biến." }],
-            "10": [{ id: "10-1", title: "Bài 1: Nhập môn công nghệ", content: "Khoa học là hệ thống tri thức về thế giới xung quanh. Kỹ thuật là ứng dụng khoa học để giải quyết vấn đề. Công nghệ là các giải pháp cụ thể.", instruction: "So sánh sự khác biệt giữa kỹ thuật và công nghệ." }]
-        };
-
-        const QUIZZES = [
-            { id: "q1", title: "Kiểm tra 5 phút - Bài 1", time: 300, questions: [{ q: "Đơn vị của tụ điện là gì?", a: ["Ohm", "Farad", "Henry", "Ampe"], correct: 1 }] }
-        ];
-
-        function App() {
-            const [user, setUser] = useState(null);
-            const [tab, setTab] = useState('baigiang');
-            const [grade, setGrade] = useState('12');
-            const [ls, setLs] = useState(null);
-            const [qz, setQz] = useState(null);
-            const [isFocus, setIsFocus] = useState(false); // Trạng thái Chế độ tập trung
-
-            useEffect(() => {
-                const unsub = auth.onAuthStateChanged(u => setUser(u));
-                return () => unsub();
-            }, []);
-
-            useEffect(() => { setLs(DATA[grade][0]); }, [grade]);
-
-            if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-950 text-white font-black italic text-3xl">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-950 px-10 py-4 rounded-full shadow-2xl transition-all active:scale-95">ĐĂNG NHẬP E-TECH</button>
-                </div>
-            );
-
-            return (
-                <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR (Ngoài cùng) */}
-                    <aside className={`w-72 flex flex-col p-8 z-50 ${isFocus ? 'hide-left' : ''}`}>
-                        <div className="mb-16 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
-                            <span className="font-black text-2xl tracking-tighter italic">E-TECH</span>
-                        </div>
-                        <nav className="flex-1 space-y-3">
-                            {['baigiang', 'luyentap', 'kiemtra'].map(id => (
-                                <button key={id} onClick={() => setTab(id)} className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-bold transition-all ${tab === id ? 'sidebar-active' : 'text-slate-500 hover:text-slate-300'}`}>
-                                    {id === 'baigiang' ? '📖 Bài học' : id === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
-                                </button>
-                            ))}
-                        </nav>
-                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-full border border-slate-700" />
-                            <div className="overflow-hidden">
-                                <p className="text-[10px] font-black truncate">{user.displayName}</p>
-                                <button onClick={()=>auth.signOut()} className="text-[9px] font-bold text-rose-500 uppercase">Thoát</button>
-                            </div>
-                        </div>
-                    </aside>
-
-                    {/* MAIN CONTENT AREA */}
-                    <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden border-l border-slate-100 transition-all duration-500">
-                        {tab === 'baigiang' ? (
-                            <div className="flex h-full">
-                                {/* CỘT GIỮA (Danh sách bài học) */}
-                                <div className={`w-80 bg-slate-50/50 border-r p-8 flex flex-col transition-all duration-400 ${isFocus ? 'hide-left' : ''}`}>
-                                    <div className="mb-8">
-                                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none shadow-sm">
-                                            <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto space-y-3 custom-scroll">
-                                        {DATA[grade].map(l => (
-                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card p-5 ${ls?.id===l.id?'active shadow-md':''}`}>
-                                                <div className="text-[10px] font-black text-slate-300 mb-1 uppercase tracking-tighter italic">Bài {l.id.split('-')[1]}</div>
-                                                <div className="font-bold text-[13px] leading-tight">{l.title}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* NỘI DUNG BÀI HỌC CHÍNH */}
-                                <div className="flex-1 p-16 overflow-y-auto custom-scroll relative">
-                                    {/* NÚT FOCUS MODE (Tối ưu hóa) */}
-                                    <button 
-                                        onClick={() => setIsFocus(!isFocus)} 
-                                        className="absolute top-8 left-8 w-12 h-12 flex items-center justify-center bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-400 rounded-2xl transition-all shadow-sm z-10"
-                                        title={isFocus ? "Mở lại menu" : "Thu gọn menu"}
-                                    >
-                                        {isFocus ? <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg> : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7"/></svg>}
-                                    </button>
-
-                                    <div className={`transition-all duration-500 ${isFocus ? 'max-w-5xl mx-auto pt-10' : ''}`}>
-                                        <h2 className="text-5xl font-black text-slate-900 mb-10 tracking-tighter leading-none mt-10">{ls?.title}</h2>
-                                        <div className="text-xl leading-relaxed text-slate-600 font-medium mb-12">{ls?.content}</div>
-                                        <div className="instruction-box p-8">
-                                            <div className="flex items-center gap-3 mb-4 text-emerald-600 font-black text-xs uppercase tracking-[0.2em]">💡 Hướng dẫn học tập</div>
-                                            <p className="text-slate-700 font-bold text-lg italic">{ls?.instruction}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="p-16 h-full bg-slate-50/30 overflow-y-auto">
-                                <h2 className="text-5xl font-black mb-16 tracking-tighter text-slate-900 uppercase italic">Học phần {tab}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                    {QUIZZES.map(q => (
-                                        <div key={q.id} onClick={()=>setQz(q)} className="lesson-card p-10 h-72 flex flex-col justify-between group">
-                                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-[1.5rem] flex items-center justify-center text-3xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">📝</div>
-                                            <h4 className="text-xl font-black mb-2">{q.title}</h4>
-                                            <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Bắt đầu ngay →</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
-        }
-
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
