@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Student Hub</title>
+    <title>E-TECH Hub 2026 - Official</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,17 +12,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
+    <script src="data10/bai1-10.js" defer></script>
+    <script src="data10/bai2-10.js" defer></script>
+    <script src="data11/bai1-11.js" defer></script>
+    <script src="data12/bai1-12.js" defer></script>
+    <script src="data12/bai2-12.js" defer></script>
+    
+    <script src="quizzes.js" defer></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overflow: hidden; color: #1e293b; }
-        aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s ease; }
-        .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
-        .lesson-card { transition: all 0.3s; border: 1px solid transparent; cursor: pointer; position: relative; }
-        .lesson-card.active { background: #eff6ff; border-color: #dbeafe; }
-        .active-dot { width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
+        aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.4s ease; }
+        .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3); }
+        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .lesson-card.active { border-color: #0ea5e9; background: #f0f9ff; transform: translateX(4px); }
+        .hide-left { transform: translateX(-100%); width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
@@ -30,7 +37,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useCallback } = React;
 
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
@@ -43,9 +50,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
-
-        // --- COMPONENT LÀM BÀI ---
+        // COMPONENT LÀM BÀI KIỂM TRA
         function QuizModal({ quiz, user, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
             const [answers, setAnswers] = useState({});
@@ -61,43 +66,65 @@
             const submitQuiz = async () => {
                 if (isSubmitted) return;
                 let correctCount = 0;
-                quiz.questions.forEach((q, i) => { if (answers[i] === q.correctText) correctCount++; });
+                quiz.questions.forEach((q, i) => { if (answers[i] === q.correct) correctCount++; });
                 const finalScore = ((correctCount / quiz.questions.length) * 10).toFixed(1);
-                setScore(finalScore); setIsSubmitted(true);
+                
+                setScore(finalScore);
+                setIsSubmitted(true);
+
                 try {
                     await db.collection("quiz_results").add({
-                        studentName: user.displayName, quizTitle: quiz.title,
-                        score: finalScore, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        date: new Date().toLocaleString('vi-VN')
+                        studentName: user.displayName,
+                        studentEmail: user.email,
+                        quizTitle: quiz.title,
+                        score: finalScore,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                } catch (e) { console.error(e); }
+                } catch (e) { console.error("Lỗi lưu điểm:", e); }
             };
 
             return (
                 <div className="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-5 bg-slate-50 border-b flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                            <span>{quiz.title}</span>
-                            {!isSubmitted && <span className="text-rose-600">⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>}
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 bg-slate-50 border-b flex justify-between items-center">
+                            <h3 className="font-black text-slate-800">{quiz.title}</h3>
+                            {!isSubmitted && (
+                                <div className="bg-rose-100 text-rose-600 px-4 py-2 rounded-xl font-bold">
+                                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                                </div>
+                            )}
                         </div>
-                        <div className="p-10 overflow-y-auto custom-scroll flex-1">
+                        <div className="p-8 overflow-y-auto custom-scroll flex-1">
                             {!isSubmitted ? quiz.questions.map((q, i) => (
-                                <div key={i} className="mb-10">
-                                    <p className="font-bold text-lg mb-6"><span className="text-blue-500"># {i+1}</span> {q.q}</p>
-                                    <div className="grid gap-2">
-                                        {q.a.map((opt, idx) => (
-                                            <button key={idx} onClick={() => setAnswers({...answers, [i]: opt})} className={`p-4 rounded-xl border-2 text-left font-semibold text-sm ${answers[i] === opt ? 'border-blue-600 bg-blue-50' : 'border-slate-100'}`}>{opt}</button>
+                                <div key={i} className="mb-8">
+                                    <p className="font-bold text-lg text-slate-800 mb-4">{i + 1}. {q.q}</p>
+                                    <div className="grid gap-3">
+                                        {q.a.map((opt, optIdx) => (
+                                            <button 
+                                                key={optIdx} 
+                                                onClick={() => setAnswers({...answers, [i]: optIdx})}
+                                                className={`p-4 rounded-2xl border-2 text-left transition-all font-medium ${answers[i] === optIdx ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-slate-200'}`}
+                                            >
+                                                {opt}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-center py-12">
-                                    <div className="text-7xl font-black text-blue-600 mb-4">{score}</div>
-                                    <button onClick={onClose} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase">Xong</button>
+                                <div className="text-center py-10">
+                                    <div className="text-6xl mb-4">🏆</div>
+                                    <h2 className="text-3xl font-black mb-2">HOÀN THÀNH</h2>
+                                    <p className="text-slate-500 mb-6 font-bold uppercase tracking-widest text-xs">Điểm số của bạn</p>
+                                    <div className="text-7xl font-black text-blue-600 mb-10 tracking-tighter">{score}</div>
+                                    <button onClick={onClose} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold">Quay lại</button>
                                 </div>
                             )}
                         </div>
-                        {!isSubmitted && <div className="p-6 border-t"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs">Nộp bài</button></div>}
+                        {!isSubmitted && (
+                            <div className="p-6 border-t">
+                                <button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200">Nộp bài</button>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -107,135 +134,122 @@
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
             const [grade, setGrade] = useState('12');
+            const [ls, setLs] = useState(null);
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
-            
-            const [notes, setNotes] = useState([]); // Chứa bài học thực tế
-            const [currentNote, setCurrentNote] = useState(null);
-            const [quizzes, setQuizzes] = useState([]);
+            const [allData, setAllData] = useState({ "10": [], "11": [], "12": [] });
 
-            useEffect(() => { auth.onAuthStateChanged(u => setUser(u)); }, []);
-
-            // 1. LẤY BÀI HỌC THEO KHỐI LỚP (Bỏ Mock Timeline)
-            useEffect(() => {
-                if (!user) return;
-                // Nếu trang giáo viên của bạn lưu grade vào notes, hãy dùng lọc .where("grade", "==", grade)
-                // Hiện tại tôi sẽ lấy toàn bộ và lọc thủ công để đảm bảo bạn thấy dữ liệu ngay
-                const unsub = db.collection("notes")
-                    .onSnapshot(s => {
-                        const data = s.docs.map(d => ({id: d.id, ...d.data()}));
-                        // Lọc bài học theo khối lớp đã chọn
-                        const filtered = data.filter(n => n.grade === grade || n.category === 'baigiang');
-                        setNotes(filtered);
-                        if (filtered.length > 0) setCurrentNote(filtered[0]);
-                        else setCurrentNote(null);
-                    });
-                return () => unsub();
-            }, [user, grade]);
-
-            // 2. LẤY ĐỀ THI
-            useEffect(() => {
-                if (!user) return;
-                const unsub = db.collection("quizzes").where("grade", "==", grade).onSnapshot(s => {
-                    setQuizzes(s.docs.map(d => ({ id: d.id, ...d.data() })));
+            const scanData = useCallback(() => {
+                const results = { "10": [], "11": [], "12": [] };
+                ["10", "11", "12"].forEach(g => {
+                    for (let i = 1; i <= 20; i++) {
+                        const data = window[`D${g}_B${i}`];
+                        if (data) results[g].push(data);
+                    }
                 });
-                return () => unsub();
-            }, [user, grade]);
+                setAllData(results);
+            }, []);
 
-            const handleStartQuiz = (quiz) => {
-                let qs = quiz.questions.map(q => ({ ...q, correctText: q.a[q.correct] }));
-                if (quiz.shuffleQuestions) qs = shuffleArray(qs);
-                if (quiz.shuffleOptions) qs = qs.map(q => ({...q, a: shuffleArray(q.a)}));
-                setActiveQuiz({ ...quiz, questions: qs });
-            };
+            useEffect(() => {
+                const unsub = auth.onAuthStateChanged(u => setUser(u));
+                const interval = setInterval(scanData, 1000);
+                return () => { unsub(); clearInterval(interval); };
+            }, [scanData]);
+
+            useEffect(() => {
+                const lessons = allData[grade];
+                if (lessons && lessons.length > 0) setLs(lessons[0]);
+                else setLs(null);
+            }, [grade, allData]);
 
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-[#0f172a]">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black text-[10px] uppercase">Đăng nhập</button>
+                <div className="h-screen flex items-center justify-center bg-slate-900">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black shadow-2xl active:scale-95 transition-all">ĐĂNG NHẬP E-TECH</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
-                    <aside className={`flex flex-col py-8 px-5 ${isFocus ? 'hide-left' : ''}`}>
-                        <div className="mb-10 px-4 font-black text-lg text-blue-400 uppercase italic">E-Tech Hub</div>
-                        <nav className="flex-1 space-y-2">
+                    <aside className={`flex flex-col p-8 z-50 ${isFocus ? 'hide-left' : ''}`}>
+                        <div className="mb-12 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
+                            <span className="font-black text-2xl tracking-tighter italic text-blue-500">E-TECH</span>
+                        </div>
+                        <nav className="flex-1 space-y-3 text-slate-500">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'active bg-blue-600' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-sm font-bold transition-all ${tab === t ? 'sidebar-active text-white' : 'hover:text-slate-300'}`}>
                                     {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-800/40 rounded-2xl flex items-center gap-3">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-lg" />
-                            <div className="truncate text-[9px] font-black text-white">{user.displayName}</div>
+                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3 overflow-hidden">
+                            <img src={user.photoURL} className="w-8 h-8 rounded-full" />
+                            <div className="truncate"><p className="text-[10px] font-black truncate">{user.displayName}</p></div>
                         </div>
                     </aside>
 
-                    {/* MAIN */}
-                    <main className="flex-1 bg-white rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l">
-                        <div className="h-16 px-8 border-b flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <span className="font-extrabold text-[11px] text-blue-600 uppercase italic tracking-widest">Lớp {grade}</span>
-                                <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-slate-50 border p-1 rounded font-bold text-[10px] outline-none border-slate-200">
-                                    <option value="12">Khối 12</option>
-                                    <option value="11">Khối 11</option>
-                                    <option value="10">Khối 10</option>
-                                </select>
-                            </div>
-                            <button onClick={() => setIsFocus(!isFocus)} className="px-4 py-2 border rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50">
-                                {isFocus ? '📂 Mở Menu' : '🖥️ Toàn màn hình'}
-                            </button>
-                        </div>
-
-                        <div className="flex-1 flex overflow-hidden">
-                            {tab === 'baigiang' ? (
-                                <React.Fragment>
-                                    {/* DANH SÁCH BÀI HỌC TỪ FIREBASE (Thay thế Timeline) */}
-                                    <div className={`w-72 border-r p-5 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
-                                        <div className="flex-1 overflow-y-auto custom-scroll space-y-1">
-                                            {notes.length > 0 ? notes.map((n, idx) => (
-                                                <div key={n.id} onClick={()=>setCurrentNote(n)} className={`lesson-card p-4 rounded-xl ${currentNote?.id === n.id ? 'active' : ''}`}>
-                                                    {currentNote?.id === n.id && <div className="active-dot" />}
-                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Bài học {idx + 1}</div>
-                                                    <div className="font-bold text-[12px] leading-tight text-slate-700 ml-4 truncate">{n.content.split('\n')[0]}</div>
-                                                </div>
-                                            )) : <div className="p-10 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">Trống...</div>}
-                                        </div>
+                    <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex border-l border-slate-100">
+                        {tab === 'baigiang' ? (
+                            <React.Fragment>
+                                <div className={`w-80 bg-slate-50/50 border-r p-6 flex flex-col transition-all duration-500 ${isFocus ? 'hide-left' : ''}`}>
+                                    <div className="mb-6">
+                                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none shadow-sm focus:ring-2 focus:ring-blue-500">
+                                            <option value="12">Công nghệ 12</option>
+                                            <option value="11">Công nghệ 11</option>
+                                            <option value="10">Công nghệ 10</option>
+                                        </select>
                                     </div>
-                                    {/* NỘI DUNG CHI TIẾT */}
-                                    <div className="flex-1 p-12 overflow-y-auto custom-scroll bg-white">
-                                        {currentNote ? (
-                                            <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in duration-500">
-                                                <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight">Nội dung bài học</h2>
-                                                <div className="bg-slate-50/50 p-10 rounded-[2.5rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic border border-slate-100 shadow-inner">
-                                                    {currentNote.content}
-                                                </div>
-                                                {currentNote.fileUrl && (
-                                                    <a href={currentNote.fileUrl} target="_blank" className="flex items-center gap-4 p-5 bg-blue-50 text-blue-600 rounded-2xl font-black text-xs border border-blue-100 hover:bg-blue-100 transition-all">
-                                                        <span className="text-2xl">📄</span> XEM TÀI LIỆU CHI TIẾT
-                                                    </a>
-                                                )}
+                                    <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
+                                        {allData[grade]?.length > 0 ? allData[grade].map(l => (
+                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card p-5 ${ls?.id === l.id ? 'active shadow-md' : 'hover:border-slate-300'}`}>
+                                                <div className="text-[10px] font-black text-slate-300 uppercase mb-1">BÀI {l.id.split('-')[1]}</div>
+                                                <div className="font-bold text-sm leading-tight text-slate-700">{l.title}</div>
                                             </div>
-                                        ) : <div className="h-full flex items-center justify-center text-slate-200 font-black italic text-xl">CHỌN MỘT BÀI HỌC...</div>}
+                                        )) : <p className="text-center py-20 text-slate-400 font-bold text-xs uppercase animate-pulse italic">Đang nạp bài học từ thư mục...</p>}
                                     </div>
-                                </React.Fragment>
-                            ) : (
-                                <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-fit">
-                                    {quizzes.length > 0 ? quizzes.map(q => (
-                                        <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
-                                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">🎯</div>
-                                            <div>
-                                                <h4 className="text-lg font-extrabold mb-1 text-slate-800">{q.title}</h4>
-                                                <p className="text-[9px] text-slate-400 uppercase font-black">{q.questions.length} câu • {q.time/60} phút</p>
-                                            </div>
-                                            <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
-                                        </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black uppercase text-lg tracking-widest">Trống...</div>}
                                 </div>
-                            )}
-                        </div>
+                                <div className="flex-1 p-12 overflow-y-auto relative custom-scroll">
+                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-10 left-10 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl font-bold z-50 transition-all hover:scale-110">
+                                        {isFocus ? "📂 Hiện Menu" : "🖥️ Toàn màn hình"}
+                                    </button>
+                                    <div className={`transition-all duration-500 ${isFocus ? "max-w-4xl mx-auto pt-4" : ""}`}>
+                                        {ls ? (
+                                            <div className="animate-in fade-in duration-700">
+                                                <h2 className="text-5xl font-black mb-8 tracking-tighter text-slate-900 leading-tight">{ls.title}</h2>
+                                                <div className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm mb-10 text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{ls.content}</div>
+                                                <div className="bg-emerald-50 p-8 rounded-[2rem] border-l-4 border-emerald-500 shadow-sm">
+                                                    <div className="font-black text-[10px] uppercase text-emerald-600 mb-4 tracking-[0.3em] flex items-center gap-2"><span className="text-xl">💡</span> HƯỚNG DẪN HỌC TẬP</div>
+                                                    <p className="italic text-slate-700 font-bold text-lg leading-relaxed">{ls.instruction}</p>
+                                                </div>
+                                            </div>
+                                        ) : <div className="h-full flex flex-col items-center justify-center py-40 opacity-20"><p className="font-black text-2xl tracking-widest uppercase italic">Chọn bài học</p></div>}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        ) : (
+                            /* GIAO DIỆN KIỂM TRA / LUYỆN TẬP */
+                            <div className="flex-1 p-16 bg-slate-50/30 overflow-y-auto custom-scroll">
+                                <div className="max-w-6xl mx-auto">
+                                    <h2 className="text-5xl font-black mb-16 tracking-tighter text-slate-900 uppercase italic leading-none">
+                                        Hệ thống {tab === 'luyentap' ? 'Luyện tập' : 'Kiểm tra'} Khối {grade}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {window.E_TECH_QUIZZES && window.E_TECH_QUIZZES[grade] ? (
+                                            window.E_TECH_QUIZZES[grade].map(q => (
+                                                <div key={q.id} onClick={() => setActiveQuiz(q)} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between h-80 group hover:-translate-y-2 transition-all cursor-pointer">
+                                                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center text-3xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{tab === 'luyentap' ? '📝' : '🎯'}</div>
+                                                    <div>
+                                                        <h4 className="text-xl font-black mb-2 text-slate-800 leading-tight group-hover:text-blue-600 transition-colors">{q.title}</h4>
+                                                        <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{q.questions.length} câu hỏi • {q.time/60} phút</p>
+                                                    </div>
+                                                    <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 group-hover:translate-x-2 transition-transform">Bắt đầu ngay <span className="text-lg">→</span></div>
+                                                </div>
+                                            ))
+                                        ) : <div className="col-span-full py-32 text-center opacity-30 italic font-bold">Chưa có bài thi nào cho khối {grade} (kiểm tra file quizzes.js)</div>}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </main>
                     {activeQuiz && <QuizModal quiz={activeQuiz} user={user} onClose={() => setActiveQuiz(null)} />}
                 </div>
