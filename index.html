@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Student Hub Official</title>
+    <title>E-TECH Hub 2026 - Student Official</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -14,8 +14,6 @@
 
     <script src="bai1-10.js" defer></script>
     <script src="bai2-10.js" defer></script>
-    <script src="bai3-10.js" defer></script>
-    <script src="bai4-10.js" defer></script>
     <script src="bai1-11.js" defer></script>
     <script src="bai2-11.js" defer></script>
     <script src="bai1-12.js" defer></script>
@@ -36,14 +34,14 @@
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
         .logout-btn:hover { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
         .lesson-item { cursor: pointer; transition: 0.3s; border: 1px solid transparent; border-radius: 1rem; }
-        .lesson-item.active { background: #fff; border-color: #e2e8f0; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .lesson-item.active { background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
+        const { useState, useEffect, useCallback, useRef } = React;
 
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
@@ -205,7 +203,12 @@
                     if (window[`LTAP${i}`]) resP.push(window[`LTAP${i}`]);
                     if (window[`TLIEU${i}`]) resD.push(window[`TLIEU${i}`]);
                 }
-                setLocalLessons(resLessons);
+                
+                // Cập nhật State bài giảng một cách thông minh để tránh nhảy bài
+                setLocalLessons(prev => {
+                    if (JSON.stringify(prev) !== JSON.stringify(resLessons)) return resLessons;
+                    return prev;
+                });
                 setPracticeData(resP);
                 setDocData(resD);
             }, []);
@@ -216,16 +219,25 @@
                 return () => { unsub(); clearInterval(timer); };
             }, [scanData]);
 
+            // CHỈNH SỬA LOGIC CHỌN BÀI HỌC (FIX LỖI NHẢY BÀI)
+            useEffect(() => {
+                const list = localLessons[grade];
+                if (list && list.length > 0) {
+                    // Nếu chưa chọn bài nào HOẶC bài hiện tại không thuộc khối lớp vừa chuyển
+                    // thì mới tự động chọn bài đầu tiên của khối đó
+                    if (!ls || ls.grade !== grade) {
+                        setLs(list[0]);
+                    }
+                } else {
+                    setLs(null);
+                }
+            }, [grade, localLessons]);
+
             useEffect(() => {
                 if (!user) return;
                 return db.collection("quiz_results").where("studentEmail", "==", user.email)
                     .onSnapshot(s => setDoneQuizzes(s.docs.map(d => d.data().quizId)));
             }, [user]);
-
-            useEffect(() => {
-                const list = localLessons[grade];
-                if (list && list.length > 0) setLs(list[0]); else setLs(null);
-            }, [grade, localLessons]);
 
             const startQuiz = (q) => {
                 let qs = shuffle(q.questions).map(item => ({ ...item, a: shuffle(item.a) }));
@@ -299,10 +311,17 @@
                                         ))}
                                     </div>
                                     <div className="flex-1 p-16 overflow-y-auto custom-scroll">
-                                        {ls && <div className="max-w-3xl mx-auto animate-in fade-in duration-700">
-                                            <h2 className="text-4xl font-black mb-10 tracking-tighter leading-tight text-slate-800">{ls.title}</h2>
-                                            <div className="bg-slate-50 p-10 rounded-[2.5rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic shadow-inner border border-slate-100">{ls.content}</div>
-                                        </div>}
+                                        {ls ? (
+                                            <div className="max-w-3xl mx-auto animate-in fade-in duration-700">
+                                                <h2 className="text-4xl font-black mb-10 tracking-tighter leading-tight text-slate-800">{ls.title}</h2>
+                                                <div className="bg-slate-50 p-10 rounded-[2.5rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic shadow-inner border border-slate-100">{ls.content}</div>
+                                            </div>
+                                        ) : (
+                                            <div className="h-full flex flex-col items-center justify-center opacity-10">
+                                                <div className="text-8xl mb-4">📖</div>
+                                                <p className="font-black text-2xl uppercase italic tracking-widest text-center">Chọn một bài học</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </React.Fragment>
                             )}
@@ -357,4 +376,3 @@
     </script>
 </body>
 </html>
-
