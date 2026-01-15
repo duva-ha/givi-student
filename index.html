@@ -61,11 +61,9 @@
                 quiz.questions.forEach((q, i) => {
                     if (answers[i] === q.correctText) correctCount++;
                 });
-
                 const finalScore = ((correctCount / quiz.questions.length) * 10).toFixed(1);
                 setScore(finalScore); 
                 setIsSubmitted(true);
-
                 try {
                     await db.collection("quiz_results").add({
                         studentName: user.displayName,
@@ -125,24 +123,27 @@
                 return () => unsub();
             }, []);
 
-            // 1. Lắng nghe Bài giảng/Tài liệu (Notes) từ Firebase
+            // 1. Lấy Bài giảng (Notes) từ Firebase
             useEffect(() => {
                 if (!user) return;
                 const unsub = db.collection("notes")
-                    .orderBy("timestamp", "desc")
                     .onSnapshot(s => {
                         setNotes(s.docs.map(d => ({id: d.id, ...d.data()})));
                     });
                 return () => unsub;
             }, [user]);
 
-            // 2. Lắng nghe Đề kiểm tra (Quizzes) từ Firebase
+            // 2. Lấy Đề kiểm tra (Quizzes) - ĐÃ XÓA ORDERBY ĐỂ TRÁNH LỖI INDEX
             useEffect(() => {
                 if (!user) return;
                 const unsub = db.collection("quizzes")
                     .where("grade", "==", grade)
                     .onSnapshot(snapshot => {
-                        setFirebaseQuizzes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("Dữ liệu nhận được:", data);
+                        setFirebaseQuizzes(data);
+                    }, err => {
+                        console.error("Lỗi Firebase:", err);
                     });
                 return () => unsub();
             }, [user, grade]);
@@ -168,7 +169,7 @@
                     <aside className={`flex flex-col py-8 px-5 ${isFocus ? 'hide-left' : ''}`}>
                         <div className="mb-10 px-4 flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">E</div>
-                            <span className="font-black text-lg text-blue-400 uppercase">E-Tech</span>
+                            <span className="font-black text-lg text-blue-400 uppercase italic">E-Tech</span>
                         </div>
                         <nav className="flex-1 space-y-2">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
@@ -207,12 +208,10 @@
                                             <div className="text-[9px] font-black text-blue-500 uppercase mb-2 tracking-widest">{n.category || 'Tài liệu'}</div>
                                             <h4 className="text-sm font-bold text-slate-800 mb-3">{n.content}</h4>
                                             {n.fileUrl && (
-                                                <a href={n.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-                                                    📄 Xem tài liệu
-                                                </a>
+                                                <a href={n.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">📄 Xem tài liệu</a>
                                             )}
                                         </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có bài giảng nào...</div>
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase tracking-widest">Chưa có bài giảng nào...</div>
                                 ) : (
                                     firebaseQuizzes.length > 0 ? firebaseQuizzes.map(q => (
                                         <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
@@ -223,7 +222,7 @@
                                             </div>
                                             <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
                                         </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có đề nào cho Khối {grade}...</div>
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase tracking-widest">Chưa có đề nào cho Khối {grade}...</div>
                                 )}
                             </div>
                         </div>
