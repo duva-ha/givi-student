@@ -12,23 +12,156 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-    <script src="data10/bai1.js"></script>
-    <script src="data10/bai2.js"></script>
+    <script src="data10/bai1-10.js"></script>
+    <script src="data10/bai2-10.js"></script>
     
-    <script src="data11/bai1.js"></script>
-    <script src="data11/bai2.js"></script>
+    <script src="data11/bai1-11.js"></script>
+    <script src="data11/bai2-11.js"></script>
     
-    <script src="data12/bai1.js"></script>
-    <script src="data12/bai2.js"></script>
+    <script src="data12/bai1-12.js"></script>
+    <script src="data12/bai2-12.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
-        aside { background: #0f172a; color: #f8fafc; transition: all 0.4s ease; }
+        aside { background: #0f172a; color: #f8fafc; transition: all 0.4s ease; width: 280px; flex-shrink: 0; }
         .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; }
-        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; cursor: pointer; transition: all 0.3s; }
+        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; cursor: pointer; transition: all 0.3s; margin-bottom: 8px; }
         .lesson-card.active { border-color: #0ea5e9; background: #f0f9ff; transform: translateX(4px); }
         .instruction-box { background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 1rem; }
         .hide-left { transform: translateX(-100%); width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
     </style>
 </head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
+            authDomain: "qlhs10a7.firebaseapp.com",
+            projectId: "qlhs10a7",
+            storageBucket: "qlhs10a7.firebasestorage.app",
+            appId: "1:584229565603:web:d47a10f0a512a1a309bb16"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // LOGIC GOM DỮ LIỆU: Tìm các biến D10_B1, D11_B1, D12_B1... đã nạp từ các file .js
+        const collectData = (prefix) => {
+            const lessons = [];
+            for (let i = 1; i <= 20; i++) { // Quét tối đa 20 bài
+                const lesson = window[`${prefix}_B${i}`];
+                if (lesson) lessons.push(lesson);
+            }
+            return lessons;
+        };
+
+        const DATA = {
+            "10": collectData("D10"),
+            "11": collectData("D11"),
+            "12": collectData("D12")
+        };
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [tab, setTab] = useState('baigiang');
+            const [grade, setGrade] = useState('12');
+            const [ls, setLs] = useState(null);
+            const [isFocus, setIsFocus] = useState(false);
+
+            useEffect(() => {
+                const unsub = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsub();
+            }, []);
+
+            // Khi đổi khối lớp, tự động chọn bài đầu tiên của khối đó
+            useEffect(() => { 
+                if (DATA[grade] && DATA[grade].length > 0) {
+                    setLs(DATA[grade][0]); 
+                } else {
+                    setLs(null);
+                }
+            }, [grade]);
+
+            if (!user) return (
+                <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-bold uppercase tracking-widest">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-full shadow-2xl">Đăng nhập Học sinh</button>
+                </div>
+            );
+
+            return (
+                <div className="flex h-screen overflow-hidden">
+                    <aside className={`flex flex-col p-8 ${isFocus ? 'hide-left' : ''}`}>
+                        <div className="mb-12 font-black text-2xl italic text-blue-500">E-TECH HUB</div>
+                        <nav className="flex-1 space-y-2">
+                            {['baigiang', 'luyentap', 'kiemtra'].map(t => (
+                                <button key={t} onClick={() => setTab(t)} className={`w-full text-left p-4 font-bold text-sm transition-all ${tab === t ? 'sidebar-active' : 'text-slate-400 hover:text-white'}`}>
+                                    {t === 'baigiang' ? '📖 Bài học' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
+                                </button>
+                            ))}
+                        </nav>
+                    </aside>
+
+                    <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex transition-all duration-500">
+                        {tab === 'baigiang' ? (
+                            <React.Fragment>
+                                <div className={`w-80 bg-slate-50 border-r p-6 flex flex-col transition-all duration-500 ${isFocus ? 'hide-left' : ''}`}>
+                                    <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-4 mb-6 rounded-2xl font-bold border border-slate-200 outline-none shadow-sm cursor-pointer">
+                                        <option value="12">Công nghệ 12</option>
+                                        <option value="11">Công nghệ 11</option>
+                                        <option value="10">Công nghệ 10</option>
+                                    </select>
+                                    <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
+                                        {DATA[grade].length > 0 ? DATA[grade].map(l => (
+                                            <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card p-4 ${ls?.id === l.id ? 'active' : ''}`}>
+                                                <div className="text-[10px] font-bold text-slate-300 uppercase italic">Bài {l.id.split('-')[1]}</div>
+                                                <div className="font-bold text-sm leading-tight text-slate-700">{l.title}</div>
+                                            </div>
+                                        )) : <p className="text-slate-400 text-center py-10 font-bold">Đang cập nhật dữ liệu...</p>}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 p-12 overflow-y-auto relative custom-scroll">
+                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-8 left-8 p-4 bg-slate-900 text-white rounded-2xl hover:scale-110 transition-all z-50 shadow-xl" title="Chế độ tập trung">
+                                        {isFocus ? "📂 Hiện Menu" : "🖥️ Xem toàn màn hình"}
+                                    </button>
+                                    
+                                    <div className={`transition-all duration-500 ${isFocus ? "max-w-4xl mx-auto pt-4" : ""}`}>
+                                        {ls ? (
+                                            <React.Fragment>
+                                                <h2 className="text-5xl font-black mb-8 tracking-tighter text-slate-900 leading-tight">{ls.title}</h2>
+                                                <div className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm mb-10">
+                                                    <div className="text-xl text-slate-600 leading-relaxed space-y-4">{ls.content}</div>
+                                                </div>
+                                                <div className="instruction-box p-8 shadow-sm">
+                                                    <div className="font-black text-xs uppercase text-emerald-600 mb-4 tracking-[0.2em] flex items-center gap-2">
+                                                        <span className="text-xl">💡</span> HƯỚNG DẪN HỌC TẬP
+                                                    </div>
+                                                    <p className="italic text-slate-700 font-bold text-lg leading-relaxed">{ls.instruction}</p>
+                                                </div>
+                                            </React.Fragment>
+                                        ) : (
+                                            <div className="h-full flex flex-col items-center justify-center opacity-20">
+                                                <div className="text-9xl mb-4">📖</div>
+                                                <p className="font-bold text-2xl uppercase tracking-widest">Chọn bài để bắt đầu</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </React.Fragment>
+                        ) : (
+                            <div className="w-full flex items-center justify-center text-slate-300 font-black text-3xl uppercase italic tracking-tighter opacity-30">
+                                Chức năng {tab} đang được hoàn thiện
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
