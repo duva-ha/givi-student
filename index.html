@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Minimal UI</title>
+    <title>E-TECH Hub 2026 - Student Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,28 +12,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-    <script src="quizzes.js" defer></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overflow: hidden; color: #1e293b; }
-        aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .nav-btn { position: relative; transition: all 0.3s; border-radius: 1rem; overflow: hidden; }
+        aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s ease; }
         .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
-        main { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .lesson-list-container { transition: all 0.5s ease; border-right: 1px solid #f1f5f9; background: #ffffff; }
-        .lesson-card { transition: all 0.3s ease; border: 1px solid transparent; }
-        .lesson-card:hover { background: #f8fafc; }
-        .lesson-card.active { background: #eff6ff; border-color: #dbeafe; }
-        .active-dot { width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; position: absolute; left: 14px; }
-        
-        /* Focus Toggle Slim */
-        .focus-toggle { background: white; border: 1px solid #e2e8f0; color: #64748b; transition: all 0.3s; font-size: 9px; }
-        .focus-toggle:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
-        
+        .focus-toggle { background: white; border: 1px solid #e2e8f0; font-size: 9px; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; transform: translateX(-40px); }
+        .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
         .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
@@ -42,12 +29,6 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-
-        const MOCK_LESSONS = {
-            "10": Array.from({ length: 20 }, (_, i) => ({ id: `10-${i+1}`, title: `Bài ${i+1}: Công nghệ Lớp 10`, content: `Nội dung bài học số ${i+1}...`, instruction: `Nghiên cứu trang ${10+i}.` })),
-            "11": Array.from({ length: 20 }, (_, i) => ({ id: `11-${i+1}`, title: `Bài ${i+1}: Công nghệ Lớp 11`, content: `Nội dung bài học số ${i+1}...`, instruction: `Vẽ hình bài ${i+1}.` })),
-            "12": Array.from({ length: 20 }, (_, i) => ({ id: `12-${i+1}`, title: `Bài ${i+1}: Công nghệ Lớp 12`, content: `Nội dung bài học số ${i+1}...`, instruction: `Thực hành bài ${i+1}.` }))
-        };
 
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
@@ -59,6 +40,9 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // Hàm trộn mảng ngẫu nhiên
+        const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
         function QuizModal({ quiz, user, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
@@ -75,16 +59,27 @@
             const submitQuiz = async () => {
                 if (isSubmitted) return;
                 let correctCount = 0;
-                quiz.questions.forEach((q, i) => { if (answers[i] === q.correct) correctCount++; });
+                
+                quiz.questions.forEach((q, i) => {
+                    // Kiểm tra dựa trên nội dung text của đáp án để không bị sai khi đảo vị trí
+                    if (answers[i] === q.correctText) correctCount++;
+                });
+
                 const finalScore = ((correctCount / quiz.questions.length) * 10).toFixed(1);
-                setScore(finalScore); setIsSubmitted(true);
+                setScore(finalScore); 
+                setIsSubmitted(true);
+
                 try {
                     await db.collection("quiz_results").add({
-                        studentName: user.displayName, studentEmail: user.email,
-                        quizTitle: quiz.title, score: finalScore,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        studentName: user.displayName,
+                        studentEmail: user.email,
+                        quizTitle: quiz.title,
+                        correctAnswers: `${correctCount}/${quiz.questions.length}`,
+                        score: finalScore,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        date: new Date().toLocaleString('vi-VN')
                     });
-                } catch (e) { console.error(e); }
+                } catch (e) { console.error("Lỗi nộp bài:", e); }
             };
 
             return (
@@ -92,7 +87,7 @@
                     <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-5 bg-slate-50 border-b flex justify-between items-center">
                             <h3 className="font-extrabold text-slate-800 uppercase text-[10px] tracking-widest">{quiz.title}</h3>
-                            {!isSubmitted && <div className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full font-bold text-[10px] border border-rose-100">⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>}
+                            {!isSubmitted && <div className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full font-bold text-[10px]">⏱️ {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>}
                         </div>
                         <div className="p-10 overflow-y-auto custom-scroll flex-1">
                             {!isSubmitted ? quiz.questions.map((q, i) => (
@@ -100,20 +95,20 @@
                                     <p className="font-bold text-lg text-slate-800 mb-6 flex gap-3"><span className="text-blue-500 font-black">{i+1}.</span> {q.q}</p>
                                     <div className="grid gap-2">
                                         {q.a.map((opt, optIdx) => (
-                                            <button key={optIdx} onClick={() => setAnswers({...answers, [i]: optIdx})} className={`p-4 rounded-xl border-2 text-left transition-all font-semibold text-sm ${answers[i] === optIdx ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}>{opt}</button>
+                                            <button key={optIdx} onClick={() => setAnswers({...answers, [i]: opt})} className={`p-4 rounded-xl border-2 text-left transition-all font-semibold text-sm ${answers[i] === opt ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}>{opt}</button>
                                         ))}
                                     </div>
                                 </div>
                             )) : (
                                 <div className="text-center py-12">
                                     <div className="text-7xl mb-4">🎯</div>
-                                    <h2 className="text-2xl font-black mb-1 uppercase tracking-tighter text-slate-900">Hoàn thành</h2>
+                                    <h2 className="text-2xl font-black mb-1 uppercase text-slate-900">Kết quả của bạn</h2>
                                     <div className="text-7xl font-black text-blue-600 mb-8">{score}</div>
-                                    <button onClick={onClose} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:scale-105 transition-transform text-sm uppercase tracking-widest">Đóng</button>
+                                    <button onClick={onClose} className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm uppercase">Hoàn thành</button>
                                 </div>
                             )}
                         </div>
-                        {!isSubmitted && <div className="p-6 border-t bg-slate-50"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-md">Nộp bài ngay</button></div>}
+                        {!isSubmitted && <div className="p-6 border-t bg-slate-50"><button onClick={submitQuiz} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-xs shadow-md">Nộp bài</button></div>}
                     </div>
                 </div>
             );
@@ -123,126 +118,102 @@
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
             const [grade, setGrade] = useState('12');
-            const [ls, setLs] = useState(MOCK_LESSONS["12"][0]);
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
+            const [firebaseQuizzes, setFirebaseQuizzes] = useState([]);
 
             useEffect(() => {
                 const unsub = auth.onAuthStateChanged(u => setUser(u));
                 return () => unsub();
             }, []);
 
-            useEffect(() => { setLs(MOCK_LESSONS[grade][0]); }, [grade]);
+            // Lấy đề thi Real-time từ Firebase
+            useEffect(() => {
+                const unsubscribe = db.collection("quizzes")
+                    .where("grade", "==", grade)
+                    .orderBy("createdAt", "desc")
+                    .onSnapshot(snapshot => {
+                        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        setFirebaseQuizzes(list);
+                    });
+                return () => unsubscribe();
+            }, [grade]);
+
+            // Logic xử lý khi bấm vào làm đề (có đảo đề)
+            const handleStartQuiz = (quiz) => {
+                let preparedQuestions = quiz.questions.map(q => ({
+                    ...q,
+                    correctText: q.a[q.correct] // Lưu lại nội dung đáp án đúng trước khi trộn
+                }));
+
+                if (quiz.shuffleQuestions) preparedQuestions = shuffleArray(preparedQuestions);
+                if (quiz.shuffleOptions) {
+                    preparedQuestions = preparedQuestions.map(q => ({
+                        ...q,
+                        a: shuffleArray(q.a)
+                    }));
+                }
+
+                setActiveQuiz({ ...quiz, questions: preparedQuestions });
+            };
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-[#0f172a]">
-                    <div className="text-center space-y-6">
-                        <div className="w-20 h-20 bg-blue-600 rounded-[1.5rem] mx-auto flex items-center justify-center text-white text-4xl font-black italic shadow-2xl">E</div>
-                        <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-3.5 rounded-full font-black shadow-xl hover:scale-105 transition-all text-slate-900 uppercase tracking-widest text-[10px]">Đăng nhập E-TECH Hub</button>
-                    </div>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black shadow-xl text-slate-900 uppercase tracking-widest text-[10px]">Đăng nhập E-TECH Hub</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
                     <aside className={`flex flex-col py-8 px-5 ${isFocus ? 'hide-left' : ''}`}>
                         <div className="mb-10 px-4 flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">E</div>
-                            <span className="font-black text-lg tracking-widest italic text-blue-400 uppercase">E-Tech</span>
+                            <span className="font-black text-lg text-blue-400 uppercase">E-Tech</span>
                         </div>
                         <nav className="flex-1 space-y-2">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all nav-btn ${tab === t ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'active bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>
                                     {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-800/40 rounded-2xl border border-slate-700/50 flex items-center gap-3">
-                            <img src={user.photoURL} className="w-8 h-8 rounded-lg border border-slate-600" />
+                        <div className="mt-auto p-4 bg-slate-800/40 rounded-2xl flex items-center gap-3">
+                            <img src={user.photoURL} className="w-8 h-8 rounded-lg" />
                             <div className="truncate">
-                                <p className="text-[9px] font-black truncate text-white">{user.displayName}</p>
-                                <button onClick={()=>auth.signOut()} className="text-[8px] font-bold text-rose-400 uppercase tracking-widest opacity-60">Thoát</button>
+                                <p className="text-[9px] font-black text-white">{user.displayName}</p>
+                                <button onClick={()=>auth.signOut()} className="text-[8px] font-bold text-rose-400 uppercase opacity-60">Thoát</button>
                             </div>
                         </div>
                     </aside>
 
-                    {/* MAIN */}
-                    <main className="flex-1 bg-white relative rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l border-white/10">
-                        {/* SLIM HEADER */}
+                    <main className="flex-1 bg-white relative rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l">
                         <div className="h-16 px-8 border-b flex items-center justify-between bg-white/90 backdrop-blur-md z-40">
                             <div className="flex items-center gap-4">
-                                <h3 className="font-black text-[9px] uppercase tracking-[0.3em] text-slate-400">
-                                    {tab === 'baigiang' ? 'Học tập' : 'Đánh giá'}
-                                </h3>
-                                <div className="h-3 w-px bg-slate-200"></div>
-                                <span className="font-extrabold text-[11px] text-blue-600 uppercase tracking-widest italic">Khối {grade}</span>
+                                <span className="font-extrabold text-[11px] text-blue-600 uppercase italic">Khối {grade}</span>
+                                <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-slate-50 border p-1 rounded font-bold text-[10px] outline-none">
+                                    <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
+                                </select>
                             </div>
-                            
-                            <button onClick={() => setIsFocus(!isFocus)} className="focus-toggle px-4 py-2 rounded-xl uppercase tracking-widest flex items-center gap-2 font-black shadow-sm active:scale-95">
+                            <button onClick={() => setIsFocus(!isFocus)} className="focus-toggle px-4 py-2 rounded-xl uppercase font-black shadow-sm">
                                 {isFocus ? '📂 Hiện Menu' : '🖥️ Tập trung'}
                             </button>
                         </div>
 
-                        <div className="flex flex-1 overflow-hidden">
-                            {tab === 'baigiang' ? (
-                                <React.Fragment>
-                                    <div className={`lesson-list-container w-72 p-5 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
-                                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="w-full p-3 mb-5 bg-slate-50 border border-slate-100 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-700 outline-none">
-                                            <option value="12">Lớp 12</option>
-                                            <option value="11">Lớp 11</option>
-                                            <option value="10">Lớp 10</option>
-                                        </select>
-                                        <div className="flex-1 overflow-y-auto pr-2 custom-scroll space-y-1">
-                                            {MOCK_LESSONS[grade].map(l => (
-                                                <div key={l.id} onClick={()=>setLs(l)} className={`lesson-card relative p-4 rounded-xl cursor-pointer ${ls?.id === l.id ? 'active' : ''}`}>
-                                                    {ls?.id === l.id && <div className="active-dot" />}
-                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-4">Bài {l.id.split('-')[1]}</div>
-                                                    <div className="font-bold text-[12px] leading-tight text-slate-700 ml-4">{l.title}</div>
-                                                </div>
-                                            ))}
+                        <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll">
+                            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {firebaseQuizzes.length > 0 ? firebaseQuizzes.map(q => (
+                                    <div key={q.id} onClick={() => handleStartQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
+                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">🎯</div>
+                                        <div>
+                                            <h4 className="text-lg font-extrabold mb-1 text-slate-800 group-hover:text-blue-600 transition-colors">{q.title}</h4>
+                                            <p className="text-[9px] text-slate-400 uppercase font-black">{q.questions.length} câu • {q.time/60} phút</p>
                                         </div>
+                                        <div className="text-[9px] font-black text-blue-500 uppercase flex items-center gap-2">Bắt đầu <span className="text-base">→</span></div>
                                     </div>
-
-                                    <div className="flex-1 p-12 overflow-y-auto custom-scroll bg-white">
-                                        {ls && (
-                                            <div className="max-w-3xl mx-auto space-y-10 animate-in fade-in duration-500">
-                                                <div className="space-y-2">
-                                                    <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em]">Educational Portal</span>
-                                                    <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight">{ls.title}</h2>
-                                                </div>
-                                                <div className="bg-slate-50/50 border border-slate-100 p-10 rounded-[2rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap shadow-inner italic">
-                                                    {ls.content}
-                                                </div>
-                                                <div className="bg-emerald-50/50 p-8 rounded-3xl border border-emerald-100 flex gap-6 items-start">
-                                                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-md text-lg flex-shrink-0">💡</div>
-                                                    <div>
-                                                        <h4 className="font-black text-[9px] uppercase text-emerald-600 mb-2 tracking-[0.2em]">Hướng dẫn</h4>
-                                                        <p className="italic text-slate-700 font-bold text-base leading-relaxed">{ls.instruction}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </React.Fragment>
-                            ) : (
-                                <div className="flex-1 p-12 bg-slate-50/30 overflow-y-auto custom-scroll">
-                                    <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {window.E_TECH_QUIZZES && window.E_TECH_QUIZZES[grade] ? (
-                                            window.E_TECH_QUIZZES[grade].map(q => (
-                                                <div key={q.id} onClick={() => setActiveQuiz(q)} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-between h-72 group hover:-translate-y-1.5 transition-all cursor-pointer">
-                                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">{tab === 'luyentap' ? '📝' : '🎯'}</div>
-                                                    <div>
-                                                        <h4 className="text-lg font-extrabold mb-1 text-slate-800 leading-tight group-hover:text-blue-600 transition-colors">{q.title}</h4>
-                                                        <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{q.questions.length} câu • {q.time/60} phút</p>
-                                                    </div>
-                                                    <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2 group-hover:translate-x-1.5 transition-transform">Bắt đầu <span className="text-base">→</span></div>
-                                                </div>
-                                            ))
-                                        ) : <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase tracking-widest">Đợi quizzes.js...</div>}
-                                    </div>
-                                </div>
-                            )}
+                                )) : (
+                                    <div className="col-span-full py-20 text-center opacity-20 italic font-black text-lg uppercase">Chưa có đề nào cho Khối {grade}...</div>
+                                )}
+                            </div>
                         </div>
                     </main>
                     {activeQuiz && <QuizModal quiz={activeQuiz} user={user} onClose={() => setActiveQuiz(null)} />}
