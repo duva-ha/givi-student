@@ -16,10 +16,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overflow: hidden; color: #1e293b; }
         aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.5s ease; }
-        .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
-        .lesson-card { transition: all 0.3s; border: 1px solid transparent; cursor: pointer; }
+        .nav-btn { transition: all 0.3s; border-radius: 1rem; }
+        .nav-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5); }
+        .lesson-card { transition: all 0.3s; border: 1px solid transparent; cursor: pointer; position: relative; }
         .lesson-card.active { background: #eff6ff; border-color: #dbeafe; }
-        .active-dot { width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; position: absolute; left: 14px; }
+        .active-dot { width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .hide-left { width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
@@ -45,7 +46,7 @@
 
         const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
-        // --- COMPONENT LÀM BÀI (MODAL) ---
+        // --- COMPONENT LÀM BÀI (QUIZ MODAL) ---
         function QuizModal({ quiz, user, onClose }) {
             const [timeLeft, setTimeLeft] = useState(quiz.time);
             const [answers, setAnswers] = useState({});
@@ -116,25 +117,24 @@
             const [activeQuiz, setActiveQuiz] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
             
-            const [notes, setNotes] = useState([]); // Dữ liệu bài giảng từ Firebase
-            const [currentNote, setCurrentNote] = useState(null); // Bài giảng đang chọn xem
-            const [quizzes, setQuizzes] = useState([]); // Đề thi từ Firebase
+            const [notes, setNotes] = useState([]); 
+            const [currentNote, setCurrentNote] = useState(null); 
+            const [quizzes, setQuizzes] = useState([]); 
 
             useEffect(() => {
-                auth.onAuthStateChanged(u => setUser(u));
+                const unsub = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsub();
             }, []);
 
-            // 1. Lắng nghe Bài giảng (Notes)
             useEffect(() => {
                 if (!user) return;
-                return db.collection("notes").orderBy("timestamp", "desc").onSnapshot(s => {
+                return db.collection("notes").onSnapshot(s => {
                     const data = s.docs.map(d => ({id: d.id, ...d.data()}));
                     setNotes(data);
-                    if (data.length > 0) setCurrentNote(data[0]);
+                    if (data.length > 0 && !currentNote) setCurrentNote(data[0]);
                 });
             }, [user]);
 
-            // 2. Lắng nghe Đề thi (Quizzes)
             useEffect(() => {
                 if (!user) return;
                 return db.collection("quizzes").where("grade", "==", grade).onSnapshot(s => {
@@ -151,21 +151,19 @@
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-[#0f172a]">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest">Đăng nhập E-TECH Hub</button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl">Đăng nhập E-TECH Hub</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {/* SIDEBAR */}
+                    {/* SIDEBAR - KHÔI PHỤC ĐẦY ĐỦ TAB */}
                     <aside className={`flex flex-col py-8 px-5 ${isFocus ? 'hide-left' : ''}`}>
                         <div className="mb-10 px-4 flex items-center gap-3 font-black text-lg text-blue-400 uppercase italic">E-Tech</div>
                         <nav className="flex-1 space-y-2">
-                            {['baigiang', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>
-                                    {t === 'baigiang' ? '📖 Bài giảng' : '🎯 Kiểm tra'}
-                                </button>
-                            ))}
+                            <button onClick={() => setTab('baigiang')} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest nav-btn ${tab === 'baigiang' ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>📖 Bài giảng</button>
+                            <button onClick={() => setTab('luyentap')} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest nav-btn ${tab === 'luyentap' ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>📝 Luyện tập</button>
+                            <button onClick={() => setTab('kiemtra')} className={`w-full flex items-center gap-3 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest nav-btn ${tab === 'kiemtra' ? 'active' : 'text-slate-500 hover:text-slate-300'}`}>🎯 Kiểm tra</button>
                         </nav>
                         <div className="mt-auto flex items-center gap-3 bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50">
                             <img src={user.photoURL} className="w-8 h-8 rounded-lg" />
@@ -173,7 +171,7 @@
                         </div>
                     </aside>
 
-                    {/* MAIN CONTENT */}
+                    {/* MAIN */}
                     <main className="flex-1 bg-white rounded-l-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-l">
                         <div className="h-16 px-8 border-b flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -188,28 +186,26 @@
                         <div className="flex-1 flex overflow-hidden">
                             {tab === 'baigiang' ? (
                                 <React.Fragment>
-                                    {/* DANH SÁCH BÀI GIẢNG BÊN TRÁI (QUAN TRỌNG) */}
                                     <div className={`w-72 border-r p-5 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
                                         <div className="flex-1 overflow-y-auto custom-scroll space-y-1">
-                                            {notes.map((n, idx) => (
-                                                <div key={n.id} onClick={()=>setCurrentNote(n)} className={`lesson-card relative p-4 rounded-xl ${currentNote?.id === n.id ? 'active' : ''}`}>
+                                            {notes.length > 0 ? notes.map((n, idx) => (
+                                                <div key={n.id} onClick={()=>setCurrentNote(n)} className={`lesson-card p-4 rounded-xl ${currentNote?.id === n.id ? 'active' : ''}`}>
                                                     {currentNote?.id === n.id && <div className="active-dot" />}
-                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Bài {idx + 1}</div>
+                                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-4">Bài học {idx + 1}</div>
                                                     <div className="font-bold text-[12px] leading-tight text-slate-700 ml-4 truncate">{n.content.split('\n')[0]}</div>
                                                 </div>
-                                            ))}
+                                            )) : <div className="p-4 text-[10px] text-slate-400 italic">Đang tải...</div>}
                                         </div>
                                     </div>
-                                    {/* NỘI DUNG CHI TIẾT BÊN PHẢI */}
-                                    <div className="flex-1 p-12 overflow-y-auto custom-scroll">
+                                    <div className="flex-1 p-12 overflow-y-auto custom-scroll bg-white">
                                         {currentNote && (
                                             <div className="max-w-3xl mx-auto space-y-6">
-                                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Nội dung bài học</h2>
-                                                <div className="bg-slate-50 p-10 rounded-[2rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic">
+                                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Nội dung học tập</h2>
+                                                <div className="bg-slate-50 p-10 rounded-[2rem] text-lg text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic shadow-inner">
                                                     {currentNote.content}
                                                 </div>
                                                 {currentNote.fileUrl && (
-                                                    <a href={currentNote.fileUrl} target="_blank" className="inline-flex items-center gap-3 p-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-xs">📄 XEM TÀI LIỆU ĐÍNH KÈM</a>
+                                                    <a href={currentNote.fileUrl} target="_blank" className="inline-flex items-center gap-3 p-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-xs border border-blue-100">📄 XEM TÀI LIỆU ĐÍNH KÈM</a>
                                                 )}
                                             </div>
                                         )}
@@ -226,7 +222,7 @@
                                             </div>
                                             <div className="text-[9px] font-black text-blue-500 uppercase">Bắt đầu →</div>
                                         </div>
-                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black uppercase">Chưa có đề nào lớp {grade}...</div>}
+                                    )) : <div className="col-span-full py-20 text-center opacity-20 italic font-black uppercase tracking-widest">Không có đề nào trong danh mục này...</div>}
                                 </div>
                             )}
                         </div>
