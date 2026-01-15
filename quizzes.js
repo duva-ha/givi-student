@@ -1,5 +1,5 @@
 // quizzes.js
-const QUIZ_DATA = {
+window.QUIZ_DATA = {
     "10": [
         {
             id: "q10-1",
