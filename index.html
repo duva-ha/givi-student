@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-TECH Hub 2026 - Student Official</title>
+    <title>E-TECH Hub 2026 - Student Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -15,18 +15,19 @@
     <script src="data10/bai1-10.js" defer></script>
     <script src="data10/bai2-10.js" defer></script>
     <script src="data11/bai1-11.js" defer></script>
-    <script src="data11/bai2-11.js" defer></script> <script src="data12/bai1-12.js" defer></script>
+    <script src="data11/bai2-11.js" defer></script>
+    <script src="data12/bai1-12.js" defer></script>
     <script src="data12/bai2-12.js" defer></script>
     <script src="quizzes.js" defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
-        aside { background: #0f172a; color: #f8fafc; width: 280px; flex-shrink: 0; transition: all 0.4s ease; }
-        .sidebar-active { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); color: white; border-radius: 1rem; }
-        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; cursor: pointer; transition: 0.3s; margin-bottom: 10px; position: relative; }
-        .lesson-card.active { border-color: #0ea5e9; background: #f0f9ff; transform: translateX(6px); }
-        .active-dot { width: 4px; height: 4px; background: #0ea5e9; border-radius: 50%; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+        aside { background: #0f172a; width: 280px; flex-shrink: 0; transition: all 0.4s ease; }
+        .sidebar-active { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border-radius: 1rem; }
+        .lesson-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; cursor: pointer; transition: 0.3s; margin-bottom: 10px; position: relative; overflow: hidden; }
+        .lesson-card.active { border-color: #3b82f6; background: #eff6ff; transform: translateX(6px); }
+        .active-dot { width: 4px; height: 16px; background: #3b82f6; border-radius: 2px; position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
         .hide-left { transform: translateX(-100%); width: 0 !important; padding: 0 !important; opacity: 0; pointer-events: none; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -38,7 +39,6 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback } = React;
 
-        // Firebase chỉ dùng để login và nhận đề thi real-time (nếu cần)
         const firebaseConfig = {
             apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
             authDomain: "qlhs10a7.firebaseapp.com",
@@ -53,130 +53,132 @@
             const [user, setUser] = useState(null);
             const [tab, setTab] = useState('baigiang');
             const [grade, setGrade] = useState('12');
-            const [ls, setLs] = useState(null);
+            const [currentLesson, setCurrentLesson] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
-            const [localData, setLocalData] = useState({ "10": [], "11": [], "12": [] });
+            const [allLessons, setAllLessons] = useState({ "10": [], "11": [], "12": [] });
 
-            // Hàm quét dữ liệu từ window object (nạp từ các file .js)
-            const scanLocalFiles = useCallback(() => {
-                const results = { "10": [], "11": [], "12": [] };
+            // Hàm quét dữ liệu từ window object
+            const scanData = useCallback(() => {
+                const data = { "10": [], "11": [], "12": [] };
                 ["10", "11", "12"].forEach(g => {
                     for (let i = 1; i <= 20; i++) {
-                        const data = window[`D${g}_B${i}`];
-                        if (data) {
-                            results[g].push({ ...data, index: i });
+                        // Tìm biến D10_B1, D11_B2... trong window
+                        const lessonData = window[`D${g}_B${i}`];
+                        if (lessonData) {
+                            data[g].push({ ...lessonData, lessonIndex: i });
                         }
                     }
                 });
-                setLocalData(results);
+                setAllLessons(data);
             }, []);
 
             useEffect(() => {
-                const unsub = auth.onAuthStateChanged(u => setUser(u));
-                // Quét dữ liệu ngay khi nạp trang và định kỳ để cập nhật nếu script load chậm
-                scanLocalFiles();
-                const timer = setInterval(scanLocalFiles, 2000);
-                return () => { unsub(); clearInterval(timer); };
-            }, [scanLocalFiles]);
+                auth.onAuthStateChanged(u => setUser(u));
+                // Quét dữ liệu liên tục mỗi 1 giây để đảm bảo file tải muộn vẫn nhận được
+                const timer = setInterval(scanData, 1000);
+                return () => clearInterval(timer);
+            }, [scanData]);
 
-            // Tự động chọn bài đầu tiên khi đổi khối lớp
+            // Tự động chọn bài học đầu tiên khi chuyển khối lớp hoặc khi dữ liệu load xong
             useEffect(() => {
-                const lessons = localData[grade];
-                if (lessons && lessons.length > 0) setLs(lessons[0]);
-                else setLs(null);
-            }, [grade, localData]);
+                const list = allLessons[grade];
+                if (list && list.length > 0) {
+                    if (!currentLesson || !list.find(l => l.id === currentLesson.id)) {
+                        setCurrentLesson(list[0]);
+                    }
+                } else {
+                    setCurrentLesson(null);
+                }
+            }, [grade, allLessons]);
 
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-900">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-full font-black shadow-2xl">ĐĂNG NHẬP HỆ THỐNG</button>
+                <div className="h-screen flex items-center justify-center bg-slate-950">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-10 py-4 rounded-2xl font-black shadow-2xl active:scale-95 transition-all">ĐĂNG NHẬP HỆ THỐNG</button>
                 </div>
             );
 
             return (
                 <div className="flex h-screen overflow-hidden bg-slate-50">
-                    {/* SIDEBAR NAVIGATION */}
-                    <aside className={`flex flex-col p-6 z-50 shadow-xl ${isFocus ? 'hide-left' : ''}`}>
+                    {/* SIDEBAR */}
+                    <aside className={`flex flex-col p-6 z-50 shadow-2xl ${isFocus ? 'hide-left' : ''}`}>
                         <div className="mb-10 px-4 flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black italic shadow-lg">E</div>
-                            <span className="font-black text-2xl tracking-tighter text-blue-500 italic uppercase">E-Tech</span>
+                            <span className="font-black text-2xl tracking-tighter text-blue-500 italic">E-TECH</span>
                         </div>
                         <nav className="flex-1 space-y-2">
                             {['baigiang', 'luyentap', 'kiemtra'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'sidebar-active text-white' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'sidebar-active' : 'text-slate-500 hover:text-slate-300'}`}>
                                     {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
                                 </button>
                             ))}
                         </nav>
-                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3">
+                        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center gap-3 overflow-hidden">
                             <img src={user.photoURL} className="w-8 h-8 rounded-full border border-blue-500" />
-                            <div className="truncate"><p className="text-[9px] font-black text-white uppercase">{user.displayName}</p></div>
+                            <div className="truncate text-[9px] font-black text-white uppercase italic">{user.displayName}</div>
                         </div>
                     </aside>
 
-                    {/* MAIN CONTENT AREA */}
+                    {/* MAIN CONTENT */}
                     <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex border-l border-slate-200">
                         {tab === 'baigiang' ? (
                             <React.Fragment>
-                                {/* LESSON LIST COLUMN */}
-                                <div className={`w-80 bg-slate-50/50 border-r p-6 flex flex-col ${isFocus ? 'hide-left' : ''}`}>
+                                {/* LESSON LIST */}
+                                <div className={`w-80 bg-slate-50/50 border-r p-6 flex flex-col transition-all duration-500 ${isFocus ? 'hide-left' : ''}`}>
                                     <div className="mb-6">
                                         <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl font-black text-slate-700 outline-none shadow-sm focus:ring-2 focus:ring-blue-500">
-                                            <option value="12">Công nghệ 12</option>
-                                            <option value="11">Công nghệ 11</option>
-                                            <option value="10">Công nghệ 10</option>
+                                            <option value="12">Lớp 12 (Hiện {allLessons["12"].length} bài)</option>
+                                            <option value="11">Lớp 11 (Hiện {allLessons["11"].length} bài)</option>
+                                            <option value="10">Lớp 10 (Hiện {allLessons["10"].length} bài)</option>
                                         </select>
                                     </div>
                                     <div className="flex-1 overflow-y-auto pr-2 custom-scroll">
-                                        {localData[grade]?.length > 0 ? localData[grade].map(l => (
-                                            <div key={l.id} onClick={() => setLs(l)} className={`lesson-card p-5 ${ls?.id === l.id ? 'active' : ''}`}>
-                                                {ls?.id === l.id && <div className="active-dot" />}
-                                                <div className="text-[9px] font-black text-slate-400 uppercase mb-1 ml-4">BÀI {l.index}</div>
-                                                <div className="font-bold text-xs leading-tight text-slate-700 ml-4">{l.title}</div>
+                                        {allLessons[grade].length > 0 ? allLessons[grade].map(l => (
+                                            <div key={l.id} onClick={() => setCurrentLesson(l)} className={`lesson-card p-5 ${currentLesson?.id === l.id ? 'active' : ''}`}>
+                                                {currentLesson?.id === l.id && <div className="active-dot" />}
+                                                <div className="text-[9px] font-black text-slate-400 uppercase mb-1 ml-2 tracking-widest">BÀI {l.lessonIndex}</div>
+                                                <div className="font-bold text-xs leading-tight text-slate-700 ml-2">{l.title}</div>
                                             </div>
-                                        )) : <p className="text-center py-20 text-slate-300 font-bold text-[10px] uppercase italic">Chưa nạp bài học...</p>}
+                                        )) : (
+                                            <div className="py-20 text-center opacity-30 italic font-bold text-xs uppercase">Đang tải dữ liệu...</div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* CONTENT DETAIL COLUMN */}
+                                {/* CONTENT DETAIL */}
                                 <div className="flex-1 p-12 overflow-y-auto relative custom-scroll">
-                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-10 left-10 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl font-bold z-50 transition-all hover:scale-110 active:scale-95">
-                                        {isFocus ? "📂 HIỆN MENU" : "🖥️ TẬP TRUNG"}
+                                    <button onClick={() => setIsFocus(!isFocus)} className="fixed bottom-10 left-10 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl font-black text-[10px] z-50 hover:scale-110 transition-all uppercase tracking-widest">
+                                        {isFocus ? "📂 Hiện Menu" : "🖥️ Toàn màn hình"}
                                     </button>
                                     
                                     <div className={`transition-all duration-700 ${isFocus ? "max-w-4xl mx-auto" : ""}`}>
-                                        {ls ? (
-                                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                                <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em]">Hệ thống bài học Official</span>
-                                                <h2 className="text-5xl font-black mb-10 tracking-tighter text-slate-900 leading-tight mt-2">{ls.title}</h2>
-                                                
+                                        {currentLesson ? (
+                                            <div className="animate-in fade-in duration-700">
+                                                <h2 className="text-5xl font-black mb-10 tracking-tighter text-slate-900 leading-tight">{currentLesson.title}</h2>
                                                 <div className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm mb-10 text-xl text-slate-600 leading-relaxed font-medium whitespace-pre-wrap italic">
-                                                    {ls.content}
+                                                    {currentLesson.content}
                                                 </div>
-
-                                                <div className="bg-blue-50 p-8 rounded-[2.5rem] border border-blue-100 flex gap-6 items-start">
-                                                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">💡</div>
+                                                <div className="bg-emerald-50 p-8 rounded-[2.5rem] border border-emerald-100 flex gap-6 items-center">
+                                                    <div className="text-3xl">💡</div>
                                                     <div>
-                                                        <h4 className="font-black text-[10px] uppercase text-blue-600 mb-2 tracking-widest">Hướng dẫn học tập</h4>
-                                                        <p className="italic text-slate-700 font-bold text-lg leading-relaxed">{ls.instruction}</p>
+                                                        <h4 className="font-black text-[10px] uppercase text-emerald-600 mb-1 tracking-widest">Hướng dẫn học tập</h4>
+                                                        <p className="italic text-slate-700 font-bold text-lg">{currentLesson.instruction}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="h-full flex flex-col items-center justify-center opacity-10 py-40">
-                                                <div className="text-9xl mb-4">📖</div>
-                                                <p className="font-black text-3xl uppercase italic tracking-widest">Chọn bài học</p>
+                                            <div className="h-full flex flex-col items-center justify-center opacity-10">
+                                                <div className="text-8xl mb-4">📖</div>
+                                                <p className="font-black text-2xl uppercase italic tracking-widest">Chọn một bài học</p>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </React.Fragment>
                         ) : (
-                            <div className="flex-1 p-16 bg-slate-50/50 flex items-center justify-center">
-                                <div className="text-center opacity-20">
-                                    <div className="text-8xl mb-4">🎯</div>
-                                    <p className="font-black text-2xl uppercase tracking-[0.5em]">Hệ thống {tab === 'kiemtra' ? 'Kiểm tra' : 'Luyện tập'}</p>
-                                    <p className="mt-4 font-bold italic">Dữ liệu được nạp từ file quizzes.js</p>
-                                </div>
+                            <div className="flex-1 flex flex-col items-center justify-center opacity-20">
+                                <div className="text-9xl mb-4">🎯</div>
+                                <h2 className="text-3xl font-black uppercase tracking-[0.3em]">Hệ thống {tab === 'kiemtra' ? 'Kiểm tra' : 'Luyện tập'}</h2>
+                                <p className="font-bold italic mt-2">Dữ liệu từ quizzes.js</p>
                             </div>
                         )}
                     </main>
