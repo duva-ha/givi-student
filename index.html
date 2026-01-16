@@ -30,7 +30,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fdfdfb; margin: 0; overflow: hidden; color: #334155; }
-        aside { background: #1e293b; width: 260px; flex-shrink: 0; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        aside { background: #1e293b; width: 260px; flex-shrink: 0; transition: all 0.5s ease; }
         .nav-active { background: rgba(255,255,255,0.1); border-left: 3px solid #3b82f6; color: white; }
         .custom-scroll::-webkit-scrollbar { width: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -105,7 +105,7 @@
                 } else setLs(null);
             }, [grade, localLessons]);
 
-            // ĐIỀU CHỈNH CHÍNH TẠI ĐÂY: Split theo đúng cụm '---'
+            // KIỂM TRA KỸ: Logic tách trang dựa trên đúng 3 dấu gạch nối
             const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
             
             useEffect(() => { 
@@ -133,7 +133,7 @@
             if (!user) return (
                 <div className="h-screen flex flex-col items-center justify-center bg-slate-900">
                     <div className="mb-8 text-blue-500 font-black text-4xl italic uppercase tracking-tighter">E-Tech Hub</div>
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold shadow-2xl hover:scale-105 transition-transform">Đăng nhập Google</button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold shadow-2xl">Đăng nhập</button>
                 </div>
             );
 
@@ -148,9 +148,7 @@
                                 </button>
                             ))}
                         </nav>
-                        <button onClick={() => auth.signOut()} className="mt-auto flex items-center gap-3 px-6 py-4 text-slate-500 hover:text-rose-400 transition-colors text-[10px] font-black uppercase tracking-widest">
-                             Thoát ứng dụng
-                        </button>
+                        <button onClick={() => auth.signOut()} className="mt-auto flex items-center gap-3 px-6 py-4 text-slate-500 hover:text-rose-400 transition-colors text-[10px] font-black uppercase">Thoát</button>
                     </aside>
 
                     <main className="flex-1 bg-white relative rounded-l-[3rem] shadow-2xl overflow-hidden flex flex-col border-l border-slate-100">
@@ -166,94 +164,11 @@
                                     <div className="flex items-center gap-3 border-l pl-6 border-slate-100">
                                         <img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-200" alt="Avatar" />
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{user.displayName}</span>
-                                        <button onClick={() => auth.signOut()} className="text-[9px] font-black text-rose-400 hover:text-rose-300 uppercase ml-2 underline underline-offset-4">Thoát</button>
                                     </div>
                                 )}
                             </div>
 
                             {isFocus && pages.length > 1 && (
-                                <div className="flex items-center gap-6 bg-white px-6 py-1.5 rounded-full border border-slate-200 shadow-lg animate-in fade-in zoom-in duration-300">
+                                <div className="flex items-center gap-6 bg-white px-6 py-1.5 rounded-full border border-slate-200 shadow-lg">
                                     <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">←</button>
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest min-w-[100px] text-center italic">Trang {slideIndex + 1} / {pages.length}</span>
-                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">→</button>
-                                </div>
-                            )}
-
-                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-400'}`}>
-                                {isFocus ? '✕' : '⛶'}
-                            </button>
-                        </header>
-
-                        <div className="flex-1 flex overflow-hidden">
-                            {tab === 'baigiang' && ls && (
-                                <React.Fragment>
-                                    <div className={`w-80 bg-slate-50/50 border-r p-6 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hide-sidebar' : ''}`}>
-                                        {localLessons[grade].map((l, idx) => (
-                                            <div key={idx} onClick={()=>setLs(l)} className={`p-4 rounded-xl cursor-pointer transition-all border ${ls?.id === l.id ? 'bg-white border-blue-500 shadow-sm' : 'border-transparent hover:bg-white'}`}>
-                                                <div className="text-[8px] font-black text-slate-300 uppercase mb-1">Bài {l.lessonIndex}</div>
-                                                <div className="font-bold text-xs text-slate-700">{l.title}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    <div className={`flex-1 overflow-y-auto custom-scroll bg-white flex flex-col items-center ${isFocus ? 'p-1' : 'p-8 md:p-12'}`}>
-                                        <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-full px-8' : 'max-w-5xl'}`}>
-                                            <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-6 mt-4' : 'mb-10'}`} 
-                                                style={{ fontSize: isFocus ? '36px' : '24px' }}>
-                                                {ls.title}
-                                            </h2>
-
-                                            <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10 items-center justify-center`}>
-                                                
-                                                <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-8 md:p-16 rounded-[3.5rem] slide-content shadow-inner border border-slate-100 text-slate-600 font-medium overflow-hidden`}
-                                                     style={{ minHeight: isFocus ? 'calc(100vh - 220px)' : 'auto' }}>
-                                                    <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? '32px' : '16px' }}>
-                                                        {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
-                                                    </div>
-                                                </div>
-
-                                                {isFocus && (
-                                                    <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex items-center justify-center p-2`}>
-                                                        <video 
-                                                            src={`videos/${ls.id}-S${slideIndex + 1}.mp4`}
-                                                            controls autoPlay muted loop
-                                                            className="media-box bg-black shadow-2xl"
-                                                            style={{ maxHeight: '70vh' }}
-                                                            onLoadedData={() => setHasMedia(true)}
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                const img = e.target.nextSibling;
-                                                                if(img) img.style.display = 'block';
-                                                            }}
-                                                        />
-                                                        <img 
-                                                            src={`images/${ls.id}-S${slideIndex + 1}.jpg`} 
-                                                            className="media-box bg-white hidden shadow-2xl"
-                                                            style={{ maxHeight: '70vh', objectFit: 'contain' }}
-                                                            onLoad={() => setHasMedia(true)}
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') {
-                                                                    setHasMedia(false);
-                                                                }
-                                                            }} 
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.4em] animate-pulse">Phím mũi tên hoặc Space để chuyển trang • Esc để thoát</p>}
-                                        </div>
-                                    </div>
-                                </React.Fragment>
-                            )}
-                        </div>
-                    </main>
-                </div>
-            );
-        }
-
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
+                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-
