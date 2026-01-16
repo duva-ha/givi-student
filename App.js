@@ -7,9 +7,11 @@ function App() {
     const [ls, setLs] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
+    const [mediaIndex, setMediaIndex] = useState(1); // Mặc định bắt đầu từ ảnh 1
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
 
+    // Quét dữ liệu bài giảng từ các file baiX-X.js
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         ["10", "11", "12"].forEach(g => {
@@ -36,17 +38,36 @@ function App() {
 
     const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
     
-    useEffect(() => { setSlideIndex(0); setHasMedia(false); }, [ls, isFocus]);
+    // Mỗi khi đổi Slide hoặc đổi trạng thái Focus, reset ảnh minh họa về số 1
+    useEffect(() => { 
+        setSlideIndex(0); 
+        setMediaIndex(1); 
+        setHasMedia(false); 
+    }, [ls, isFocus]);
 
+    // Lắng nghe phím bấm: Trái/Phải (Đổi trang), Lên/Xuống (Đổi ảnh)
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!isFocus) return;
+            
+            // 1. Chuyển trang (Ngang)
             if (e.key === "ArrowRight" || e.key === " ") {
                 setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
+                setMediaIndex(1); // Reset ảnh khi sang trang mới
             }
             if (e.key === "ArrowLeft") {
                 setSlideIndex(prev => Math.max(0, prev - 1));
+                setMediaIndex(1); // Reset ảnh khi lùi trang
             }
+
+            // 2. Chuyển ảnh minh họa (Dọc)
+            if (e.key === "ArrowDown") {
+                setMediaIndex(prev => prev + 1); // Tăng ảnh: M1 -> M2 -> M3...
+            }
+            if (e.key === "ArrowUp") {
+                setMediaIndex(prev => Math.max(1, prev - 1)); // Giảm ảnh
+            }
+
             if (e.key === "Escape") setIsFocus(false);
         };
         window.addEventListener("keydown", handleKeyDown);
@@ -54,7 +75,7 @@ function App() {
     }, [isFocus, pages]);
 
     if (!user) return (
-        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center font-bold">
+        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
             <div className="mb-8 text-blue-500 text-4xl italic font-black uppercase tracking-tighter">E-Tech Hub</div>
             <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold w-full max-w-xs shadow-2xl">Đăng nhập Google</button>
         </div>
@@ -62,6 +83,7 @@ function App() {
 
     return (
         <div className="flex h-screen overflow-hidden relative bg-[#fdfdfb]">
+            {/* Sidebar */}
             <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 overflow-hidden ${isFocus ? 'w-0 p-0 opacity-0 -translate-x-full' : 'w-[260px] relative'}`}>
                 <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase whitespace-nowrap">E-Tech Hub</div>
                 <nav className="flex-1 space-y-1 overflow-hidden">
@@ -91,7 +113,7 @@ function App() {
                     {isFocus && pages.length > 1 && (
                         <div className="flex items-center gap-3 lg:gap-6 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm animate-in fade-in duration-300">
                             <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">←</button>
-                            <span className="text-[9px] lg:text-[11px] font-black text-slate-500 uppercase italic">Trang {slideIndex + 1} / {pages.length}</span>
+                            <span className="text-[9px] lg:text-[11px] font-black text-slate-500 uppercase italic">Slide {slideIndex + 1} / {pages.length}</span>
                             <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">→</button>
                         </div>
                     )}
@@ -120,22 +142,45 @@ function App() {
                                     </h2>
 
                                     <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-6 lg:gap-10 items-start justify-center`}>
+                                        
+                                        {/* NỘI DUNG CHỮ */}
                                         <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-6 lg:p-12 rounded-[2rem] lg:rounded-[3rem] slide-content border border-slate-100 text-slate-600 font-medium overflow-hidden shadow-inner`}
                                              style={{ minHeight: isFocus ? '45vh' : 'auto' }}>
-                                            <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} 
+                                            <div key={`${slideIndex}-${isFocus}`} className={isFocus ? 'ppt-slide' : ''} 
                                                  style={{ fontSize: isFocus ? (window.innerWidth < 768 ? '18px' : '30px') : '16px' }}>
                                                 {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                             </div>
                                         </div>
 
+                                        {/* MEDIA (HỖ TRỢ TRƯỢT ẢNH DỌC) */}
                                         {isFocus && (
-                                            <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex items-center justify-center p-2 animate-in fade-in zoom-in duration-700`}>
-                                                <video src={`videos/${ls.id}-S${slideIndex + 1}.mp4`} controls autoPlay muted loop className="media-box bg-black" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh' }} onLoadedData={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; const img = e.target.nextSibling; if(img) img.style.display = 'block'; }} />
-                                                <img src={`images/${ls.id}-S${slideIndex + 1}.jpg`} className="media-box bg-white hidden" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh', objectFit: 'contain' }} onLoad={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') { setHasMedia(false); } }} />
+                                            <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex flex-col items-center justify-center p-2`}>
+                                                <div key={`${slideIndex}-${mediaIndex}`} className="media-slide-active w-full flex justify-center">
+                                                    <video 
+                                                        src={`videos/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.mp4`} 
+                                                        controls autoPlay muted loop className="media-box bg-black" 
+                                                        style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh' }} 
+                                                        onLoadedData={() => setHasMedia(true)} 
+                                                        onError={(e) => { e.target.style.display = 'none'; const img = e.target.nextSibling; if(img) img.style.display = 'block'; }} 
+                                                    />
+                                                    <img 
+                                                        src={`images/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.jpg`} 
+                                                        className="media-box bg-white hidden" 
+                                                        style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh', objectFit: 'contain' }} 
+                                                        onLoad={() => setHasMedia(true)} 
+                                                        onError={(e) => { 
+                                                            e.target.style.display = 'none'; 
+                                                            if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') { setHasMedia(false); } 
+                                                        }} 
+                                                    />
+                                                </div>
+                                                {/* Ghi chú số ảnh cho thầy dễ theo dõi */}
+                                                <span className="mt-2 text-[10px] font-bold text-slate-300 uppercase italic">Ảnh minh họa {mediaIndex}</span>
                                             </div>
                                         )}
                                     </div>
-                                    {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-[0.3em] animate-pulse italic">Phím mũi tên / Space để chuyển Slide • Esc để thoát</p>}
+                                    
+                                    {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-[0.3em] animate-pulse italic">Phím ← →: Trang • Phím ↑ ↓: Trượt ảnh • Esc: Thoát</p>}
                                 </div>
                             </div>
                         </React.Fragment>
@@ -145,3 +190,6 @@ function App() {
         </div>
     );
 }
+
+// Render ứng dụng
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
