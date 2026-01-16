@@ -37,7 +37,9 @@
         .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
         .lesson-container { transition: all 0.5s ease; }
-        .slide-content { transition: all 0.3s ease; line-height: 1.6; }
+        
+        /* TĂNG KHOẢNG CÁCH DÒNG (LINE-HEIGHT) ĐỂ DỄ ĐỌC KHI TRÌNH CHIẾU */
+        .slide-content { transition: all 0.3s ease; line-height: 1.8 !important; }
     </style>
 </head>
 <body>
@@ -121,7 +123,7 @@
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-slate-900">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold">Đăng nhập Google</button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold">Đăng nhập</button>
                 </div>
             );
 
@@ -148,14 +150,14 @@
                             </div>
 
                             {isFocus && pages.length > 1 && (
-                                <div className="flex items-center gap-4 bg-slate-100 px-5 py-1.5 rounded-full border border-slate-200 shadow-inner animate-in fade-in zoom-in duration-300">
-                                    <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">← TRƯỚC</button>
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[100px] text-center">Trang {slideIndex + 1} / {pages.length}</span>
-                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">SAU →</button>
+                                <div className="flex items-center gap-4 bg-white/90 px-6 py-1.5 rounded-full border border-slate-200 shadow-lg">
+                                    <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs">← TRƯỚC</button>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[100px] text-center">Slide {slideIndex + 1} / {pages.length}</span>
+                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs">SAU →</button>
                                 </div>
                             )}
 
-                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-blue-600 text-white shadow-lg scale-110' : 'bg-slate-100 text-slate-400'}`}>
+                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
                                 {isFocus ? '✕' : <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>}
                             </button>
                         </header>
@@ -172,20 +174,21 @@
                                         ))}
                                     </div>
                                     
-                                    {/* ĐÃ ĐIỀU CHỈNH: p-2 (nếu focus) để đẩy tiêu đề sát lên trên */}
-                                    <div className={`flex-1 overflow-y-auto custom-scroll bg-white lesson-container flex flex-col items-center ${isFocus ? 'p-2' : 'p-8 md:p-12'}`}>
+                                    {/* ĐIỀU CHỈNH: p-2 md:p-4 khi focus để giãn sát biên nhất có thể */}
+                                    <div className={`flex-1 overflow-y-auto custom-scroll bg-white lesson-container flex flex-col items-center ${isFocus ? 'p-2 md:p-4' : 'p-8 md:p-12'}`}>
                                         {ls && (
-                                            <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-6xl' : 'max-w-5xl'}`}>
-                                                {/* ĐÃ ĐIỀU CHỈNH: mb-4 (nếu focus) để sát nội dung bên dưới hơn */}
-                                                <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-4 mt-2' : 'mb-10'}`} 
+                                            /* ĐIỀU CHỈNH: max-w-7xl khi focus để khung nội dung giãn cực rộng */
+                                            <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-7xl' : 'max-w-5xl'}`}>
+                                                <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-4 mt-1' : 'mb-10'}`} 
                                                     style={{ fontSize: isFocus ? '36px' : '24px' }}>
                                                     {ls.title}
                                                 </h2>
-                                                <div className="bg-slate-50 p-12 rounded-[2.5rem] slide-content whitespace-pre-wrap italic shadow-inner border border-slate-100 text-slate-600 font-medium animate-in fade-in slide-in-from-bottom-4 duration-500"
-                                                     style={{ fontSize: isFocus ? '32px' : '16px', minHeight: isFocus ? '500px' : 'auto' }}>
+                                                {/* ĐIỀU CHỈNH: p-8 md:p-16 tăng đệm trong để chữ không chạm lề khung xám */}
+                                                <div className="bg-slate-50 p-8 md:p-16 rounded-[3rem] slide-content whitespace-pre-wrap italic shadow-inner border border-slate-100 text-slate-600 font-medium animate-in fade-in slide-in-from-bottom-4 duration-500"
+                                                     style={{ fontSize: isFocus ? '32px' : '16px', minHeight: isFocus ? '550px' : 'auto' }}>
                                                     {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                                 </div>
-                                                {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.3em] animate-pulse">Dùng phím mũi tên hoặc Space để chuyển trang</p>}
+                                                {isFocus && <p className="mt-6 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.3em] animate-pulse">Phím mũi tên hoặc Space để chuyển trang</p>}
                                             </div>
                                         )}
                                     </div>
