@@ -29,9 +29,9 @@
     <script src="quizzes.js" defer></script>
     <script src="LT10_B1.js"></script>
     <script src="LT10_B2.js"></script>
-    <script src="TLIEU1.js" defer></script>
-    <script src="config.js" defer></script>
-    <script type="text/babel" src="App.js"></script>
+    
+    <script src="TLIEU1.js"></script>
+    <script src="config.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -39,10 +39,10 @@
     <script type="text/babel" src="App.js"></script>
     
     <script type="text/babel">
-        // Lệnh kích hoạt ứng dụng
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        // Đợi một chút để đảm bảo mọi file JS trên đã nạp xong vào window
+        window.onload = () => {
+            ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        };
     </script>
 </body>
 </html>
-
-
