@@ -24,12 +24,15 @@ aside {
     z-index: 50; 
 }
 
-/* Lệnh ẩn Sidebar khi trình chiếu (Focus) */
+/* Ép Sidebar ẩn hoàn toàn và không chiếm không gian */
 .hide-sidebar { 
     transform: translateX(-100%); 
     width: 0 !important; 
+    min-width: 0 !important; /* Thêm dòng này */
     padding: 0 !important;
+    margin: 0 !important;   /* Thêm dòng này */
     opacity: 0;
+    overflow: hidden;       /* Thêm dòng này */
     pointer-events: none;
 }
 
