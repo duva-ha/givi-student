@@ -8,7 +8,7 @@ const LT10_B1 = [
     { 
        q: "Vật liệu nào sau đây là kim loại đen?", 
        a: ["Gang", "Đồng đỏ", "Nhôm kẽm", "Hợp kim titan"],
-       c: "Gang" }, 
+       c: "0" }, 
        
     }
 ]; 
