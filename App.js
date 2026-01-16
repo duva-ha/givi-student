@@ -22,7 +22,23 @@ function App() {
         });
         setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
     }, []);
-
+{/* TAB LUYỆN TẬP */}
+{tab === 'luyentap' && (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50">
+        <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 max-w-2xl w-full text-center">
+            <div className="text-5xl mb-6">📝</div>
+            <h2 className="text-2xl font-black text-slate-800 uppercase mb-4">Phần Luyện Tập</h2>
+            <p className="text-slate-500 font-medium mb-8">
+                Hệ thống đang nạp câu hỏi trắc nghiệm từ dữ liệu khối {grade}...
+            </p>
+            {/* Đây là nơi thầy sẽ gọi Component trắc nghiệm hoặc danh sách bài tập */}
+            <div className="grid grid-cols-2 gap-4">
+                <button className="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">Luyện tập 1</button>
+                <button className="bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">Luyện tập 2</button>
+            </div>
+        </div>
+    </div>
+)}
     useEffect(() => {
         auth.onAuthStateChanged(u => setUser(u));
         const timer = setInterval(scanData, 1000);
