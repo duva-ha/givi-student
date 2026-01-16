@@ -10,22 +10,17 @@ function App() {
     const [mediaIndex, setMediaIndex] = useState(1);
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
-
     const [localQuizzes, setLocalQuizzes] = useState({ "10": [], "11": [], "12": [] });
     const [activeQuiz, setActiveQuiz] = useState(null);
-    const [quizState, setQuizState] = useState({
-        currentQ: 0, score: 0, showResult: false, selectedAnswer: null, isCorrect: null
-    });
+    const [quizState, setQuizState] = useState({ currentQ: 0, score: 0, showResult: false, selectedAnswer: null, isCorrect: null });
 
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
-
         ["10", "11", "12"].forEach(g => {
             for (let i = 1; i <= 20; i++) {
                 const d = window[`D${g}_B${i}`];
                 if (d) resLessons[g].push({ ...d, lessonIndex: i });
-
                 const q = window[`LT${g}_B${i}`];
                 if (q) resQuizzes[g].push({ questions: q, quizIndex: i });
             }
@@ -42,55 +37,22 @@ function App() {
 
     useEffect(() => {
         const list = localLessons[grade];
-        if (list && list.length > 0) {
-            if (!ls || ls.grade !== grade) setLs(list[0]);
-        } else setLs(null);
+        if (list && list.length > 0) { if (!ls || ls.grade !== grade) setLs(list[0]); } else setLs(null);
     }, [grade, localLessons]);
 
     const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
-    
-    useEffect(() => { 
-        setSlideIndex(0); setMediaIndex(1); setHasMedia(false); 
-    }, [ls, isFocus]);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (!isFocus || activeQuiz) return;
-            if (e.key === "ArrowRight" || e.key === " ") {
-                setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
-                setMediaIndex(1);
-            }
-            if (e.key === "ArrowLeft") {
-                setSlideIndex(prev => Math.max(0, prev - 1));
-                setMediaIndex(1);
-            }
-            if (e.key === "ArrowDown") setMediaIndex(prev => prev + 1);
-            if (e.key === "ArrowUp") setMediaIndex(prev => Math.max(1, prev - 1));
-            if (e.key === "Escape") setIsFocus(false);
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isFocus, pages, activeQuiz]);
+    useEffect(() => { setSlideIndex(0); setMediaIndex(1); setHasMedia(false); }, [ls, isFocus]);
 
     const handleAnswer = (index) => {
         if (quizState.selectedAnswer !== null) return;
         const correct = activeQuiz[quizState.currentQ].c;
-        setQuizState({
-            ...quizState,
-            selectedAnswer: index,
-            isCorrect: index === correct,
-            score: index === correct ? quizState.score + 1 : quizState.score
-        });
+        setQuizState({ ...quizState, selectedAnswer: index, isCorrect: index === correct, score: index === correct ? quizState.score + 1 : quizState.score });
     };
 
     const nextQuestion = () => {
         if (quizState.currentQ < activeQuiz.length - 1) {
-            setQuizState({
-                ...quizState, currentQ: quizState.currentQ + 1, selectedAnswer: null, isCorrect: null
-            });
-        } else {
-            setQuizState({ ...quizState, showResult: true });
-        }
+            setQuizState({ ...quizState, currentQ: quizState.currentQ + 1, selectedAnswer: null, isCorrect: null });
+        } else { setQuizState({ ...quizState, showResult: true }); }
     };
 
     if (!user) return (
@@ -121,7 +83,7 @@ function App() {
                             <option value="12">K12</option><option value="11">K11</option><option value="10">K10</option>
                         </select>
                         {!isFocus && user && (
-                            <div className="flex items-center gap-3 border-l pl-4 border-slate-100 animate-in fade-in duration-500">
+                            <div className="flex items-center gap-3 border-l pl-4 border-slate-100">
                                 <img src={user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName} className="w-8 h-8 rounded-full border-2 border-white shadow-sm" />
                                 <span className="hidden lg:block text-[10px] font-bold text-slate-700 uppercase">{user.displayName}</span>
                             </div>
@@ -146,15 +108,8 @@ function App() {
                             <div className="flex-1 overflow-y-auto custom-scroll flex flex-col items-center p-6 lg:p-12">
                                 <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-full' : 'max-w-5xl'}`}>
                                     <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase mb-10 ${isFocus ? 'text-4xl' : 'text-2xl'}`}>{ls.title}</h2>
-                                    <div className={`flex flex-col ${isFocus ? 'lg:flex-row' : 'flex-col'} gap-10 items-start justify-center`}>
-                                        <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-inner flex-1 w-full" style={{ fontSize: isFocus ? '28px' : '16px' }}>
-                                            {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
-                                        </div>
-                                        {isFocus && (
-                                            <div className="lg:w-1/2 w-full flex justify-center">
-                                                <img src={`images/${ls.id}-S${slideIndex+1}-M${mediaIndex}.jpg`} className="media-box" onError={(e)=>e.target.style.display='none'} />
-                                            </div>
-                                        )}
+                                    <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-inner w-full" style={{ fontSize: isFocus ? '28px' : '16px' }}>
+                                        {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                     </div>
                                 </div>
                             </div>
@@ -163,23 +118,18 @@ function App() {
 
                     {tab === 'luyentap' && (
                         <div className="flex-1 p-10 bg-slate-50 overflow-y-auto custom-scroll">
-                            <h2 className="text-2xl font-black text-slate-800 uppercase mb-10 text-center">Luyện tập Công nghệ {grade}</h2>
+                            <h2 className="text-2xl font-black text-slate-800 uppercase mb-10 text-center">Luyện tập K{grade}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                                 {localQuizzes[grade] && localQuizzes[grade].length > 0 ? (
                                     localQuizzes[grade].map((item, idx) => (
                                         <div key={idx} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-blue-500 transition-all group">
                                             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-black mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all">{item.quizIndex}</div>
                                             <h3 className="font-bold text-slate-700 mb-4 uppercase text-sm">Luyện tập Bài {item.quizIndex}</h3>
-                                            <button 
-                                                onClick={() => { setActiveQuiz(item.questions); setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); }}
-                                                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg"
-                                            >Vào làm bài</button>
+                                            <button onClick={() => { setActiveQuiz(item.questions); setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); }} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg">Vào làm bài</button>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase tracking-widest">
-                                        Chưa nạp file LT{grade}_B...js (Hãy chọn K10)
-                                    </div>
+                                    <div className="col-span-full text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase">Đang nạp file dữ liệu...</div>
                                 )}
                             </div>
                         </div>
@@ -198,10 +148,7 @@ function App() {
                                     <h3 className="text-xl font-bold text-slate-800 mb-8 leading-relaxed">{activeQuiz[quizState.currentQ].q}</h3>
                                     <div className="space-y-3">
                                         {activeQuiz[quizState.currentQ].a.map((ans, i) => (
-                                            <button 
-                                                key={i} onClick={() => handleAnswer(i)}
-                                                className={`w-full p-5 rounded-2xl text-left font-bold transition-all border-2 ${quizState.selectedAnswer === i ? (quizState.isCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700') : 'bg-slate-50 border-transparent hover:border-slate-200 text-slate-600'}`}
-                                            >
+                                            <button key={i} onClick={() => handleAnswer(i)} className={`w-full p-5 rounded-2xl text-left font-bold transition-all border-2 ${quizState.selectedAnswer === i ? (quizState.isCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700') : 'bg-slate-50 border-transparent hover:border-slate-200 text-slate-600'}`}>
                                                 <span className="inline-block w-8">{String.fromCharCode(65 + i)}.</span> {ans}
                                             </button>
                                         ))}
@@ -228,5 +175,4 @@ function App() {
         </div>
     );
 }
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
