@@ -10,4 +10,4 @@ const LT10_B2 = [
         a: ["Gang", "Đồng đỏ", "Nhôm kẽm", "Hợp kim titan"],
         c: 0
     }
-]; // Đảm bảo kết thúc bằng ]; và không có dấu phẩy dư ở câu cuối
+];
