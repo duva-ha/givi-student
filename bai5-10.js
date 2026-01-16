@@ -6,7 +6,7 @@ window.D10_B5 = {
 🎯 Hiểu được các loại công nghệ phổ biến hiện nay.
 🎯 Phân loại được công nghệ dựa trên lĩnh vực ứng dụng.
 
---------------------------------------------------
+---
 
 1. CÔNG NGHỆ TRONG LĨNH VỰC LUYỆN KIM, CƠ KHÍ
 ● Công nghệ luyện kim: Tập trung vào việc chiết tách kim loại từ quặng.
@@ -19,7 +19,7 @@ window.D10_B5 = {
 ● Công nghệ sản xuất điện năng: Nhiệt điện, thủy điện, năng lượng tái tạo.
 ● Công nghệ điện tử y sinh: Ứng dụng trong các thiết bị hỗ trợ sức khỏe.
 
---------------------------------------------------
+---
 
 [CÂU HỎI SUY NGẪM - DÀNH CHO TRÌNH CHIẾU]
 ❓ Theo em, chiếc xe đạp em đi hàng ngày được chế tạo bằng công nghệ nào trong các loại trên?
