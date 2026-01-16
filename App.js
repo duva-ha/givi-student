@@ -1,27 +1,4 @@
-<header className="h-14 px-4 lg:px-8 border-b flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
-    <div className="flex items-center gap-2 lg:gap-6">
-        <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-transparent font-black text-blue-600 text-[10px] uppercase outline-none cursor-pointer">
-            <option value="12">K12</option><option value="11">K11</option><option value="10">K10</option>
-        </select>
-
-        {/* --- ĐOẠN MÃ HIỂN THỊ ẢNH ĐĂNG NHẬP (THẦY CHÈN VÀO ĐÂY) --- */}
-        {!isFocus && user && (
-            <div className="flex items-center gap-3 border-l pl-4 border-slate-100 animate-in fade-in duration-500">
-                <img src={user.photoURL} className="w-7 h-7 rounded-full border-2 border-white shadow-sm" alt="avatar" />
-                <div className="hidden lg:block">
-                    <p className="text-[9px] font-black uppercase text-slate-400 leading-none mb-1">Giáo viên</p>
-                    <p className="text-[10px] font-bold text-slate-700 leading-none">{user.displayName}</p>
-                </div>
-            </div>
-        )}
-        {/* -------------------------------------------------------- */}
-    </div>
-
-    <button onClick={() => setIsFocus(!isFocus)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
-        {isFocus ? '✕' : '⛶'}
-    </button>
-</header>
-    const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback } = React;
 
 function App() {
     const [user, setUser] = useState(null);
@@ -34,9 +11,8 @@ function App() {
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
 
-    // --- CÁC STATE MỚI CHO PHẦN LUYỆN TẬP ---
     const [localQuizzes, setLocalQuizzes] = useState({ "10": [], "11": [], "12": [] });
-    const [activeQuiz, setActiveQuiz] = useState(null); // Lưu danh sách câu hỏi đang làm
+    const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizState, setQuizState] = useState({
         currentQ: 0,
         score: 0,
@@ -48,14 +24,10 @@ function App() {
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
-
         ["10", "11", "12"].forEach(g => {
             for (let i = 1; i <= 20; i++) {
-                // Quét Bài Giảng (D10_B1...)
                 const d = window[`D${g}_B${i}`];
                 if (d) resLessons[g].push({ ...d, lessonIndex: i });
-
-                // Quét Luyện Tập (LT10_B1...)
                 const q = window[`LT${g}_B${i}`];
                 if (q) resQuizzes[g].push({ questions: q, quizIndex: i });
             }
@@ -85,10 +57,9 @@ function App() {
         setHasMedia(false); 
     }, [ls, isFocus]);
 
-    // Xử lý phím bấm
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (!isFocus || activeQuiz) return; // Nếu đang làm Quiz thì tạm dừng phím tắt chuyển trang
+            if (!isFocus || activeQuiz) return;
             if (e.key === "ArrowRight" || e.key === " ") {
                 setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
                 setMediaIndex(1);
@@ -105,7 +76,6 @@ function App() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFocus, pages, activeQuiz]);
 
-    // --- HÀM XỬ LÝ TRẮC NGHIỆM ---
     const handleAnswer = (index) => {
         if (quizState.selectedAnswer !== null) return;
         const correct = activeQuiz[quizState.currentQ].c;
@@ -139,7 +109,6 @@ function App() {
 
     return (
         <div className="flex h-screen overflow-hidden relative bg-[#fdfdfb]">
-            {/* SIDEBAR */}
             <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 overflow-hidden ${isFocus ? 'w-0 p-0 opacity-0 -translate-x-full' : 'w-[260px] relative'}`}>
                 <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                 <nav className="flex-1 space-y-1">
@@ -153,11 +122,20 @@ function App() {
             </aside>
 
             <main className="flex-1 bg-white relative main-container shadow-2xl overflow-hidden flex flex-col border-l border-slate-100">
+                {/* HEADER - Đã đưa vào đúng vị trí và thêm Avatar */}
                 <header className="h-14 px-4 lg:px-8 border-b flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
-                     <div className="flex items-center gap-2 lg:gap-6">
+                    <div className="flex items-center gap-2 lg:gap-6">
                         <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-transparent font-black text-blue-600 text-[10px] uppercase outline-none cursor-pointer">
                             <option value="12">K12</option><option value="11">K11</option><option value="10">K10</option>
                         </select>
+                        {!isFocus && user && (
+                            <div className="flex items-center gap-3 border-l pl-4 border-slate-100 animate-in fade-in duration-500">
+                                <img src={user.photoURL} className="w-7 h-7 rounded-full border-2 border-white shadow-sm" alt="avatar" />
+                                <div className="hidden lg:block">
+                                    <p className="text-[10px] font-bold text-slate-700 leading-none">{user.displayName}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <button onClick={() => setIsFocus(!isFocus)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
                         {isFocus ? '✕' : '⛶'}
@@ -165,7 +143,6 @@ function App() {
                 </header>
 
                 <div className="flex-1 flex overflow-hidden">
-                    {/* TAB BÀI GIẢNG */}
                     {tab === 'baigiang' && ls && (
                         <React.Fragment>
                             <div className={`w-full lg:w-80 bg-slate-50/50 border-r p-4 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hidden' : 'block'}`}>
@@ -179,13 +156,18 @@ function App() {
                             <div className={`flex-1 overflow-y-auto custom-scroll flex flex-col items-center ${isFocus ? 'p-2 lg:p-6' : 'p-6 lg:p-12'}`}>
                                 <div className={`w-full ${isFocus ? 'max-w-full' : 'max-w-5xl'}`}>
                                     <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase mb-10 ${isFocus ? 'text-3xl' : 'text-2xl'}`}>{ls.title}</h2>
-                                    <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10`}>
+                                    <div className={`flex flex-col ${isFocus ? 'lg:flex-row' : 'flex-col'} gap-10`}>
                                         <div className="bg-slate-50 p-10 rounded-[3rem] slide-content border border-slate-100 shadow-inner flex-1" style={{ fontSize: isFocus ? '28px' : '16px' }}>
                                             {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                         </div>
-                                        {isFocus && hasMedia && (
+                                        {isFocus && (
                                             <div className="lg:w-1/2 flex justify-center">
-                                                <img src={`images/${ls.id}-S${slideIndex+1}-M${mediaIndex}.jpg`} className="media-box" onLoad={()=>setHasMedia(true)} onError={()=>setHasMedia(false)} />
+                                                <img 
+                                                    src={`images/${ls.id}-S${slideIndex+1}-M${mediaIndex}.jpg`} 
+                                                    className="media-box" 
+                                                    onLoad={()=>setHasMedia(true)} 
+                                                    onError={(e)=>{e.target.style.display='none'; setHasMedia(false)}} 
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -194,7 +176,6 @@ function App() {
                         </React.Fragment>
                     )}
 
-                    {/* TAB LUYỆN TẬP */}
                     {tab === 'luyentap' && (
                         <div className="flex-1 p-10 bg-slate-50 overflow-y-auto custom-scroll">
                             <h2 className="text-2xl font-black text-slate-800 uppercase mb-10 text-center">Hệ thống Luyện tập K{grade}</h2>
@@ -214,7 +195,6 @@ function App() {
                     )}
                 </div>
 
-                {/* MODAL LÀM BÀI TRẮC NGHIỆM */}
                 {activeQuiz && (
                     <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
                         <div className="bg-white w-full max-w-2xl rounded-[3.5rem] p-12 shadow-2xl relative">
