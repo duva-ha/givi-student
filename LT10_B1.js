@@ -1,4 +1,3 @@
-// File: LT10_B1.js
 const LT10_B1 = [
     {
         q: "Thiết bị nào sau đây là đầu vào của hệ thống kỹ thuật?",
