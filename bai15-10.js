@@ -7,7 +7,19 @@ MỤC TIÊU BÀI HỌC
 🎯 Hình thành ý tưởng thiết kế sản phẩm.
 ---
 1. XÁC ĐỊNH VẤN ĐỀ
+● Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế. Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
 ● Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
+● Quan sát nhu cầu thực tế.
+● Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
+● Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
+● Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
+● Quan sát nhu cầu thực tế.
+● Đặt ra mục tiêu cần giải quyết.
 ● Đặt ra mục tiêu cần giải quyết.
 ---
 2. TÌM KIẾM GIẢI PHÁP
