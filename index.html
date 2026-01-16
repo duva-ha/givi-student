@@ -41,7 +41,12 @@
             from { opacity: 0; transform: translateX(30px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .slide-content { line-height: 1.8 !important; }
+        
+        /* Đã bổ sung white-space để xử lý xuống hàng tự động từ file JS */
+        .slide-content { 
+            line-height: 1.8 !important; 
+            white-space: pre-line; 
+        }
 
         .media-box { 
             transition: all 0.5s ease; 
@@ -105,7 +110,7 @@
                 } else setLs(null);
             }, [grade, localLessons]);
 
-            // ĐIỀU CHỈNH CHÍNH TẠI ĐÂY: Split theo đúng cụm '---'
+            // KIỂM TRA KỸ: Tách trang bằng '---' (3 dấu gạch ngang)
             const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
             
             useEffect(() => { 
@@ -203,8 +208,9 @@
                                                 {ls.title}
                                             </h2>
 
-                                            <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10 items-center justify-center`}>
+                                            <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10 items-start justify-center`}>
                                                 
+                                                {/* CỘT CHỮ - Đã sửa lỗi xuống hàng và ngắt trang */}
                                                 <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-8 md:p-16 rounded-[3.5rem] slide-content shadow-inner border border-slate-100 text-slate-600 font-medium overflow-hidden`}
                                                      style={{ minHeight: isFocus ? 'calc(100vh - 220px)' : 'auto' }}>
                                                     <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? '32px' : '16px' }}>
@@ -212,6 +218,7 @@
                                                     </div>
                                                 </div>
 
+                                                {/* CỘT MEDIA */}
                                                 {isFocus && (
                                                     <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex items-center justify-center p-2`}>
                                                         <video 
