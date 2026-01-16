@@ -1,4 +1,27 @@
-const { useState, useEffect, useCallback } = React;
+<header className="h-14 px-4 lg:px-8 border-b flex items-center justify-between bg-white/80 backdrop-blur-md z-40">
+    <div className="flex items-center gap-2 lg:gap-6">
+        <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-transparent font-black text-blue-600 text-[10px] uppercase outline-none cursor-pointer">
+            <option value="12">K12</option><option value="11">K11</option><option value="10">K10</option>
+        </select>
+
+        {/* --- ĐOẠN MÃ HIỂN THỊ ẢNH ĐĂNG NHẬP (THẦY CHÈN VÀO ĐÂY) --- */}
+        {!isFocus && user && (
+            <div className="flex items-center gap-3 border-l pl-4 border-slate-100 animate-in fade-in duration-500">
+                <img src={user.photoURL} className="w-7 h-7 rounded-full border-2 border-white shadow-sm" alt="avatar" />
+                <div className="hidden lg:block">
+                    <p className="text-[9px] font-black uppercase text-slate-400 leading-none mb-1">Giáo viên</p>
+                    <p className="text-[10px] font-bold text-slate-700 leading-none">{user.displayName}</p>
+                </div>
+            </div>
+        )}
+        {/* -------------------------------------------------------- */}
+    </div>
+
+    <button onClick={() => setIsFocus(!isFocus)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
+        {isFocus ? '✕' : '⛶'}
+    </button>
+</header>
+    const { useState, useEffect, useCallback } = React;
 
 function App() {
     const [user, setUser] = useState(null);
