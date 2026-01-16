@@ -99,12 +99,10 @@
                 } else setLs(null);
             }, [grade, localLessons]);
 
-            // CHỈNH SỬA TẠI ĐÂY: Split theo đúng cụm '---' để tránh hiện 65 trang
             const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
             
             useEffect(() => { setSlideIndex(0); }, [ls, isFocus]);
 
-            // Thêm phím Space để chuyển Slide cho thuận tiện
             useEffect(() => {
                 const handleKeyDown = (e) => {
                     if (!isFocus || pages.length <= 1) return;
@@ -173,10 +171,13 @@
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scroll bg-white lesson-container flex flex-col items-center">
+                                    
+                                    {/* ĐÃ ĐIỀU CHỈNH: p-2 (nếu focus) để đẩy tiêu đề sát lên trên */}
+                                    <div className={`flex-1 overflow-y-auto custom-scroll bg-white lesson-container flex flex-col items-center ${isFocus ? 'p-2' : 'p-8 md:p-12'}`}>
                                         {ls && (
                                             <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-6xl' : 'max-w-5xl'}`}>
-                                                <h2 className="font-black mb-10 tracking-tighter text-slate-800 text-center uppercase transition-all" 
+                                                {/* ĐÃ ĐIỀU CHỈNH: mb-4 (nếu focus) để sát nội dung bên dưới hơn */}
+                                                <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-4 mt-2' : 'mb-10'}`} 
                                                     style={{ fontSize: isFocus ? '36px' : '24px' }}>
                                                     {ls.title}
                                                 </h2>
