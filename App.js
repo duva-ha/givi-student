@@ -7,11 +7,10 @@ function App() {
     const [ls, setLs] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
-    const [mediaIndex, setMediaIndex] = useState(1); // Mặc định bắt đầu từ ảnh 1
+    const [mediaIndex, setMediaIndex] = useState(1);
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
 
-    // Quét dữ liệu bài giảng từ các file baiX-X.js
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         ["10", "11", "12"].forEach(g => {
@@ -22,23 +21,7 @@ function App() {
         });
         setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
     }, []);
-{/* TAB LUYỆN TẬP */}
-{tab === 'luyentap' && (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50">
-        <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 max-w-2xl w-full text-center">
-            <div className="text-5xl mb-6">📝</div>
-            <h2 className="text-2xl font-black text-slate-800 uppercase mb-4">Phần Luyện Tập</h2>
-            <p className="text-slate-500 font-medium mb-8">
-                Hệ thống đang nạp câu hỏi trắc nghiệm từ dữ liệu khối {grade}...
-            </p>
-            {/* Đây là nơi thầy sẽ gọi Component trắc nghiệm hoặc danh sách bài tập */}
-            <div className="grid grid-cols-2 gap-4">
-                <button className="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">Luyện tập 1</button>
-                <button className="bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">Luyện tập 2</button>
-            </div>
-        </div>
-    </div>
-)}
+
     useEffect(() => {
         auth.onAuthStateChanged(u => setUser(u));
         const timer = setInterval(scanData, 1000);
@@ -54,36 +37,29 @@ function App() {
 
     const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
     
-    // Mỗi khi đổi Slide hoặc đổi trạng thái Focus, reset ảnh minh họa về số 1
     useEffect(() => { 
         setSlideIndex(0); 
         setMediaIndex(1); 
         setHasMedia(false); 
     }, [ls, isFocus]);
 
-    // Lắng nghe phím bấm: Trái/Phải (Đổi trang), Lên/Xuống (Đổi ảnh)
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!isFocus) return;
-            
-            // 1. Chuyển trang (Ngang)
             if (e.key === "ArrowRight" || e.key === " ") {
                 setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
-                setMediaIndex(1); // Reset ảnh khi sang trang mới
+                setMediaIndex(1);
             }
             if (e.key === "ArrowLeft") {
                 setSlideIndex(prev => Math.max(0, prev - 1));
-                setMediaIndex(1); // Reset ảnh khi lùi trang
+                setMediaIndex(1);
             }
-
-            // 2. Chuyển ảnh minh họa (Dọc)
             if (e.key === "ArrowDown") {
-                setMediaIndex(prev => prev + 1); // Tăng ảnh: M1 -> M2 -> M3...
+                setMediaIndex(prev => prev + 1);
             }
             if (e.key === "ArrowUp") {
-                setMediaIndex(prev => Math.max(1, prev - 1)); // Giảm ảnh
+                setMediaIndex(prev => Math.max(1, prev - 1));
             }
-
             if (e.key === "Escape") setIsFocus(false);
         };
         window.addEventListener("keydown", handleKeyDown);
@@ -91,15 +67,14 @@ function App() {
     }, [isFocus, pages]);
 
     if (!user) return (
-        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
-            <div className="mb-8 text-blue-500 text-4xl italic font-black uppercase tracking-tighter">E-Tech Hub</div>
+        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center font-bold">
+            <div className="mb-8 text-blue-500 text-4xl italic uppercase tracking-tighter">E-Tech Hub</div>
             <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold w-full max-w-xs shadow-2xl">Đăng nhập Google</button>
         </div>
     );
 
     return (
         <div className="flex h-screen overflow-hidden relative bg-[#fdfdfb]">
-            {/* Sidebar */}
             <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 overflow-hidden ${isFocus ? 'w-0 p-0 opacity-0 -translate-x-full' : 'w-[260px] relative'}`}>
                 <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase whitespace-nowrap">E-Tech Hub</div>
                 <nav className="flex-1 space-y-1 overflow-hidden">
@@ -126,8 +101,8 @@ function App() {
                         )}
                     </div>
 
-                    {isFocus && pages.length > 1 && (
-                        <div className="flex items-center gap-3 lg:gap-6 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm animate-in fade-in duration-300">
+                    {isFocus && tab === 'baigiang' && pages.length > 1 && (
+                        <div className="flex items-center gap-3 lg:gap-6 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                             <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">←</button>
                             <span className="text-[9px] lg:text-[11px] font-black text-slate-500 uppercase italic">Slide {slideIndex + 1} / {pages.length}</span>
                             <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">→</button>
@@ -140,6 +115,7 @@ function App() {
                 </header>
 
                 <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                    {/* KHU VỰC BÀI GIẢNG */}
                     {tab === 'baigiang' && ls && (
                         <React.Fragment>
                             <div className={`w-full lg:w-80 bg-slate-50/50 border-r p-4 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hidden' : 'block'}`}>
@@ -156,50 +132,43 @@ function App() {
                                     <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-6 text-xl lg:text-4xl' : 'mb-10 text-lg lg:text-2xl'}`}>
                                         {ls.title}
                                     </h2>
-
                                     <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-6 lg:gap-10 items-start justify-center`}>
-                                        
-                                        {/* NỘI DUNG CHỮ */}
-                                        <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-6 lg:p-12 rounded-[2rem] lg:rounded-[3rem] slide-content border border-slate-100 text-slate-600 font-medium overflow-hidden shadow-inner`}
-                                             style={{ minHeight: isFocus ? '45vh' : 'auto' }}>
-                                            <div key={`${slideIndex}-${isFocus}`} className={isFocus ? 'ppt-slide' : ''} 
-                                                 style={{ fontSize: isFocus ? (window.innerWidth < 768 ? '18px' : '30px') : '16px' }}>
+                                        <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-6 lg:p-12 rounded-[2rem] lg:rounded-[3rem] slide-content border border-slate-100 text-slate-600 font-medium shadow-inner`} style={{ minHeight: isFocus ? '45vh' : 'auto' }}>
+                                            <div key={`${slideIndex}-${isFocus}`} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? (window.innerWidth < 768 ? '18px' : '30px') : '16px' }}>
                                                 {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                             </div>
                                         </div>
-
-                                        {/* MEDIA (HỖ TRỢ TRƯỢT ẢNH DỌC) */}
                                         {isFocus && (
                                             <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex flex-col items-center justify-center p-2`}>
                                                 <div key={`${slideIndex}-${mediaIndex}`} className="media-slide-active w-full flex justify-center">
-                                                    <video 
-                                                        src={`videos/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.mp4`} 
-                                                        controls autoPlay muted loop className="media-box bg-black" 
-                                                        style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh' }} 
-                                                        onLoadedData={() => setHasMedia(true)} 
-                                                        onError={(e) => { e.target.style.display = 'none'; const img = e.target.nextSibling; if(img) img.style.display = 'block'; }} 
-                                                    />
-                                                    <img 
-                                                        src={`images/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.jpg`} 
-                                                        className="media-box bg-white hidden" 
-                                                        style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh', objectFit: 'contain' }} 
-                                                        onLoad={() => setHasMedia(true)} 
-                                                        onError={(e) => { 
-                                                            e.target.style.display = 'none'; 
-                                                            if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') { setHasMedia(false); } 
-                                                        }} 
-                                                    />
+                                                    <video src={`videos/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.mp4`} controls autoPlay muted loop className="media-box bg-black" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh' }} onLoadedData={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; const img = e.target.nextSibling; if(img) img.style.display = 'block'; }} />
+                                                    <img src={`images/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.jpg`} className="media-box bg-white hidden" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh', objectFit: 'contain' }} onLoad={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') { setHasMedia(false); } }} />
                                                 </div>
-                                                {/* Ghi chú số ảnh cho thầy dễ theo dõi */}
-                                                <span className="mt-2 text-[10px] font-bold text-slate-300 uppercase italic">Ảnh minh họa {mediaIndex}</span>
+                                                <span className="mt-2 text-[10px] font-bold text-slate-300 uppercase italic">Minh họa {mediaIndex}</span>
                                             </div>
                                         )}
                                     </div>
-                                    
-                                    {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-[0.3em] animate-pulse italic">Phím ← →: Trang • Phím ↑ ↓: Trượt ảnh • Esc: Thoát</p>}
+                                    {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-[0.3em] animate-pulse italic">← →: Trang • ↑ ↓: Trượt ảnh • Esc: Thoát</p>}
                                 </div>
                             </div>
                         </React.Fragment>
+                    )}
+
+                    {/* KHU VỰC LUYỆN TẬP - Đã đưa vào đúng vị trí */}
+                    {tab === 'luyentap' && (
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50 animate-in fade-in duration-500">
+                            <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 max-w-2xl w-full text-center">
+                                <div className="text-5xl mb-6">📝</div>
+                                <h2 className="text-2xl font-black text-slate-800 uppercase mb-4">Phần Luyện Tập</h2>
+                                <p className="text-slate-500 font-medium mb-8">
+                                    Hệ thống đang nạp câu hỏi trắc nghiệm từ dữ liệu khối {grade}...
+                                </p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button className="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all hover:scale-105">Luyện tập 1</button>
+                                    <button className="bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all hover:scale-105">Luyện tập 2</button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
             </main>
@@ -207,5 +176,4 @@ function App() {
     );
 }
 
-// Render ứng dụng
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
