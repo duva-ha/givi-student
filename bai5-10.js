@@ -9,8 +9,10 @@ window.D10_B5 = {
 --------------------------------------------------
 
 1. CÔNG NGHỆ TRONG LĨNH VỰC LUYỆN KIM, CƠ KHÍ
-● Công nghệ luyện kim: Tập trung vào việc chiết tách kim loại từ quặng...
+● Công nghệ luyện kim: Tập trung vào việc chiết tách kim loại từ quặng.
+
 ● Công nghệ đúc: Chế tạo sản phẩm bằng cách rót kim loại lỏng vào khuôn.
+
 ● Công nghệ gia công cắt gọt: Tiện, phay, bào... để tạo hình chi tiết.
 
 2. CÔNG NGHỆ TRONG LĨNH VỰC ĐIỆN, ĐIỆN TỬ
