@@ -43,7 +43,7 @@
             to { opacity: 1; transform: translateX(0); }
         }
         .slide-content { line-height: 1.8 !important; }
-        .media-box { transition: all 0.5s ease; border: 8px solid white; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
+        .media-box { transition: all 0.5s ease; border: 8px solid white; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); width: 100%; height: auto; }
     </style>
 </head>
 <body>
@@ -70,8 +70,7 @@
             const [isFocus, setIsFocus] = useState(false);
             const [slideIndex, setSlideIndex] = useState(0);
             const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
-            const [practiceData, setPracticeData] = useState([]);
-            const [docData, setDocData] = useState([]);
+            const [hasMedia, setHasMedia] = useState(false);
 
             const scanData = useCallback(() => {
                 const resLessons = { "10": [], "11": [], "12": [] };
@@ -81,14 +80,7 @@
                         if (d) resLessons[g].push({ ...d, lessonIndex: i });
                     }
                 });
-                const resP = []; const resD = [];
-                for (let i = 1; i <= 10; i++) {
-                    if (window[`LTAP${i}`]) resP.push(window[`LTAP${i}`]);
-                    if (window[`TLIEU${i}`]) resD.push(window[`TLIEU${i}`]);
-                }
                 setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
-                setPracticeData(resP);
-                setDocData(resD);
             }, []);
 
             useEffect(() => {
@@ -106,7 +98,10 @@
 
             const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
             
-            useEffect(() => { setSlideIndex(0); }, [ls, isFocus]);
+            useEffect(() => { 
+                setSlideIndex(0); 
+                setHasMedia(false); 
+            }, [ls, isFocus]);
 
             useEffect(() => {
                 const handleKeyDown = (e) => {
@@ -125,9 +120,7 @@
                 return () => window.removeEventListener("keydown", handleKeyDown);
             }, [isFocus, pages]);
 
-            if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-bold">LOADING E-TECH...</div>
-            );
+            if (!user) return <div className="h-screen flex items-center justify-center bg-slate-900 text-white font-bold">LOADING...</div>;
 
             return (
                 <div className="flex h-screen overflow-hidden">
@@ -153,9 +146,9 @@
 
                             {isFocus && pages.length > 1 && (
                                 <div className="flex items-center gap-6 bg-white px-6 py-1.5 rounded-full border border-slate-200 shadow-lg">
-                                    <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs">← TRƯỚC</button>
-                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest min-w-[120px] text-center">Slide {slideIndex + 1} / {pages.length}</span>
-                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs">SAU →</button>
+                                    <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">←</button>
+                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest min-w-[100px] text-center">Slide {slideIndex + 1} / {pages.length}</span>
+                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs transition-colors">→</button>
                                 </div>
                             )}
 
@@ -165,7 +158,7 @@
                         </header>
 
                         <div className="flex-1 flex overflow-hidden">
-                            {tab === 'baigiang' && (
+                            {tab === 'baigiang' && ls && (
                                 <React.Fragment>
                                     <div className={`w-80 bg-slate-50/50 border-r p-6 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hide-sidebar' : ''}`}>
                                         {localLessons[grade].map((l, idx) => (
@@ -177,21 +170,24 @@
                                     </div>
                                     
                                     <div className={`flex-1 overflow-y-auto custom-scroll bg-white flex flex-col items-center ${isFocus ? 'p-1' : 'p-8 md:p-12'}`}>
-                                        {ls && (
-                                            <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-full px-4' : 'max-w-5xl'}`}>
-                                                <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-2 mt-1' : 'mb-10'}`} 
-                                                    style={{ fontSize: isFocus ? '36px' : '24px' }}>
-                                                    {ls.title}
-                                                </h2>
+                                        <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-full px-6' : 'max-w-5xl'}`}>
+                                            <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-4 mt-2' : 'mb-10'}`} 
+                                                style={{ fontSize: isFocus ? '36px' : '24px' }}>
+                                                {ls.title}
+                                            </h2>
+
+                                            {/* BỐ CỤC CHÍNH */}
+                                            <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-8 items-start justify-center`}>
                                                 
-                                                {/* HỆ THỐNG MEDIA TỰ ĐỘNG */}
+                                                {/* CỘT TRÁI: MEDIA */}
                                                 {isFocus && (
-                                                    <div className="flex justify-center mb-6" key={`media-${slideIndex}`}>
+                                                    <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex flex-col items-center justify-center`}>
                                                         <video 
                                                             src={`videos/${ls.id}-S${slideIndex + 1}.mp4`}
                                                             controls autoPlay muted loop
-                                                            className="media-box rounded-[2.5rem] object-contain bg-black"
-                                                            style={{ maxHeight: '450px', width: 'auto' }}
+                                                            className="media-box rounded-[2.5rem] bg-black"
+                                                            style={{ maxHeight: '70vh' }}
+                                                            onLoadedData={() => setHasMedia(true)}
                                                             onError={(e) => {
                                                                 e.target.style.display = 'none';
                                                                 const img = e.target.nextSibling;
@@ -200,27 +196,33 @@
                                                         />
                                                         <img 
                                                             src={`images/${ls.id}-S${slideIndex + 1}.jpg`} 
-                                                            className="media-box rounded-[2.5rem] object-contain bg-white"
-                                                            style={{ maxHeight: '450px', display: 'none' }}
-                                                            onError={(e) => e.target.style.display = 'none'} 
+                                                            className="media-box rounded-[2.5rem] bg-white hidden"
+                                                            style={{ maxHeight: '70vh', objectFit: 'contain' }}
+                                                            onLoad={() => setHasMedia(true)}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') {
+                                                                    setHasMedia(false);
+                                                                }
+                                                            }} 
                                                         />
                                                     </div>
                                                 )}
 
-                                                <div className="bg-slate-50 p-8 md:p-20 rounded-[3.5rem] slide-content shadow-inner border border-slate-100 text-slate-600 font-medium overflow-hidden"
-                                                     style={{ minHeight: isFocus ? 'calc(100vh - 220px)' : 'auto' }}>
+                                                {/* CỘT PHẢI: CHỮ */}
+                                                <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-8 md:p-16 rounded-[3.5rem] slide-content shadow-inner border border-slate-100 text-slate-600 font-medium overflow-hidden`}
+                                                     style={{ minHeight: isFocus ? 'calc(100vh - 180px)' : 'auto' }}>
                                                     <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? '32px' : '16px' }}>
                                                         {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                                     </div>
                                                 </div>
-                                                
-                                                {isFocus && <p className="mt-4 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.4em]">Space / Arrows to Slide • Esc to Exit</p>}
                                             </div>
-                                        )}
+                                            
+                                            {isFocus && <p className="mt-4 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.4em]">Space / Arrows to Navigate</p>}
+                                        </div>
                                     </div>
                                 </React.Fragment>
                             )}
-                            {/* CÁC TAB KHÁC GIỮ NGUYÊN */}
                         </div>
                     </main>
                 </div>
