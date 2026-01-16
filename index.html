@@ -105,6 +105,7 @@
                 } else setLs(null);
             }, [grade, localLessons]);
 
+            // ĐIỀU CHỈNH CHÍNH TẠI ĐÂY: Split theo đúng cụm '---'
             const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
             
             useEffect(() => { 
@@ -132,12 +133,7 @@
             if (!user) return (
                 <div className="h-screen flex flex-col items-center justify-center bg-slate-900">
                     <div className="mb-8 text-blue-500 font-black text-4xl italic uppercase tracking-tighter">E-Tech Hub</div>
-                    <button 
-                        onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} 
-                        className="bg-white px-8 py-3 rounded-xl font-bold shadow-2xl hover:scale-105 transition-transform"
-                    >
-                        Đăng nhập Google
-                    </button>
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white px-8 py-3 rounded-xl font-bold shadow-2xl hover:scale-105 transition-transform">Đăng nhập Google</button>
                 </div>
             );
 
@@ -152,11 +148,8 @@
                                 </button>
                             ))}
                         </nav>
-                        
-                        {/* NÚT THOÁT Ở SIDEBAR (TÙY CHỌN THÊM) */}
                         <button onClick={() => auth.signOut()} className="mt-auto flex items-center gap-3 px-6 py-4 text-slate-500 hover:text-rose-400 transition-colors text-[10px] font-black uppercase tracking-widest">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                             Thoát
+                             Thoát ứng dụng
                         </button>
                     </aside>
 
@@ -169,12 +162,11 @@
                                         <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
                                     </select>
                                 </div>
-
-                                {/* THÔNG TIN ĐĂNG NHẬP */}
                                 {!isFocus && user && (
                                     <div className="flex items-center gap-3 border-l pl-6 border-slate-100">
                                         <img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-200" alt="Avatar" />
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{user.displayName}</span>
+                                        <button onClick={() => auth.signOut()} className="text-[9px] font-black text-rose-400 hover:text-rose-300 uppercase ml-2 underline underline-offset-4">Thoát</button>
                                     </div>
                                 )}
                             </div>
@@ -187,15 +179,9 @@
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-2">
-                                {/* NÚT THOÁT NHANH TRÊN HEADER */}
-                                {!isFocus && (
-                                    <button onClick={() => auth.signOut()} className="text-[10px] font-black text-slate-400 hover:text-rose-500 uppercase px-4 transition-colors">Thoát</button>
-                                )}
-                                <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-400'}`}>
-                                    {isFocus ? '✕' : <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>}
-                                </button>
-                            </div>
+                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-400'}`}>
+                                {isFocus ? '✕' : '⛶'}
+                            </button>
                         </header>
 
                         <div className="flex-1 flex overflow-hidden">
@@ -219,7 +205,6 @@
 
                                             <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10 items-center justify-center`}>
                                                 
-                                                {/* CỘT NỘI DUNG CHỮ */}
                                                 <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-8 md:p-16 rounded-[3.5rem] slide-content shadow-inner border border-slate-100 text-slate-600 font-medium overflow-hidden`}
                                                      style={{ minHeight: isFocus ? 'calc(100vh - 220px)' : 'auto' }}>
                                                     <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? '32px' : '16px' }}>
@@ -227,7 +212,6 @@
                                                     </div>
                                                 </div>
 
-                                                {/* CỘT MEDIA */}
                                                 {isFocus && (
                                                     <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex items-center justify-center p-2`}>
                                                         <video 
