@@ -11,15 +11,34 @@ function App() {
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
 
+    // --- CÁC STATE MỚI CHO PHẦN LUYỆN TẬP ---
+    const [localQuizzes, setLocalQuizzes] = useState({ "10": [], "11": [], "12": [] });
+    const [activeQuiz, setActiveQuiz] = useState(null); // Lưu danh sách câu hỏi đang làm
+    const [quizState, setQuizState] = useState({
+        currentQ: 0,
+        score: 0,
+        showResult: false,
+        selectedAnswer: null,
+        isCorrect: null
+    });
+
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
+        const resQuizzes = { "10": [], "11": [], "12": [] };
+
         ["10", "11", "12"].forEach(g => {
             for (let i = 1; i <= 20; i++) {
+                // Quét Bài Giảng (D10_B1...)
                 const d = window[`D${g}_B${i}`];
                 if (d) resLessons[g].push({ ...d, lessonIndex: i });
+
+                // Quét Luyện Tập (LT10_B1...)
+                const q = window[`LT${g}_B${i}`];
+                if (q) resQuizzes[g].push({ questions: q, quizIndex: i });
             }
         });
-        setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
+        setLocalLessons(resLessons);
+        setLocalQuizzes(resQuizzes);
     }, []);
 
     useEffect(() => {
@@ -43,9 +62,10 @@ function App() {
         setHasMedia(false); 
     }, [ls, isFocus]);
 
+    // Xử lý phím bấm
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (!isFocus) return;
+            if (!isFocus || activeQuiz) return; // Nếu đang làm Quiz thì tạm dừng phím tắt chuyển trang
             if (e.key === "ArrowRight" || e.key === " ") {
                 setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
                 setMediaIndex(1);
@@ -54,17 +74,38 @@ function App() {
                 setSlideIndex(prev => Math.max(0, prev - 1));
                 setMediaIndex(1);
             }
-            if (e.key === "ArrowDown") {
-                setMediaIndex(prev => prev + 1);
-            }
-            if (e.key === "ArrowUp") {
-                setMediaIndex(prev => Math.max(1, prev - 1));
-            }
+            if (e.key === "ArrowDown") setMediaIndex(prev => prev + 1);
+            if (e.key === "ArrowUp") setMediaIndex(prev => Math.max(1, prev - 1));
             if (e.key === "Escape") setIsFocus(false);
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isFocus, pages]);
+    }, [isFocus, pages, activeQuiz]);
+
+    // --- HÀM XỬ LÝ TRẮC NGHIỆM ---
+    const handleAnswer = (index) => {
+        if (quizState.selectedAnswer !== null) return;
+        const correct = activeQuiz[quizState.currentQ].c;
+        setQuizState({
+            ...quizState,
+            selectedAnswer: index,
+            isCorrect: index === correct,
+            score: index === correct ? quizState.score + 1 : quizState.score
+        });
+    };
+
+    const nextQuestion = () => {
+        if (quizState.currentQ < activeQuiz.length - 1) {
+            setQuizState({
+                ...quizState,
+                currentQ: quizState.currentQ + 1,
+                selectedAnswer: null,
+                isCorrect: null
+            });
+        } else {
+            setQuizState({ ...quizState, showResult: true });
+        }
+    };
 
     if (!user) return (
         <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center font-bold">
@@ -75,16 +116,17 @@ function App() {
 
     return (
         <div className="flex h-screen overflow-hidden relative bg-[#fdfdfb]">
+            {/* SIDEBAR */}
             <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 overflow-hidden ${isFocus ? 'w-0 p-0 opacity-0 -translate-x-full' : 'w-[260px] relative'}`}>
-                <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase whitespace-nowrap">E-Tech Hub</div>
-                <nav className="flex-1 space-y-1 overflow-hidden">
+                <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
+                <nav className="flex-1 space-y-1">
                     {['baigiang', 'luyentap', 'kiemtra', 'tuliaeu'].map(t => (
-                        <button key={t} onClick={() => { setTab(t); if(window.innerWidth < 768) setIsFocus(false); }} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active shadow-md text-white' : 'text-slate-500 hover:text-white'}`}>
+                        <button key={t} onClick={() => { setTab(t); setIsFocus(false); }} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active shadow-md text-white' : 'text-slate-500 hover:text-white'}`}>
                             {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : t === 'kiemtra' ? '🎯 Kiểm tra' : '📚 Tư liệu'}
                         </button>
                     ))}
                 </nav>
-                <button onClick={() => auth.signOut()} className="mt-auto py-4 text-slate-500 text-[10px] font-black uppercase text-center border-t border-slate-700 whitespace-nowrap">Thoát</button>
+                <button onClick={() => auth.signOut()} className="mt-auto py-4 text-slate-500 text-[10px] font-black uppercase border-t border-slate-700">Thoát</button>
             </aside>
 
             <main className="flex-1 bg-white relative main-container shadow-2xl overflow-hidden flex flex-col border-l border-slate-100">
@@ -93,29 +135,14 @@ function App() {
                         <select value={grade} onChange={e=>setGrade(e.target.value)} className="bg-transparent font-black text-blue-600 text-[10px] uppercase outline-none cursor-pointer">
                             <option value="12">K12</option><option value="11">K11</option><option value="10">K10</option>
                         </select>
-                        {!isFocus && user && (
-                            <div className="flex items-center gap-3 border-l pl-4 border-slate-100">
-                                <img src={user.photoURL} className="w-6 h-6 rounded-full border border-slate-200" />
-                                <span className="hidden lg:block text-[9px] font-black uppercase text-slate-400">{user.displayName}</span>
-                            </div>
-                        )}
                     </div>
-
-                    {isFocus && tab === 'baigiang' && pages.length > 1 && (
-                        <div className="flex items-center gap-3 lg:gap-6 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-                            <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">←</button>
-                            <span className="text-[9px] lg:text-[11px] font-black text-slate-500 uppercase italic">Slide {slideIndex + 1} / {pages.length}</span>
-                            <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="text-blue-600 font-bold px-2 hover:bg-white rounded">→</button>
-                        </div>
-                    )}
-
-                    <button onClick={() => setIsFocus(!isFocus)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+                    <button onClick={() => setIsFocus(!isFocus)} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
                         {isFocus ? '✕' : '⛶'}
                     </button>
                 </header>
 
-                <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-                    {/* KHU VỰC BÀI GIẢNG */}
+                <div className="flex-1 flex overflow-hidden">
+                    {/* TAB BÀI GIẢNG */}
                     {tab === 'baigiang' && ls && (
                         <React.Fragment>
                             <div className={`w-full lg:w-80 bg-slate-50/50 border-r p-4 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hidden' : 'block'}`}>
@@ -126,51 +153,83 @@ function App() {
                                     </div>
                                 ))}
                             </div>
-                            
-                            <div className={`flex-1 overflow-y-auto custom-scroll bg-white flex flex-col items-center ${isFocus ? 'p-2 lg:p-6' : 'p-6 lg:p-12'}`}>
-                                <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-full' : 'max-w-5xl'}`}>
-                                    <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase transition-all ${isFocus ? 'mb-6 text-xl lg:text-4xl' : 'mb-10 text-lg lg:text-2xl'}`}>
-                                        {ls.title}
-                                    </h2>
-                                    <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-6 lg:gap-10 items-start justify-center`}>
-                                        <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-6 lg:p-12 rounded-[2rem] lg:rounded-[3rem] slide-content border border-slate-100 text-slate-600 font-medium shadow-inner`} style={{ minHeight: isFocus ? '45vh' : 'auto' }}>
-                                            <div key={`${slideIndex}-${isFocus}`} className={isFocus ? 'ppt-slide' : ''} style={{ fontSize: isFocus ? (window.innerWidth < 768 ? '18px' : '30px') : '16px' }}>
-                                                {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
-                                            </div>
+                            <div className={`flex-1 overflow-y-auto custom-scroll flex flex-col items-center ${isFocus ? 'p-2 lg:p-6' : 'p-6 lg:p-12'}`}>
+                                <div className={`w-full ${isFocus ? 'max-w-full' : 'max-w-5xl'}`}>
+                                    <h2 className={`font-black tracking-tighter text-slate-800 text-center uppercase mb-10 ${isFocus ? 'text-3xl' : 'text-2xl'}`}>{ls.title}</h2>
+                                    <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-10`}>
+                                        <div className="bg-slate-50 p-10 rounded-[3rem] slide-content border border-slate-100 shadow-inner flex-1" style={{ fontSize: isFocus ? '28px' : '16px' }}>
+                                            {isFocus ? pages[slideIndex] : ls.content.split('---').join('\n\n')}
                                         </div>
-                                        {isFocus && (
-                                            <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex flex-col items-center justify-center p-2`}>
-                                                <div key={`${slideIndex}-${mediaIndex}`} className="media-slide-active w-full flex justify-center">
-                                                    <video src={`videos/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.mp4`} controls autoPlay muted loop className="media-box bg-black" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh' }} onLoadedData={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; const img = e.target.nextSibling; if(img) img.style.display = 'block'; }} />
-                                                    <img src={`images/${ls.id}-S${slideIndex + 1}-M${mediaIndex}.jpg`} className="media-box bg-white hidden" style={{ maxHeight: window.innerWidth < 768 ? '40vh' : '65vh', objectFit: 'contain' }} onLoad={() => setHasMedia(true)} onError={(e) => { e.target.style.display = 'none'; if (!e.target.previousSibling || e.target.previousSibling.style.display === 'none') { setHasMedia(false); } }} />
-                                                </div>
-                                                <span className="mt-2 text-[10px] font-bold text-slate-300 uppercase italic">Minh họa {mediaIndex}</span>
+                                        {isFocus && hasMedia && (
+                                            <div className="lg:w-1/2 flex justify-center">
+                                                <img src={`images/${ls.id}-S${slideIndex+1}-M${mediaIndex}.jpg`} className="media-box" onLoad={()=>setHasMedia(true)} onError={()=>setHasMedia(false)} />
                                             </div>
                                         )}
                                     </div>
-                                    {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-[0.3em] animate-pulse italic">← →: Trang • ↑ ↓: Trượt ảnh • Esc: Thoát</p>}
                                 </div>
                             </div>
                         </React.Fragment>
                     )}
 
-                    {/* KHU VỰC LUYỆN TẬP - Đã đưa vào đúng vị trí */}
+                    {/* TAB LUYỆN TẬP */}
                     {tab === 'luyentap' && (
-                        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50 animate-in fade-in duration-500">
-                            <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 max-w-2xl w-full text-center">
-                                <div className="text-5xl mb-6">📝</div>
-                                <h2 className="text-2xl font-black text-slate-800 uppercase mb-4">Phần Luyện Tập</h2>
-                                <p className="text-slate-500 font-medium mb-8">
-                                    Hệ thống đang nạp câu hỏi trắc nghiệm từ dữ liệu khối {grade}...
-                                </p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button className="bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all hover:scale-105">Luyện tập 1</button>
-                                    <button className="bg-indigo-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all hover:scale-105">Luyện tập 2</button>
-                                </div>
+                        <div className="flex-1 p-10 bg-slate-50 overflow-y-auto custom-scroll">
+                            <h2 className="text-2xl font-black text-slate-800 uppercase mb-10 text-center">Hệ thống Luyện tập K{grade}</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                                {localQuizzes[grade].map((item, idx) => (
+                                    <div key={idx} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-blue-500 transition-all group">
+                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-black mb-4 group-hover:bg-blue-600 group-hover:text-white">{item.quizIndex}</div>
+                                        <h3 className="font-bold text-slate-700 mb-4">Luyện tập Bài {item.quizIndex}</h3>
+                                        <button 
+                                            onClick={() => { setActiveQuiz(item.questions); setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); }}
+                                            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold uppercase text-xs tracking-widest hover:bg-blue-600 transition-all"
+                                        >Bắt đầu làm bài</button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
                 </div>
+
+                {/* MODAL LÀM BÀI TRẮC NGHIỆM */}
+                {activeQuiz && (
+                    <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-2xl rounded-[3.5rem] p-12 shadow-2xl relative">
+                            {!quizState.showResult ? (
+                                <React.Fragment>
+                                    <div className="flex justify-between items-center mb-10">
+                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Câu hỏi {quizState.currentQ + 1} / {activeQuiz.length}</span>
+                                        <button onClick={() => setActiveQuiz(null)} className="text-slate-300 hover:text-rose-500 font-black">THOÁT</button>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-800 mb-8 leading-relaxed">{activeQuiz[quizState.currentQ].q}</h3>
+                                    <div className="space-y-3">
+                                        {activeQuiz[quizState.currentQ].a.map((ans, i) => (
+                                            <button 
+                                                key={i} onClick={() => handleAnswer(i)}
+                                                className={`w-full p-5 rounded-2xl text-left font-bold transition-all border-2 ${quizState.selectedAnswer === i ? (quizState.isCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700') : 'bg-slate-50 border-transparent hover:border-slate-200 text-slate-600'}`}
+                                            >
+                                                <span className="inline-block w-8">{String.fromCharCode(65 + i)}.</span> {ans}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {quizState.selectedAnswer !== null && (
+                                        <button onClick={nextQuestion} className="w-full mt-8 bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200">
+                                            {quizState.currentQ === activeQuiz.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo'}
+                                        </button>
+                                    )}
+                                </React.Fragment>
+                            ) : (
+                                <div className="text-center py-10">
+                                    <div className="text-7xl mb-6">🏆</div>
+                                    <h2 className="text-3xl font-black text-slate-800 uppercase mb-2">Hoàn thành!</h2>
+                                    <p className="text-slate-500 font-medium mb-8">Thầy/trò đã trả lời đúng {quizState.score} / {activeQuiz.length} câu hỏi.</p>
+                                    <div className="text-5xl font-black text-blue-600 mb-10">{Math.round((quizState.score/activeQuiz.length)*10)} / 10</div>
+                                    <button onClick={() => setActiveQuiz(null)} className="bg-slate-900 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest">Đóng</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
