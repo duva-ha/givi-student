@@ -23,11 +23,9 @@
     <script src="bai18-10.js" defer></script>
     <script src="bai19-10.js" defer></script>
     <script src="bai20-10.js" defer></script>
-
     <script src="quizzes.js" defer></script>
     <script src="LTAP1.js" defer></script>
     <script src="TLIEU1.js" defer></script>
-
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -38,9 +36,8 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
-        
         .lesson-container { transition: all 0.5s ease; }
-        .lesson-content-box { transition: all 0.5s ease; line-height: 1.6; }
+        .slide-content { transition: all 0.3s ease; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -66,6 +63,7 @@
             const [grade, setGrade] = useState('10');
             const [ls, setLs] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
+            const [slideIndex, setSlideIndex] = useState(0);
             const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
             const [practiceData, setPracticeData] = useState([]);
             const [docData, setDocData] = useState([]);
@@ -94,12 +92,30 @@
                 return () => clearInterval(timer);
             }, [scanData]);
 
+            // Logic tự động chọn bài 1 khi đổi khối
             useEffect(() => {
                 const list = localLessons[grade];
                 if (list && list.length > 0) {
                     if (!ls || ls.grade !== grade) setLs(list[0]);
                 } else setLs(null);
             }, [grade, localLessons]);
+
+            // Tách nội dung thành các Slide khi có dấu ---
+            const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
+            
+            // Reset Slide về trang đầu khi đổi bài hoặc đổi chế độ
+            useEffect(() => { setSlideIndex(0); }, [ls, isFocus]);
+
+            // Lắng nghe phím mũi tên để chuyển Slide
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (!isFocus || pages.length <= 1) return;
+                    if (e.key === "ArrowRight") setSlideIndex(prev => Math.min(pages.length - 1, prev + 1));
+                    if (e.key === "ArrowLeft") setSlideIndex(prev => Math.max(0, prev - 1));
+                };
+                window.addEventListener("keydown", handleKeyDown);
+                return () => window.removeEventListener("keydown", handleKeyDown);
+            }, [isFocus, pages]);
 
             if (!user) return (
                 <div className="h-screen flex items-center justify-center bg-slate-900">
@@ -113,7 +129,7 @@
                         <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                         <nav className="flex-1 space-y-1">
                             {['baigiang', 'luyentap', 'kiemtra', 'tuliaeu'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>
+                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active shadow-md text-white' : 'text-slate-500 hover:text-white'}`}>
                                     {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : t === 'kiemtra' ? '🎯 Kiểm tra' : '📚 Tư liệu'}
                                 </button>
                             ))}
@@ -128,7 +144,16 @@
                                     <option value="12">Lớp 12</option><option value="11">Lớp 11</option><option value="10">Lớp 10</option>
                                 </select>
                             </div>
-                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-400'}`}>
+
+                            {isFocus && pages.length > 1 && (
+                                <div className="flex items-center gap-4 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">
+                                    <button onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))} className="hover:text-blue-600 font-bold text-xs">← TRƯỚC</button>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trang {slideIndex + 1} / {pages.length}</span>
+                                    <button onClick={() => setSlideIndex(prev => Math.min(pages.length - 1, prev + 1))} className="hover:text-blue-600 font-bold text-xs">SAU →</button>
+                                </div>
+                            )}
+
+                            <button onClick={() => setIsFocus(!isFocus)} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isFocus ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
                                 {isFocus ? '✕' : <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>}
                             </button>
                         </header>
@@ -144,24 +169,24 @@
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scroll bg-white lesson-container">
+                                    <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scroll bg-white lesson-container flex flex-col items-center">
                                         {ls && (
-                                            <div className={`mx-auto transition-all duration-500 ${isFocus ? 'max-w-full px-10' : 'max-w-5xl'}`}>
-                                                <h2 className="font-black mb-10 tracking-tighter text-slate-800 transition-all duration-500" 
+                                            <div className={`w-full transition-all duration-500 ${isFocus ? 'max-w-6xl' : 'max-w-5xl'}`}>
+                                                <h2 className="font-black mb-10 tracking-tighter text-slate-800 text-center uppercase" 
                                                     style={{ fontSize: isFocus ? '36px' : '24px' }}>
                                                     {ls.title}
                                                 </h2>
-                                                <div className="bg-slate-50 p-12 rounded-[2.5rem] lesson-content-box whitespace-pre-wrap italic shadow-inner border border-slate-100 text-slate-600 font-medium"
-                                                     style={{ fontSize: isFocus ? '32px' : '16px' }}>
-                                                    {ls.content}
+                                                <div className="bg-slate-50 p-12 rounded-[2.5rem] slide-content whitespace-pre-wrap italic shadow-inner border border-slate-100 text-slate-600 font-medium animate-in fade-in zoom-in-95 duration-500"
+                                                     style={{ fontSize: isFocus ? '32px' : '16px', minHeight: isFocus ? '500px' : 'auto' }}>
+                                                    {isFocus ? pages[slideIndex] : ls.content.replace(/---/g, '\n\n')}
                                                 </div>
+                                                {isFocus && <p className="mt-8 text-center text-slate-300 font-bold text-[10px] uppercase tracking-[0.3em]">Dùng phím mũi tên ← → để chuyển trang</p>}
                                             </div>
                                         )}
                                     </div>
                                 </React.Fragment>
                             )}
-                            
-                            {/* CÁC TAB LUYỆN TẬP, KIỂM TRA, TƯ LIỆU ĐÃ ĐƯỢC GIỮ NGUYÊN */}
+
                             {tab === 'luyentap' && (
                                 <div className="flex-1 p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto custom-scroll">
                                     {practiceData.filter(p => p.grade === grade).map(item => (
