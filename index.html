@@ -17,8 +17,13 @@
     <script src="bai3-10.js" defer></script>
     <script src="bai4-10.js" defer></script>
     <script src="bai5-10.js" defer></script>
-    <script src="bai1-11.js" defer></script>
-    <script src="bai2-11.js" defer></script>
+    <script src="bai15-10.js" defer></script>
+    <script src="bai16-10.js" defer></script>
+    <script src="bai17-10.js" defer></script>
+    <script src="bai18-10.js" defer></script>
+    <script src="bai19-10.js" defer></script>
+    <script src="bai20-10.js" defer></script>
+
     <script src="quizzes.js" defer></script>
     <script src="LTAP1.js" defer></script>
     <script src="TLIEU1.js" defer></script>
@@ -33,7 +38,7 @@
         .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
         .hide-sidebar { transform: translateX(-100%); width: 0 !important; opacity: 0; }
         
-        /* CHỈNH KÍCH THƯỚC CHỮ THEO YÊU CẦU */
+        /* CHỈNH KÍCH THƯỚC CHỮ */
         .lesson-title { font-size: 24px !important; font-weight: 800; line-height: 1.2; color: #1e293b; }
         .lesson-content { font-size: 16px !important; line-height: 1.8; color: #475569; }
         
@@ -64,23 +69,36 @@
             const [grade, setGrade] = useState('10');
             const [ls, setLs] = useState(null);
             const [isFocus, setIsFocus] = useState(false);
+            
             const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
+            const [practiceData, setPracticeData] = useState([]);
+            const [docData, setDocData] = useState([]);
 
             const scanData = useCallback(() => {
                 const resLessons = { "10": [], "11": [], "12": [] };
+                // QUÉT ĐỦ TỪ BÀI 1 ĐẾN BÀI 20
                 ["10", "11", "12"].forEach(g => {
                     for (let i = 1; i <= 20; i++) {
                         const d = window[`D${g}_B${i}`];
                         if (d) resLessons[g].push({ ...d, lessonIndex: i });
                     }
                 });
+
+                const resP = []; const resD = [];
+                for (let i = 1; i <= 10; i++) {
+                    if (window[`LTAP${i}`]) resP.push(window[`LTAP${i}`]);
+                    if (window[`TLIEU${i}`]) resD.push(window[`TLIEU${i}`]);
+                }
+
                 setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
+                setPracticeData(prev => JSON.stringify(prev) !== JSON.stringify(resP) ? resP : prev);
+                setDocData(prev => JSON.stringify(prev) !== JSON.stringify(resD) ? resD : prev);
             }, []);
 
             useEffect(() => {
-                auth.onAuthStateChanged(u => setUser(u));
+                const unsub = auth.onAuthStateChanged(u => setUser(u));
                 const timer = setInterval(scanData, 1000);
-                return () => clearInterval(timer);
+                return () => { unsub(); clearInterval(timer); };
             }, [scanData]);
 
             useEffect(() => {
@@ -91,8 +109,8 @@
             }, [grade, localLessons]);
 
             if (!user) return (
-                <div className="h-screen flex items-center justify-center bg-slate-900 text-white">
-                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest">Đăng nhập</button>
+                <div className="h-screen flex items-center justify-center bg-slate-900">
+                    <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold uppercase text-xs">Đăng nhập bằng Google</button>
                 </div>
             );
 
@@ -101,11 +119,10 @@
                     <aside className={`flex flex-col p-6 z-50 transition-all duration-500 shadow-xl ${isFocus ? 'hide-sidebar' : ''}`}>
                         <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                         <nav className="flex-1 space-y-1">
-                            {['baigiang', 'luyentap', 'kiemtra', 'tuliaeu'].map(t => (
-                                <button key={t} onClick={() => setTab(t)} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>
-                                    {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : t === 'kiemtra' ? '🎯 Kiểm tra' : '📚 Tư liệu'}
-                                </button>
-                            ))}
+                            <button onClick={() => setTab('baigiang')} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'baigiang' ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>📖 Bài giảng</button>
+                            <button onClick={() => setTab('luyentap')} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'luyentap' ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>📝 Luyện tập</button>
+                            <button onClick={() => setTab('kiemtra')} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'kiemtra' ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>🎯 Kiểm tra</button>
+                            <button onClick={() => setTab('tuliaeu')} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === 'tuliaeu' ? 'nav-active shadow-md' : 'text-slate-500 hover:text-white'}`}>📚 Tư liệu</button>
                         </nav>
                     </aside>
 
@@ -133,20 +150,52 @@
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex-1 p-10 md:p-16 overflow-y-auto custom-scroll bg-white">
+                                    <div className="flex-1 p-16 overflow-y-auto custom-scroll">
                                         {ls && (
-                                            /* MỞ RỘNG KHUNG CHỨA: max-w-5xl giúp nội dung trải rộng hơn */
                                             <div className="max-w-5xl mx-auto animate-in fade-in duration-700">
                                                 <h2 className="lesson-title mb-10 tracking-tighter">{ls.title}</h2>
-                                                <div className="bg-slate-50 p-8 md:p-12 rounded-[2.5rem] lesson-content whitespace-pre-wrap italic shadow-inner border border-slate-100">
-                                                    {ls.content}
-                                                </div>
+                                                <div className="bg-slate-50 p-12 rounded-[2.5rem] lesson-content whitespace-pre-wrap italic shadow-inner border border-slate-100">{ls.content}</div>
                                             </div>
                                         )}
                                     </div>
                                 </React.Fragment>
                             )}
-                            {/* Các tab khác giữ nguyên logic của bạn */}
+
+                            {tab === 'luyentap' && (
+                                <div className="flex-1 p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto custom-scroll">
+                                    {practiceData.filter(p => p.grade === grade).map(item => (
+                                        <div key={item.id} className="bg-white p-8 rounded-[2.5rem] border border-emerald-100 shadow-sm h-80 flex flex-col justify-between">
+                                            <div className="text-3xl">📝</div>
+                                            <h4 className="text-xl font-black text-slate-800">{item.title}</h4>
+                                            <button className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px]">Luyện tập ngay</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {tab === 'kiemtra' && (
+                                <div className="flex-1 p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto custom-scroll">
+                                    {window.E_TECH_QUIZZES?.filter(q => q.grade === grade).map(quiz => (
+                                        <div key={quiz.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm h-80 flex flex-col justify-between">
+                                            <div className="text-3xl">🎯</div>
+                                            <h4 className="text-xl font-black text-slate-800">{quiz.title}</h4>
+                                            <button className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px]">Bắt đầu thi</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {tab === 'tuliaeu' && (
+                                <div className="flex-1 p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto custom-scroll">
+                                    {docData.filter(d => d.grade === grade).map(item => (
+                                        <div key={item.id} className="bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm h-80 flex flex-col justify-between">
+                                            <div className="text-3xl">📚</div>
+                                            <h4 className="text-xl font-black text-slate-800">{item.title}</h4>
+                                            <a href={item.link} target="_blank" className="w-full py-4 bg-amber-600 text-white rounded-2xl font-black uppercase text-[10px] text-center">Xem tư liệu</a>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </main>
                 </div>
