@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-TECH Hub 2026 - Student Official</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -26,44 +29,6 @@
     <script src="quizzes.js" defer></script>
     <script src="LTAP1.js" defer></script>
     <script src="TLIEU1.js" defer></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fdfdfb; margin: 0; overflow-x: hidden; color: #334155; }
-        
-        /* Ẩn Sidebar trên điện thoại khi trình chiếu */
-        aside { background: #1e293b; width: 260px; flex-shrink: 0; transition: all 0.5s ease; z-index: 50; }
-        @media (max-width: 768px) {
-            aside { position: absolute; height: 100%; left: 0; top: 0; }
-            .hide-sidebar-mobile { transform: translateX(-100%); }
-        }
-
-        .nav-active { background: rgba(255,255,255,0.1); border-left: 3px solid #3b82f6; color: white; }
-        .custom-scroll::-webkit-scrollbar { width: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .ppt-slide { animation: pptNext 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes pptNext {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .slide-content { line-height: 1.6 !important; white-space: pre-line; }
-
-        .media-box { 
-            transition: all 0.5s ease; 
-            border: 4px solid white; 
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15); 
-            width: 100%; 
-            border-radius: 2rem !important; 
-            overflow: hidden !important;   
-            object-fit: contain;            
-        }
-
-        /* Bo góc khung nội dung mượt hơn */
-        .main-container { border-radius: 2rem; }
-        @media (min-width: 768px) { .main-container { border-radius: 3rem 0 0 3rem; } }
-    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -145,7 +110,6 @@
 
             return (
                 <div className="flex h-screen overflow-hidden relative">
-                    {/* Sidebar có tính năng ẩn trên mobile */}
                     <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 ${isFocus ? '-translate-x-full absolute' : 'translate-x-0 relative'} lg:relative lg:translate-x-0`}>
                         <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                         <nav className="flex-1 space-y-1">
@@ -185,7 +149,6 @@
                         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
                             {tab === 'baigiang' && ls && (
                                 <React.Fragment>
-                                    {/* Danh sách bài giảng - Ẩn trên mobile khi đang Focus */}
                                     <div className={`w-full lg:w-80 bg-slate-50/50 border-r p-4 overflow-y-auto custom-scroll space-y-2 ${isFocus ? 'hidden lg:block' : ''}`}>
                                         {localLessons[grade].map((l, idx) => (
                                             <div key={idx} onClick={()=>{setLs(l); if(window.innerWidth < 768) setIsFocus(true);}} className={`p-3 rounded-xl cursor-pointer transition-all border ${ls?.id === l.id ? 'bg-white border-blue-500 shadow-sm' : 'border-transparent hover:bg-white'}`}>
@@ -202,8 +165,6 @@
                                             </h2>
 
                                             <div className={`flex flex-col ${isFocus && hasMedia ? 'lg:flex-row' : 'flex-col'} gap-6 lg:gap-10 items-start justify-center`}>
-                                                
-                                                {/* NỘI DUNG CHỮ - Tự co giãn theo màn hình */}
                                                 <div className={`${isFocus && hasMedia ? 'lg:w-1/2 w-full' : 'w-full'} bg-slate-50 p-6 lg:p-12 rounded-[2rem] lg:rounded-[3rem] slide-content border border-slate-100 text-slate-600 font-medium overflow-hidden`}
                                                      style={{ minHeight: isFocus ? '40vh' : 'auto' }}>
                                                     <div key={isFocus ? slideIndex : 'normal'} className={isFocus ? 'ppt-slide' : ''} 
@@ -212,7 +173,6 @@
                                                     </div>
                                                 </div>
 
-                                                {/* MEDIA - Hiển thị dưới chữ trên mobile */}
                                                 {isFocus && (
                                                     <div className={`${hasMedia ? 'lg:w-1/2 w-full' : 'hidden'} flex items-center justify-center p-2`}>
                                                         <video 
@@ -242,7 +202,6 @@
                                                     </div>
                                                 )}
                                             </div>
-                                            
                                             {isFocus && <p className="mt-6 text-center text-slate-300 font-bold text-[8px] lg:text-[10px] uppercase tracking-widest animate-pulse italic">Vuốt hoặc dùng nút mũi tên để chuyển trang</p>}
                                         </div>
                                     </div>
