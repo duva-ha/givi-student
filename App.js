@@ -11,15 +11,10 @@ function App() {
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [hasMedia, setHasMedia] = useState(false);
 
-    // State cho phần Luyện tập
     const [localQuizzes, setLocalQuizzes] = useState({ "10": [], "11": [], "12": [] });
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizState, setQuizState] = useState({
-        currentQ: 0,
-        score: 0,
-        showResult: false,
-        selectedAnswer: null,
-        isCorrect: null
+        currentQ: 0, score: 0, showResult: false, selectedAnswer: null, isCorrect: null
     });
 
     const scanData = useCallback(() => {
@@ -28,15 +23,11 @@ function App() {
 
         ["10", "11", "12"].forEach(g => {
             for (let i = 1; i <= 20; i++) {
-                // Quét Bài giảng (D10_B1...)
                 const d = window[`D${g}_B${i}`];
                 if (d) resLessons[g].push({ ...d, lessonIndex: i });
 
-                // Quét Luyện tập (LT10_B1...) - Thêm quizIndex để định danh bài tập
                 const q = window[`LT${g}_B${i}`];
-                if (q) {
-                    resQuizzes[g].push({ questions: q, quizIndex: i });
-                }
+                if (q) resQuizzes[g].push({ questions: q, quizIndex: i });
             }
         });
         setLocalLessons(resLessons);
@@ -59,9 +50,7 @@ function App() {
     const pages = ls ? ls.content.split('---').map(p => p.trim()) : [];
     
     useEffect(() => { 
-        setSlideIndex(0); 
-        setMediaIndex(1); 
-        setHasMedia(false); 
+        setSlideIndex(0); setMediaIndex(1); setHasMedia(false); 
     }, [ls, isFocus]);
 
     useEffect(() => {
@@ -97,10 +86,7 @@ function App() {
     const nextQuestion = () => {
         if (quizState.currentQ < activeQuiz.length - 1) {
             setQuizState({
-                ...quizState,
-                currentQ: quizState.currentQ + 1,
-                selectedAnswer: null,
-                isCorrect: null
+                ...quizState, currentQ: quizState.currentQ + 1, selectedAnswer: null, isCorrect: null
             });
         } else {
             setQuizState({ ...quizState, showResult: true });
@@ -179,7 +165,7 @@ function App() {
                         <div className="flex-1 p-10 bg-slate-50 overflow-y-auto custom-scroll">
                             <h2 className="text-2xl font-black text-slate-800 uppercase mb-10 text-center">Luyện tập Công nghệ {grade}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                                {localQuizzes[grade].length > 0 ? (
+                                {localQuizzes[grade] && localQuizzes[grade].length > 0 ? (
                                     localQuizzes[grade].map((item, idx) => (
                                         <div key={idx} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:border-blue-500 transition-all group">
                                             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-black mb-4 group-hover:bg-blue-600 group-hover:text-white transition-all">{item.quizIndex}</div>
@@ -192,7 +178,7 @@ function App() {
                                     ))
                                 ) : (
                                     <div className="col-span-full text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase tracking-widest">
-                                        Đang tìm file LT{grade}_B1.js...
+                                        Chưa nạp file LT{grade}_B...js (Hãy chọn K10)
                                     </div>
                                 )}
                             </div>
@@ -221,7 +207,7 @@ function App() {
                                         ))}
                                     </div>
                                     {quizState.selectedAnswer !== null && (
-                                        <button onClick={nextQuestion} className="w-full mt-8 bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest">
+                                        <button onClick={nextQuestion} className="w-full mt-8 bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-lg">
                                             {quizState.currentQ === activeQuiz.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo'}
                                         </button>
                                     )}
@@ -229,10 +215,10 @@ function App() {
                             ) : (
                                 <div className="text-center py-10">
                                     <div className="text-7xl mb-6">🏆</div>
-                                    <h2 className="text-3xl font-black text-slate-800 uppercase mb-2">Kết quả</h2>
-                                    <p className="text-slate-500 font-medium mb-8 text-xl">Đúng {quizState.score} / {activeQuiz.length} câu.</p>
+                                    <h2 className="text-3xl font-black text-slate-800 uppercase mb-2">Hoàn thành!</h2>
+                                    <p className="text-slate-500 font-medium mb-8">Bạn đúng {quizState.score} / {activeQuiz.length} câu.</p>
                                     <div className="text-6xl font-black text-blue-600 mb-10">{Math.round((quizState.score/activeQuiz.length)*10)} / 10</div>
-                                    <button onClick={() => setActiveQuiz(null)} className="bg-slate-900 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest">Hoàn tất</button>
+                                    <button onClick={() => setActiveQuiz(null)} className="bg-slate-900 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest">Đóng</button>
                                 </div>
                             )}
                         </div>
