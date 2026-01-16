@@ -3,18 +3,18 @@ window.D10_B5 = {
     title: "BÀI 5: MỘT SỐ CÔNG NGHỆ PHỔ BIẾN",
     content: `
 [MỤC TIÊU BÀI HỌC]
-🎯 Hiểu được các loại công nghệ phổ biến hiện nay.
-🎯 Phân loại được công nghệ dựa trên lĩnh vực ứng dụng.
+🎯 Hiểu được các loại công nghệ phổ biến hiện nay. <br/>
+🎯 Phân loại được công nghệ dựa trên lĩnh vực ứng dụng. <br/>
 
 ---
 
-1. CÔNG NGHỆ TRONG LĨNH VỰC LUYỆN KIM, CƠ KHÍ
+1. CÔNG NGHỆ TRONG LĨNH VỰC LUYỆN KIM, CƠ KHÍ<br/>
 ● Công nghệ luyện kim: Tập trung vào việc chiết tách kim loại từ quặng.
-
+<br/>
 ● Công nghệ đúc: Chế tạo sản phẩm bằng cách rót kim loại lỏng vào khuôn.
-
+<br/>
 ● Công nghệ gia công cắt gọt: Tiện, phay, bào... để tạo hình chi tiết.
-
+<br/>
 2. CÔNG NGHỆ TRONG LĨNH VỰC ĐIỆN, ĐIỆN TỬ
 ● Công nghệ sản xuất điện năng: Nhiệt điện, thủy điện, năng lượng tái tạo.
 ● Công nghệ điện tử y sinh: Ứng dụng trong các thiết bị hỗ trợ sức khỏe.
