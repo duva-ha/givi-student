@@ -7,7 +7,6 @@ function App() {
     const [ls, setLs] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
-    const [mediaIndex, setMediaIndex] = useState(1);
     const [localLessons, setLocalLessons] = useState({ "10": [], "11": [], "12": [] });
     const [localQuizzes, setLocalQuizzes] = useState({ "10": [], "11": [], "12": [] });
     const [activeQuiz, setActiveQuiz] = useState(null);
@@ -16,7 +15,7 @@ function App() {
     // State cho đồng hồ đếm ngược (giây)
     const [timeLeft, setTimeLeft] = useState(null);
 
-    // HÀM QUÉT DỮ LIỆU TỪ WINDOW
+    // HÀM QUÉT DỮ LIỆU TỪ WINDOW (Dùng để nhận file JS bên ngoài)
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
@@ -166,27 +165,45 @@ function App() {
                                 )) : (
                                     <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-slate-100">
                                         <div className="text-5xl mb-4">📂</div>
-                                        <p className="text-slate-400 font-black uppercase tracking-widest">Chưa tìm thấy file dữ liệu trắc nghiệm</p>
+                                        <p className="text-slate-400 font-black uppercase tracking-widest">Chưa có dữ liệu bài tập</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* TAB TƯ LIỆU */}
+                    {/* TAB TƯ LIỆU - MỚI: ĐÃ KẾT NỐI VỚI TLIEU_DATA */}
                     {tab === 'tuliaeu' && (
                         <div className="flex-1 p-12 bg-slate-50 overflow-y-auto">
                             <h2 className="text-2xl font-black text-slate-800 uppercase mb-12 text-center tracking-widest">Kho Tư liệu K{grade}</h2>
-                            <div className="max-w-4xl mx-auto bg-white p-12 rounded-[3.5rem] shadow-sm border border-slate-100 min-h-[400px] flex flex-col items-center justify-center">
-                                <div className="text-6xl mb-6">📚</div>
-                                <p className="text-slate-500 font-bold mb-4 italic">Đang cập nhật tài liệu học tập...</p>
-                                <p className="text-slate-400 text-sm uppercase font-black">Các file PDF và giáo án sẽ xuất hiện tại đây</p>
+                            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {window.TLIEU_DATA && window.TLIEU_DATA.length > 0 ? (
+                                    window.TLIEU_DATA.map((doc, idx) => (
+                                        <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-start gap-4 hover:shadow-md transition-all">
+                                            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                                                {doc.type === 'PDF' ? '📄' : doc.type === 'Image' ? '🖼️' : '📁'}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-slate-800 text-sm mb-1">{doc.name}</h3>
+                                                <p className="text-slate-500 text-[10px] mb-3">{doc.description}</p>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase">{doc.type} • {doc.size}</span>
+                                                    <a href={doc.link} target="_blank" className="px-4 py-2 bg-slate-100 hover:bg-blue-600 hover:text-white rounded-lg text-[9px] font-black uppercase transition-all">Tải tài liệu</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-slate-100">
+                                        <p className="text-slate-400 font-black uppercase">Đang cập nhật tư liệu...</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* MODAL TRẮC NGHIỆM */}
+                {/* MODAL TRẮC NGHIỆM - CÓ ĐỒNG HỒ */}
                 {activeQuiz && (
                     <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
                         <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative animate-in zoom-in duration-300">
@@ -194,7 +211,7 @@ function App() {
                                 <React.Fragment>
                                     <div className="flex justify-between items-center mb-10">
                                         <div className="flex flex-col gap-2">
-                                            <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
+                                            <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
                                             <div className={`font-black text-xl flex items-center gap-2 ${timeLeft < 60 ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
                                                 ⏱️ {formatTime(timeLeft)}
                                             </div>
@@ -222,7 +239,7 @@ function App() {
                                     <h2 className="text-4xl font-black text-slate-800 uppercase mb-4 tracking-tighter">Hoàn thành!</h2>
                                     <p className="text-slate-500 font-bold mb-10">Bạn đã trả lời đúng {quizState.score} / {activeQuiz.length} câu hỏi.</p>
                                     <div className="text-7xl font-black text-blue-600 mb-12">{Math.round((quizState.score/activeQuiz.length)*10)}/10</div>
-                                    <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-600 shadow-2xl transition-all">Đóng</button>
+                                    <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-600 shadow-2xl transition-all">Đóng cửa sổ</button>
                                 </div>
                             )}
                         </div>
