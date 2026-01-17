@@ -13,18 +13,18 @@ function App() {
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizState, setQuizState] = useState({ currentQ: 0, score: 0, showResult: false, selectedAnswer: null, isCorrect: null });
 
-    // HÀM QUÉT DỮ LIỆU CẢI TIẾN - CỰC NHẠY
+    // MỚI: State cho đồng hồ đếm ngược (tính bằng giây)
+    const [timeLeft, setTimeLeft] = useState(null);
+
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
 
         ["10", "11", "12"].forEach(g => {
             for (let i = 1; i <= 20; i++) {
-                // Quét Bài giảng D10_B1...
                 const d = window[`D${g}_B${i}`];
                 if (d) resLessons[g].push({ ...d, lessonIndex: i, id: `D${g}_B${i}` });
 
-                // Quét Luyện tập LT10_B1...
                 const q = window[`LT${g}_B${i}`];
                 if (q && Array.isArray(q)) {
                     resQuizzes[g].push({ questions: q, quizIndex: i });
@@ -32,17 +32,38 @@ function App() {
             }
         });
 
-        // Chỉ cập nhật nếu có sự thay đổi để tránh lag máy
         setLocalLessons(prev => JSON.stringify(prev) !== JSON.stringify(resLessons) ? resLessons : prev);
         setLocalQuizzes(prev => JSON.stringify(prev) !== JSON.stringify(resQuizzes) ? resQuizzes : prev);
     }, []);
 
     useEffect(() => {
         auth.onAuthStateChanged(u => setUser(u));
-        // Quét dữ liệu mỗi 1 giây để đảm bảo không bỏ sót file nạp chậm
         const timer = setInterval(scanData, 1000);
         return () => clearInterval(timer);
     }, [scanData]);
+
+    // MỚI: Logic xử lý đếm ngược thời gian
+    useEffect(() => {
+        if (timeLeft === null || !activeQuiz || quizState.showResult) return;
+
+        if (timeLeft === 0) {
+            setQuizState(prev => ({ ...prev, showResult: true }));
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setTimeLeft(timeLeft - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [timeLeft, activeQuiz, quizState.showResult]);
+
+    // MỚI: Hàm định dạng thời gian Phút:Giây
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
 
     useEffect(() => {
         const list = localLessons[grade];
@@ -134,13 +155,23 @@ function App() {
                                     <div key={idx} className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 hover:border-blue-500 transition-all group">
                                         <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-black mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all">{item.quizIndex}</div>
                                         <h3 className="font-black text-slate-700 mb-6 uppercase text-xs tracking-widest">Luyện tập Bài {item.quizIndex}</h3>
-                                        <button onClick={() => { setActiveQuiz(item.questions); setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); }} className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.2em] hover:bg-blue-600 shadow-lg transition-all">Bắt đầu bài tập</button>
+                                        <button 
+                                            onClick={() => { 
+                                                setActiveQuiz(item.questions); 
+                                                setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); 
+                                                // MỚI: Thiết lập thời gian (Bài 1: 15p, Bài 2: 20p, Khác: 15p)
+                                                const mins = item.quizIndex === 1 ? 15 : (item.quizIndex === 2 ? 20 : 15);
+                                                setTimeLeft(mins * 60);
+                                            }} 
+                                            className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.2em] hover:bg-blue-600 shadow-lg transition-all"
+                                        >
+                                            Bắt đầu bài tập
+                                        </button>
                                     </div>
                                 )) : (
                                     <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-slate-100">
                                         <div className="text-5xl mb-4">📂</div>
                                         <p className="text-slate-400 font-black uppercase tracking-widest">Chưa tìm thấy file LT{grade}_B1.js</p>
-                                        <p className="text-slate-300 text-xs mt-2">Vui lòng kiểm tra lại file dữ liệu hoặc nhấn Ctrl + F5</p>
                                     </div>
                                 )}
                             </div>
@@ -154,8 +185,14 @@ function App() {
                             {!quizState.showResult ? (
                                 <React.Fragment>
                                     <div className="flex justify-between items-center mb-10">
-                                        <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
-                                        <button onClick={() => setActiveQuiz(null)} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase tracking-widest transition-all">✕ Thoát</button>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
+                                            {/* MỚI: Hiển thị đồng hồ đếm ngược */}
+                                            <div className={`mt-2 font-black text-xl flex items-center gap-2 ${timeLeft < 60 ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
+                                                ⏱️ {formatTime(timeLeft)}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase tracking-widest transition-all">✕ Thoát</button>
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-10 leading-tight">{activeQuiz[quizState.currentQ].q}</h3>
                                     <div className="space-y-4">
@@ -178,7 +215,7 @@ function App() {
                                     <h2 className="text-4xl font-black text-slate-800 uppercase mb-4 tracking-tighter">Hoàn thành!</h2>
                                     <p className="text-slate-500 font-bold mb-10">Bạn đã trả lời đúng {quizState.score} / {activeQuiz.length} câu hỏi.</p>
                                     <div className="text-7xl font-black text-blue-600 mb-12">{Math.round((quizState.score/activeQuiz.length)*10)}/10</div>
-                                    <button onClick={() => setActiveQuiz(null)} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl">Đóng cửa sổ</button>
+                                    <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl">Đóng cửa sổ</button>
                                 </div>
                             )}
                         </div>
