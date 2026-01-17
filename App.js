@@ -77,7 +77,6 @@ function App() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
-            {/* SIDEBAR */}
             <aside className={`flex flex-col p-6 bg-white shadow-2xl transition-all duration-500 border-r border-slate-100 ${isFocus ? 'w-0 p-0 opacity-0 -translate-x-full' : 'w-[280px]'}`}>
                 <div className="mb-10 px-4 font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 italic uppercase">E-Tech Hub</div>
                 <nav className="flex-1 space-y-3">
@@ -105,8 +104,6 @@ function App() {
                                 <option value="10">Khối 10</option><option value="11">Khối 11</option><option value="12">Khối 12</option>
                             </select>
                         </div>
-                        
-                        {/* MỚI: HIỂN THỊ LOGO VÀ TÊN NGƯỜI DÙNG */}
                         {!isFocus && (
                             <div className="flex items-center gap-3 border-l pl-6 border-slate-200">
                                 <div className="text-right hidden sm:block">
@@ -133,12 +130,12 @@ function App() {
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex-1 p-8 lg:p-16 overflow-y-auto bg-slate-50/30">
+                            {/* PHẦN ĐÃ CHỈNH SỬA: ĐẨY TIÊU ĐỀ LÊN SÁT TRÊN */}
+                            <div className="flex-1 p-8 lg:p-12 overflow-y-auto bg-slate-50/30">
                                 {ls ? (
                                     <div className="max-w-4xl mx-auto">
-                                        <div className="text-center mb-12">
-                                            <span className="px-6 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-200">Bài học chi tiết</span>
-                                            <h2 className="text-4xl font-black text-slate-800 uppercase mt-6 tracking-tighter leading-tight">{ls.title}</h2>
+                                        <div className="text-center mb-8">
+                                            <h2 className="text-4xl font-black text-slate-800 uppercase tracking-tighter leading-tight">{ls.title}</h2>
                                         </div>
                                         <div className="bg-white p-10 lg:p-16 rounded-[4rem] text-left shadow-2xl shadow-slate-200/50 text-lg leading-relaxed border border-white whitespace-pre-line text-slate-700">
                                             {ls.content.split('---').join('\n\n')}
@@ -154,7 +151,7 @@ function App() {
                             <h2 className="text-2xl font-black text-slate-800 uppercase mb-12 text-center tracking-widest">📝 Luyện tập Kỹ thuật {grade}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                                 {localQuizzes[grade].map((item, idx) => (
-                                    <div key={idx} className="bg-white p-10 rounded-[3.5rem] shadow-xl shadow-slate-200/50 border border-white hover:border-orange-400 transition-all group">
+                                    <div key={idx} className="bg-white p-10 rounded-[3.5rem] shadow-xl shadow-slate-200/40 border border-white hover:border-orange-400 transition-all group">
                                         <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-3xl flex items-center justify-center text-3xl font-black mb-8 group-hover:bg-orange-500 group-hover:text-white transition-all">{item.quizIndex}</div>
                                         <h3 className="font-black text-slate-700 mb-8 uppercase text-xs tracking-wider">Luyện tập Bài {item.quizIndex}</h3>
                                         <button onClick={() => { setActiveQuiz(item.questions); setQuizState({currentQ:0, answers: new Array(item.questions.length).fill(null), showResult:false, reviewMode:false}); setTimeLeft(15 * 60); }} 
