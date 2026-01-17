@@ -3,7 +3,7 @@ function Sidebar({ tab, setTab, isFocus, setIsFocus }) {
         {id: 'baigiang', icon: '📖', label: 'Bài giảng', color: 'blue'},
         {id: 'luyentap', icon: '📝', label: 'Luyện tập', color: 'orange'},
         {id: 'kiemtra', icon: '🎯', label: 'Kiểm tra', color: 'purple'},
-        {id: 'tuliaeu', icon: '📚', label: 'Tư liệu', color: 'emerald'}
+        {id: 'tulieu', icon: '📚', label: 'Tư liệu', color: 'emerald'}
     ];
 
     return (
