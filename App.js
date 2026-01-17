@@ -13,9 +13,10 @@ function App() {
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizState, setQuizState] = useState({ currentQ: 0, score: 0, showResult: false, selectedAnswer: null, isCorrect: null });
 
-    // MỚI: State cho đồng hồ đếm ngược (tính bằng giây)
+    // State cho đồng hồ đếm ngược (giây)
     const [timeLeft, setTimeLeft] = useState(null);
 
+    // HÀM QUÉT DỮ LIỆU TỪ WINDOW
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
@@ -42,23 +43,17 @@ function App() {
         return () => clearInterval(timer);
     }, [scanData]);
 
-    // MỚI: Logic xử lý đếm ngược thời gian
+    // LOGIC ĐẾM NGƯỢC THỜI GIAN
     useEffect(() => {
         if (timeLeft === null || !activeQuiz || quizState.showResult) return;
-
         if (timeLeft === 0) {
             setQuizState(prev => ({ ...prev, showResult: true }));
             return;
         }
-
-        const timer = setTimeout(() => {
-            setTimeLeft(timeLeft - 1);
-        }, 1000);
-
+        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
         return () => clearTimeout(timer);
     }, [timeLeft, activeQuiz, quizState.showResult]);
 
-    // MỚI: Hàm định dạng thời gian Phút:Giây
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
@@ -95,12 +90,13 @@ function App() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#fdfdfb]">
+            {/* SIDEBAR */}
             <aside className={`flex flex-col p-6 shadow-2xl transition-all duration-500 ${isFocus ? 'w-0 p-0 opacity-0' : 'w-[260px]'}`}>
                 <div className="mb-10 px-4 font-black text-2xl text-blue-500 italic uppercase">E-Tech Hub</div>
                 <nav className="flex-1 space-y-1">
-                    {['baigiang', 'luyentap', 'kiemtra'].map(t => (
+                    {['baigiang', 'luyentap', 'kiemtra', 'tuliaeu'].map(t => (
                         <button key={t} onClick={() => { setTab(t); setIsFocus(false); }} className={`w-full flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${tab === t ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
-                            {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : '🎯 Kiểm tra'}
+                            {t === 'baigiang' ? '📖 Bài giảng' : t === 'luyentap' ? '📝 Luyện tập' : t === 'kiemtra' ? '🎯 Kiểm tra' : '📚 Tư liệu'}
                         </button>
                     ))}
                 </nav>
@@ -126,6 +122,7 @@ function App() {
                 </header>
 
                 <div className="flex-1 overflow-hidden flex">
+                    {/* TAB BÀI GIẢNG */}
                     {tab === 'baigiang' && ls && (
                         <React.Fragment>
                             <div className={`w-80 bg-slate-50/50 border-r p-4 overflow-y-auto ${isFocus ? 'hidden' : 'block'}`}>
@@ -147,6 +144,7 @@ function App() {
                         </React.Fragment>
                     )}
 
+                    {/* TAB LUYỆN TẬP */}
                     {tab === 'luyentap' && (
                         <div className="flex-1 p-12 bg-slate-50 overflow-y-auto">
                             <h2 className="text-2xl font-black text-slate-800 uppercase mb-12 text-center tracking-widest">Hệ thống Luyện tập K{grade}</h2>
@@ -159,40 +157,49 @@ function App() {
                                             onClick={() => { 
                                                 setActiveQuiz(item.questions); 
                                                 setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null}); 
-                                                // MỚI: Thiết lập thời gian (Bài 1: 15p, Bài 2: 20p, Khác: 15p)
                                                 const mins = item.quizIndex === 1 ? 15 : (item.quizIndex === 2 ? 20 : 15);
                                                 setTimeLeft(mins * 60);
                                             }} 
                                             className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black uppercase text-[10px] tracking-[0.2em] hover:bg-blue-600 shadow-lg transition-all"
-                                        >
-                                            Bắt đầu bài tập
-                                        </button>
+                                        >Bắt đầu bài tập</button>
                                     </div>
                                 )) : (
                                     <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-4 border-dashed border-slate-100">
                                         <div className="text-5xl mb-4">📂</div>
-                                        <p className="text-slate-400 font-black uppercase tracking-widest">Chưa tìm thấy file LT{grade}_B1.js</p>
+                                        <p className="text-slate-400 font-black uppercase tracking-widest">Chưa tìm thấy file dữ liệu trắc nghiệm</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
+
+                    {/* TAB TƯ LIỆU */}
+                    {tab === 'tuliaeu' && (
+                        <div className="flex-1 p-12 bg-slate-50 overflow-y-auto">
+                            <h2 className="text-2xl font-black text-slate-800 uppercase mb-12 text-center tracking-widest">Kho Tư liệu K{grade}</h2>
+                            <div className="max-w-4xl mx-auto bg-white p-12 rounded-[3.5rem] shadow-sm border border-slate-100 min-h-[400px] flex flex-col items-center justify-center">
+                                <div className="text-6xl mb-6">📚</div>
+                                <p className="text-slate-500 font-bold mb-4 italic">Đang cập nhật tài liệu học tập...</p>
+                                <p className="text-slate-400 text-sm uppercase font-black">Các file PDF và giáo án sẽ xuất hiện tại đây</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
+                {/* MODAL TRẮC NGHIỆM */}
                 {activeQuiz && (
                     <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
                         <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative animate-in zoom-in duration-300">
                             {!quizState.showResult ? (
                                 <React.Fragment>
                                     <div className="flex justify-between items-center mb-10">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
-                                            {/* MỚI: Hiển thị đồng hồ đếm ngược */}
-                                            <div className={`mt-2 font-black text-xl flex items-center gap-2 ${timeLeft < 60 ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
+                                        <div className="flex flex-col gap-2">
+                                            <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
+                                            <div className={`font-black text-xl flex items-center gap-2 ${timeLeft < 60 ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>
                                                 ⏱️ {formatTime(timeLeft)}
                                             </div>
                                         </div>
-                                        <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase tracking-widest transition-all">✕ Thoát</button>
+                                        <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase tracking-widest">✕ Thoát</button>
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-10 leading-tight">{activeQuiz[quizState.currentQ].q}</h3>
                                     <div className="space-y-4">
@@ -204,18 +211,18 @@ function App() {
                                         ))}
                                     </div>
                                     {quizState.selectedAnswer !== null && (
-                                        <button onClick={nextQuestion} className="w-full mt-10 bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-blue-200">
-                                            {quizState.currentQ === activeQuiz.length - 1 ? 'Xem kết quả rực rỡ' : 'Câu tiếp theo'}
+                                        <button onClick={nextQuestion} className="w-full mt-10 bg-blue-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl">
+                                            {quizState.currentQ === activeQuiz.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo'}
                                         </button>
                                     )}
                                 </React.Fragment>
                             ) : (
                                 <div className="text-center py-10">
-                                    <div className="text-8xl mb-8 animate-bounce">🏆</div>
+                                    <div className="text-8xl mb-8">🏆</div>
                                     <h2 className="text-4xl font-black text-slate-800 uppercase mb-4 tracking-tighter">Hoàn thành!</h2>
                                     <p className="text-slate-500 font-bold mb-10">Bạn đã trả lời đúng {quizState.score} / {activeQuiz.length} câu hỏi.</p>
                                     <div className="text-7xl font-black text-blue-600 mb-12">{Math.round((quizState.score/activeQuiz.length)*10)}/10</div>
-                                    <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl">Đóng cửa sổ</button>
+                                    <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-600 shadow-2xl transition-all">Đóng</button>
                                 </div>
                             )}
                         </div>
