@@ -1,9 +1,7 @@
-// ExamService.js - Chuyên nhận đề thi từ Giáo viên
+// ExamService.js
 const ExamService = {
-    // Hàm lắng nghe đề thi mới
     subscribeToQuizzes: (grade, callback) => {
-        if (!window.db) return;
-
+        // Phải có lệnh return ở đây để trả về hàm hủy đăng ký của Firebase
         return db.collection("quizzes")
             .where("grade", "==", grade)
             .orderBy("createdAt", "desc")
@@ -11,7 +9,7 @@ const ExamService = {
                 const liveQuizzes = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
-                    quizIndex: "LIVE", // Đánh dấu đề thi trực tiếp
+                    quizIndex: "LIVE",
                     isLive: true
                 }));
                 callback(liveQuizzes);
