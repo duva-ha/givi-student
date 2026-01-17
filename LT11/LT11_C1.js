@@ -1,4 +1,4 @@
-window.LT11_B1 = [
+window.LT11_C1 = [
     {
         q: "Thiết bị nào sau đây là đầu vào của hệ thống kỹ thuật?",
         a: ["Cảm biến", "Động cơ", "Bóng đèn", "Loa"],
