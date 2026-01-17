@@ -16,8 +16,8 @@ window.TLIEU_DATA = [
     },
     {
         name: "Bảng tra cứu điểm 10A7",
-        type: "Excel",
-        size: "500 KB",
+        type: "Pdf",
+        size: "250 KB",
         link: "documents/so_diem_10a7.pdf",
         description: "Tài liệu tra cứu nhanh các tính chất của kim loại và hợp kim."
     }
