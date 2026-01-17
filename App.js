@@ -67,9 +67,9 @@ function App() {
     };
 
     if (!user) return (
-        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
-            <div className="mb-8 text-blue-500 text-4xl font-black italic uppercase">E-Tech Hub</div>
-            <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl font-bold shadow-2xl">Đăng nhập Google</button>
+        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center font-bold">
+            <div className="mb-8 text-blue-500 text-4xl italic uppercase">E-Tech Hub</div>
+            <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-8 py-3 rounded-xl shadow-2xl">Đăng nhập Google</button>
         </div>
     );
 
@@ -90,11 +90,11 @@ function App() {
             <main className="flex-1 flex flex-col relative overflow-hidden border-l">
                 <header className="h-14 px-8 border-b flex items-center justify-between bg-white/80 backdrop-blur-md">
                     <div className="flex items-center gap-6">
-                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="font-black text-blue-600 text-[10px] uppercase outline-none bg-transparent">
+                        <select value={grade} onChange={e=>setGrade(e.target.value)} className="font-black text-blue-600 text-[10px] uppercase outline-none bg-transparent cursor-pointer">
                             <option value="10">Khối 10</option><option value="11">Khối 11</option><option value="12">Khối 12</option>
                         </select>
                     </div>
-                    <button onClick={() => setIsFocus(!isFocus)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                    <button onClick={() => setIsFocus(!isFocus)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:bg-slate-200">
                         {isFocus ? '✕' : '⛶'}
                     </button>
                 </header>
@@ -134,29 +134,36 @@ function App() {
                         </div>
                     )}
 
-                    {/* MỚI: TAB KIỂM TRA ĐỊNH KỲ */}
+                    {/* TAB KIỂM TRA ĐỊNH KỲ - ĐÃ TÍCH HỢP LỌC KHỐI LỚP */}
                     {tab === 'kiemtra' && (
                         <div className="flex-1 p-12 bg-slate-900 overflow-y-auto flex flex-col items-center">
-                            <h2 className="text-3xl font-black text-white uppercase mb-12 tracking-widest">Kế hoạch Kiểm tra {grade}</h2>
+                            <h2 className="text-3xl font-black text-white uppercase mb-4 tracking-widest">Kế hoạch Kiểm tra</h2>
+                            <p className="text-blue-400 font-bold mb-12 uppercase tracking-tighter">Chương trình: Khối {grade}</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl w-full">
-                                {['HK1', 'HK2'].map(hk => (
-                                    <div key={hk} className="bg-white/5 backdrop-blur-xl p-10 rounded-[4rem] border border-white/10 text-center hover:bg-white/10 transition-all">
-                                        <div className="text-5xl mb-6">{hk === 'HK1' ? '📝' : '🚀'}</div>
-                                        <h3 className="text-xl font-black text-white uppercase mb-2">Kiểm tra {hk}</h3>
-                                        <p className="text-slate-400 mb-8 text-xs font-bold uppercase tracking-widest">Thời gian: 45 Phút</p>
-                                        <button 
-                                            onClick={() => {
-                                                const data = window[`KT${grade}_${hk}`];
-                                                if(data) {
-                                                    setActiveQuiz(data);
-                                                    setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null});
-                                                    setTimeLeft(45 * 60);
-                                                } else alert(`Chưa nạp file KT${grade}_${hk}.js`);
-                                            }}
-                                            className={`w-full ${hk === 'HK1' ? 'bg-blue-600' : 'bg-emerald-600'} text-white py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-widest hover:opacity-80 shadow-xl`}
-                                        >Bắt đầu làm bài</button>
-                                    </div>
-                                ))}
+                                {['HK1', 'HK2'].map(hk => {
+                                    const examData = window[`KT${grade}_${hk}`];
+                                    return (
+                                        <div key={hk} className={`p-10 rounded-[4rem] border transition-all text-center backdrop-blur-xl ${examData ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-transparent border-white/5 opacity-40'}`}>
+                                            <div className="text-5xl mb-6">{hk === 'HK1' ? '📝' : '🚀'}</div>
+                                            <h3 className="text-xl font-black text-white uppercase mb-2">Kiểm tra {hk}</h3>
+                                            <p className="text-slate-400 mb-8 text-xs font-bold uppercase tracking-widest">
+                                                {examData ? 'Thời gian: 45 Phút' : 'Đang cập nhật đề...'}
+                                            </p>
+                                            {examData ? (
+                                                <button 
+                                                    onClick={() => {
+                                                        setActiveQuiz(examData);
+                                                        setQuizState({currentQ:0, score:0, showResult:false, selectedAnswer:null, isCorrect:null});
+                                                        setTimeLeft(45 * 60);
+                                                    }}
+                                                    className={`w-full ${hk === 'HK1' ? 'bg-blue-600' : 'bg-emerald-600'} text-white py-5 rounded-[2rem] font-black uppercase text-[10px] tracking-widest shadow-xl`}
+                                                >Bắt đầu làm bài</button>
+                                            ) : (
+                                                <div className="w-full py-4 border border-white/10 rounded-[2rem] text-white/30 text-[9px] font-black uppercase tracking-widest">Chưa có đề lớp {grade}</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -192,7 +199,7 @@ function App() {
                                             <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase">Câu {quizState.currentQ + 1} / {activeQuiz.length}</span>
                                             <div className={`font-black text-xl flex items-center gap-2 ${timeLeft < 300 ? 'text-rose-500 animate-pulse' : 'text-slate-700'}`}>⏱️ {formatTime(timeLeft)}</div>
                                         </div>
-                                        <button onClick={() => { if(confirm("Nộp bài sớm?")) { setQuizState({...quizState, showResult:true}); setTimeLeft(null); } }} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase tracking-widest transition-all">✕ Nộp bài</button>
+                                        <button onClick={() => { if(confirm("Nộp bài sớm?")) { setQuizState({...quizState, showResult:true}); setTimeLeft(null); } }} className="text-slate-300 hover:text-rose-500 font-black text-xs uppercase transition-all">✕ Nộp bài</button>
                                     </div>
                                     <h3 className="text-2xl font-bold text-slate-800 mb-10 leading-tight">{activeQuiz[quizState.currentQ].q}</h3>
                                     <div className="space-y-4">
@@ -213,7 +220,7 @@ function App() {
                                 <div className="text-center py-10">
                                     <div className="text-8xl mb-8">🏆</div>
                                     <h2 className="text-4xl font-black text-slate-800 uppercase mb-4 tracking-tighter">Hoàn thành!</h2>
-                                    <p className="text-slate-500 font-bold mb-10">Đúng {quizState.score} / {activeQuiz.length} câu.</p>
+                                    <p className="text-slate-500 font-bold mb-10">Kết quả: {quizState.score} / {activeQuiz.length} câu đúng.</p>
                                     <div className="text-7xl font-black text-blue-600 mb-12">{Math.round((quizState.score/activeQuiz.length)*10)}/10</div>
                                     <button onClick={() => { setActiveQuiz(null); setTimeLeft(null); }} className="bg-slate-900 text-white px-16 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-2xl">Đóng</button>
                                 </div>
