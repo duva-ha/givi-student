@@ -1,20 +1,13 @@
-// ExamService.js
 const ExamService = {
     subscribeToQuizzes: (grade, callback) => {
-        // Phải có lệnh return ở đây để trả về hàm hủy đăng ký của Firebase
-        return db.collection("quizzes")
+        // Kiểm tra db đã sẵn sàng chưa
+        const database = window.db || db; 
+        return database.collection("quizzes")
             .where("grade", "==", grade)
             .orderBy("createdAt", "desc")
-            .onSnapshot((snapshot) => {
-                const liveQuizzes = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    quizIndex: "LIVE",
-                    isLive: true
-                }));
-                callback(liveQuizzes);
-            }, (error) => {
-                console.error("Lỗi nhận đề thi:", error);
+            .onSnapshot(s => {
+                const data = s.docs.map(d => ({id: d.id, ...d.data(), isLive: true}));
+                callback(data);
             });
     }
 };
