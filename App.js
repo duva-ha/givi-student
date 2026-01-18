@@ -1,6 +1,7 @@
 const { useState, useEffect, useCallback } = React;
 
 function App() {
+    // 1. QUẢN LÝ TRẠNG THÁI (STATES)
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState('baigiang');
     const [grade, setGrade] = useState('10');
@@ -13,6 +14,7 @@ function App() {
     const [quizState, setQuizState] = useState({ currentQ: 0, answers: [], showResult: false, reviewMode: false });
     const [timeLeft, setTimeLeft] = useState(null);
 
+    // 2. QUÉT DỮ LIỆU TĨNH (Bài học & Luyện tập có sẵn)
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
@@ -28,6 +30,7 @@ function App() {
         return resQuizzes;
     }, []);
 
+    // 3. KẾT NỐI REALTIME VỚI GIÁO VIÊN (FIREBASE)
     useEffect(() => {
         if (!user) return;
         const staticData = scanData();
@@ -42,11 +45,13 @@ function App() {
 
     useEffect(() => { auth.onAuthStateChanged(u => setUser(u)); }, []);
 
+    // Tự động chọn bài đầu tiên khi đổi khối lớp
     useEffect(() => {
         if (localLessons[grade]?.length > 0) setLs(localLessons[grade][0]);
         else setLs(null);
     }, [grade, localLessons]);
 
+    // 4. LOGIC ĐỒNG HỒ ĐẾM NGƯỢC
     useEffect(() => {
         if (timeLeft === 0) { handleFinish(); return; }
         if (timeLeft === null || quizState.showResult) return;
@@ -54,6 +59,7 @@ function App() {
         return () => clearTimeout(timer);
     }, [timeLeft, quizState.showResult]);
 
+    // 5. XỬ LÝ CHỌN ĐÁP ÁN
     const handleSelect = (idx) => {
         if (quizState.showResult && !quizState.reviewMode) return;
         const newAns = [...quizState.answers];
@@ -61,34 +67,45 @@ function App() {
         setQuizState({ ...quizState, answers: newAns });
     };
 
+    // 6. XỬ LÝ NỘP BÀI & TÍNH ĐIỂM
     const handleFinish = async () => {
         if (!activeQuiz) return;
-        const score = quizState.answers.filter((a, i) => a === activeQuiz[i]?.c).length;
-        const finalPoint = Math.round((score / activeQuiz.length) * 100) / 10;
-        const quizTitle = activeQuiz[0]?.quizTitle || "Bài kiểm tra";
 
         try {
-            await Database.sendQuizResult(user, grade, quizTitle, finalPoint, `${score}/${activeQuiz.length}`);
+            console.log("🚀 Đang nộp bài...");
+            const score = quizState.answers.filter((ans, i) => ans === activeQuiz[i]?.c).length;
+            const total = activeQuiz.length;
+            const finalPoint = Math.round((score / total) * 100) / 10;
+            const quizTitle = activeQuiz[0]?.quizTitle || "Bài kiểm tra";
+
+            // Gửi điểm lên Cloud
+            if (window.Database && window.Database.sendQuizResult) {
+                await window.Database.sendQuizResult(user, grade, quizTitle, finalPoint, `${score}/${total}`);
+                console.log("✅ Điểm đã lưu thành công!");
+            }
+
+            // Hiện màn hình kết quả
+            setQuizState(prev => ({ ...prev, showResult: true }));
+            setTimeLeft(null);
         } catch (e) {
-            console.error("Gửi điểm lỗi:", e);
+            console.error("Lỗi nộp bài:", e);
+            alert("Lỗi kết nối khi gửi điểm!");
         }
-        
-        setQuizState(prev => ({ ...prev, showResult: true }));
-        setTimeLeft(null);
     };
 
+    // 7. GIAO DIỆN ĐĂNG NHẬP
     if (!user) return (
         <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white font-bold">
-            <div className="text-5xl mb-10 animate-pulse tracking-tighter italic">E-TECH HUB</div>
+            <div className="text-5xl mb-10 animate-pulse tracking-tighter italic font-black">E-TECH HUB</div>
             <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-2xl shadow-2xl hover:scale-105 transition-transform font-black uppercase text-sm">Đăng nhập bằng Google</button>
         </div>
     );
 
+    // 8. GIAO DIỆN CHÍNH
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50">
             <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} />
             <main className="flex-1 flex flex-col overflow-hidden">
-                {/* Header nhận đúng setIsFocus */}
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
                 
                 <div className="flex-1 flex overflow-hidden">
@@ -96,7 +113,7 @@ function App() {
                         <>
                             <div className={`w-72 border-r bg-white p-4 overflow-y-auto transition-all ${isFocus ? 'hidden' : 'block'}`}>
                                 {localLessons[grade].map((l, i) => (
-                                    <div key={i} onClick={() => setLs(l)} className={`p-4 rounded-2xl cursor-pointer mb-2 border-2 transition-all ${ls?.id === l.id ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-transparent hover:bg-slate-50'}`}>
+                                    <div key={i} onClick={() => setLs(l)} className={`p-4 rounded-2xl cursor-pointer mb-2 border-2 transition-all ${ls?.id === l.id ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:bg-slate-50'}`}>
                                         <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">Bài {l.lessonIndex}</div>
                                         <div className="text-xs font-bold text-slate-700 leading-tight">{l.title}</div>
                                     </div>
@@ -105,7 +122,7 @@ function App() {
                             <div className="flex-1 p-8 overflow-y-auto bg-slate-50/50">
                                 {ls ? (
                                     <div className="max-w-3xl mx-auto bg-white p-12 rounded-[3rem] shadow-sm whitespace-pre-line leading-relaxed text-slate-700 border border-white animate-in slide-in-from-bottom-4 duration-500">
-                                        <h2 className="text-3xl font-black mb-8 text-slate-900">{ls.title}</h2>
+                                        <h2 className="text-3xl font-black mb-8 text-slate-900 leading-tight">{ls.title}</h2>
                                         {ls.content}
                                     </div>
                                 ) : (
@@ -114,35 +131,22 @@ function App() {
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 p-10 overflow-y-auto bg-slate-50">
+                        <div className="flex-1 p-10 overflow-y-auto bg-slate-50 text-center">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                                 {(localQuizzes[grade] || []).map((q, i) => (
-                                    <div key={i} className={`p-10 rounded-[3rem] shadow-xl border-2 transition-all group relative overflow-hidden ${q.isLive ? 'bg-orange-50 border-orange-200 shadow-orange-100' : 'bg-white border-transparent'}`}>
-                                        
-                                        {q.isLive && (
-                                            <div className="absolute top-6 right-6 bg-orange-500 text-white text-[8px] font-black px-3 py-1 rounded-full animate-bounce">ĐỀ TỪ THẦY</div>
-                                        )}
-                                        
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-8 ${q.isLive ? 'bg-orange-500 text-white' : 'bg-blue-50 text-blue-500'}`}>
-                                            {q.isLive ? '🚀' : '📝'}
-                                        </div>
-                                        
-                                        <div className="font-black text-slate-800 mb-8 uppercase text-[11px] leading-tight min-h-[40px]">
-                                            {q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`}
-                                        </div>
-                                        
+                                    <div key={i} className={`p-10 rounded-[3rem] shadow-xl border-2 transition-all group relative overflow-hidden ${q.isLive ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent'}`}>
+                                        {q.isLive && <div className="absolute top-6 right-6 bg-orange-500 text-white text-[8px] font-black px-3 py-1 rounded-full animate-bounce">ĐỀ TỪ THẦY</div>}
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-8 ${q.isLive ? 'bg-orange-500 text-white' : 'bg-blue-50 text-blue-500'}`}>{q.isLive ? '🚀' : '📝'}</div>
+                                        <div className="font-black text-slate-800 mb-8 uppercase text-[11px] leading-tight min-h-[40px] text-left">{q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`}</div>
                                         <button onClick={() => {
                                             const rawQs = q.questions || [];
                                             if (rawQs.length === 0) return alert("Đề này chưa có câu hỏi!");
-                                            
                                             const quizTitle = q.isLive ? q.title : `Bài ${q.quizIndex}`;
                                             
-                                            // CHUYỂN ĐỔI DỮ LIỆU TỪ 'a' SANG 'o' ĐỂ QUIZMODAL ĐỌC ĐƯỢC
+                                            // Tự động định dạng lại dữ liệu cho đồng bộ
                                             const formattedQs = rawQs.map(item => ({
                                                 ...item,
-                                                q: item.q,
-                                                o: item.a || item.o, // Ưu tiên lấy trường 'a' từ Firebase
-                                                c: item.c,
+                                                o: item.a || item.o, // Nhận diện cả 'a' (Firebase) và 'o' (Local)
                                                 quizTitle: quizTitle
                                             }));
 
