@@ -13,7 +13,6 @@ function App() {
     const [quizState, setQuizState] = useState({ currentQ: 0, answers: [], showResult: false, reviewMode: false });
     const [timeLeft, setTimeLeft] = useState(null);
 
-    // 1. QUÉT DỮ LIỆU TĨNH
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
         const resQuizzes = { "10": [], "11": [], "12": [] };
@@ -29,7 +28,6 @@ function App() {
         return resQuizzes;
     }, []);
 
-    // 2. KẾT NỐI REALTIME VỚI GIÁO VIÊN
     useEffect(() => {
         if (!user) return;
         const staticData = scanData();
@@ -44,13 +42,11 @@ function App() {
 
     useEffect(() => { auth.onAuthStateChanged(u => setUser(u)); }, []);
 
-    // Tự động chọn bài đầu tiên khi đổi khối lớp
     useEffect(() => {
         if (localLessons[grade]?.length > 0) setLs(localLessons[grade][0]);
         else setLs(null);
     }, [grade, localLessons]);
 
-    // 3. LOGIC THỜI GIAN
     useEffect(() => {
         if (timeLeft === 0) { handleFinish(); return; }
         if (timeLeft === null || quizState.showResult) return;
@@ -65,7 +61,6 @@ function App() {
         setQuizState({ ...quizState, answers: newAns });
     };
 
-    // 4. NỘP BÀI & GỬI ĐIỂM
     const handleFinish = async () => {
         if (!activeQuiz) return;
         const score = quizState.answers.filter((a, i) => a === activeQuiz[i]?.c).length;
@@ -93,10 +88,10 @@ function App() {
         <div className="flex h-screen overflow-hidden bg-slate-50">
             <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} />
             <main className="flex-1 flex flex-col overflow-hidden">
+                {/* Header nhận đúng setIsFocus */}
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
                 
                 <div className="flex-1 flex overflow-hidden">
-                    {/* KHÔNG GIAN BÀI GIẢNG */}
                     {tab === 'baigiang' ? (
                         <>
                             <div className={`w-72 border-r bg-white p-4 overflow-y-auto transition-all ${isFocus ? 'hidden' : 'block'}`}>
@@ -119,7 +114,6 @@ function App() {
                             </div>
                         </>
                     ) : (
-                        /* KHÔNG GIAN LUYỆN TẬP */
                         <div className="flex-1 p-10 overflow-y-auto bg-slate-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                                 {(localQuizzes[grade] || []).map((q, i) => (
@@ -138,11 +132,22 @@ function App() {
                                         </div>
                                         
                                         <button onClick={() => {
-                                            const questions = q.questions || [];
-                                            if (questions.length === 0) return alert("Đề này chưa có câu hỏi!");
+                                            const rawQs = q.questions || [];
+                                            if (rawQs.length === 0) return alert("Đề này chưa có câu hỏi!");
+                                            
                                             const quizTitle = q.isLive ? q.title : `Bài ${q.quizIndex}`;
-                                            setActiveQuiz(questions.map(item => ({...item, quizTitle})));
-                                            setQuizState({currentQ:0, answers: new Array(questions.length).fill(null), showResult:false, reviewMode:false});
+                                            
+                                            // CHUYỂN ĐỔI DỮ LIỆU TỪ 'a' SANG 'o' ĐỂ QUIZMODAL ĐỌC ĐƯỢC
+                                            const formattedQs = rawQs.map(item => ({
+                                                ...item,
+                                                q: item.q,
+                                                o: item.a || item.o, // Ưu tiên lấy trường 'a' từ Firebase
+                                                c: item.c,
+                                                quizTitle: quizTitle
+                                            }));
+
+                                            setActiveQuiz(formattedQs);
+                                            setQuizState({currentQ:0, answers: new Array(rawQs.length).fill(null), showResult:false, reviewMode:false});
                                             setTimeLeft(q.time || 15 * 60);
                                         }} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest group-hover:bg-blue-600 transition-all shadow-lg">Làm bài ngay</button>
                                     </div>
