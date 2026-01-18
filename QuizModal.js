@@ -3,12 +3,44 @@ function QuizModal({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
     // 1. Chặn lỗi nếu chưa có dữ liệu mảng câu hỏi
     if (!activeQuiz || activeQuiz.length === 0) return null;
 
-    const q = activeQuiz[quizState.currentQ];
+    // =========================================================
+    // CODE THÊM MỚI: MÀN HÌNH HIỂN THỊ KẾT QUẢ KHI NỘP BÀI XONG
+    // =========================================================
+    if (quizState.showResult) {
+        // Tính toán nhanh số câu đúng để hiện cho học sinh xem
+        const score = quizState.answers.filter((ans, i) => ans === activeQuiz[i]?.c).length;
+        const point = Math.round((score / activeQuiz.length) * 100) / 10;
 
-    // 2. Lấy danh sách đáp án (Ưu tiên cột 'a' từ Firebase của thầy Hải)
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4 animate-in zoom-in duration-300">
+                <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl text-center">
+                    <div className="text-6xl mb-6">🎉</div>
+                    <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase">Hoàn thành!</h2>
+                    <p className="text-slate-500 font-medium mb-8">Kết quả của em đã được gửi đến thầy Hải</p>
+                    
+                    <div className="bg-slate-50 rounded-3xl p-6 mb-8 border-2 border-dashed border-slate-200">
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Điểm số của em</div>
+                        <div className="text-5xl font-black text-blue-600">{point}</div>
+                        <div className="text-sm font-bold text-slate-500 mt-2">Đúng {score} / {activeQuiz.length} câu</div>
+                    </div>
+
+                    <button 
+                        onClick={() => setActiveQuiz(null)} 
+                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200"
+                    >
+                        Đóng màn hình
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // =========================================================
+    // PHẦN DƯỚI ĐÂY GIỮ NGUYÊN CODE GIAO DIỆN LÀM BÀI CỦA THẦY
+    // =========================================================
+    const q = activeQuiz[quizState.currentQ];
     const options = q.a || q.o || [];
 
-    // 3. Nếu câu hỏi không có đáp án, hiển thị thông báo lỗi thay vì trắng trang
     if (!q || options.length === 0) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 text-white p-10 text-center">
