@@ -1,27 +1,35 @@
+// ExamService.js - Dành cho App Học sinh
 const ExamService = {
     subscribeToQuizzes: (grade, callback) => {
-        // Lấy db từ window (đã khởi tạo ở config.js)
         const database = window.db; 
         
         if (!database) {
-            console.error("Hệ thống chưa kết nối được Firebase!");
-            return () => {}; // Trả về hàm rỗng để App.js không bị crash
+            console.error("Firebase chưa sẵn sàng!");
+            return () => {}; 
         }
 
-        // Lắng nghe đề thi mới từ ngăn tủ "quizzes"
+        console.log("📡 Đang lắng nghe đề thi cho khối:", grade);
+
+        // Lắng nghe realtime từ ngăn tủ "quizzes"
         return database.collection("quizzes")
-            .where("grade", "==", grade)
-            .orderBy("createdAt", "desc")
             .onSnapshot((snapshot) => {
-                const liveQuizzes = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    quizIndex: "LIVE",
-                    isLive: true
-                }));
+                // Lọc dữ liệu ngay tại máy học sinh để tránh lỗi kiểu dữ liệu String/Number
+                const liveQuizzes = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(quiz => {
+                        // Kiểm tra nếu grade khớp (chấp nhận cả "10" và 10)
+                        return String(quiz.grade) === String(grade);
+                    })
+                    .map(quiz => ({
+                        ...quiz,
+                        quizIndex: "LIVE",
+                        isLive: true
+                    }));
+
+                console.log(`✅ Tìm thấy ${liveQuizzes.length} đề thi mới cho khối ${grade}`);
                 callback(liveQuizzes);
             }, (error) => {
-                console.log("Đang đợi đề thi mới từ thầy...");
+                console.error("Lỗi lắng nghe:", error);
             });
     }
 };
