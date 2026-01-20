@@ -1,23 +1,22 @@
-// Database.js - Dành cho App Học sinh (Givi Student)
 const Database = {
-    
     // 1. Gửi kết quả sau khi làm bài xong
-    sendQuizResult: async (userData, grade, title, score, details) => {
+    sendQuizResult: async (userData, grade, title, scoreValue, details) => {
         try {
-            // Sử dụng window.db nếu đã định nghĩa ở config.js hoặc dùng trực tiếp firebase.firestore()
             const db = window.db || firebase.firestore();
             
+            // CHÚ Ý: Tên trường phải khớp hoàn toàn với GradeReport.js của thầy
             await db.collection("quiz_results").add({
-                studentName: userData.displayName,
-                studentEmail: userData.email,
-                studentAvatar: userData.photoURL,
+                userName: userData.displayName,  // Sửa từ studentName thành userName
+                userEmail: userData.email,      // Sửa từ studentEmail thành userEmail
+                userAvatar: userData.photoURL,
                 quizTitle: title,
                 grade: grade,
-                score: score,
-                details: details,
+                point: scoreValue,               // Sửa từ score thành point
+                detail: details,                // Sửa từ details thành detail (không có s)
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
-            console.log("✅ Điểm đã được gửi về cho Giáo viên!");
+            
+            console.log("✅ Điểm đã được gửi về cho Giáo viên với cấu trúc mới!");
             return true;
         } catch (e) {
             console.error("❌ Lỗi gửi điểm:", e);
@@ -25,7 +24,7 @@ const Database = {
         }
     },
 
-    // 2. Lấy các tư liệu học tập
+    // 2. Lấy các tư liệu học tập (Giữ nguyên)
     getDocuments: (grade, callback) => {
         const db = window.db || firebase.firestore();
         return db.collection("documents")
