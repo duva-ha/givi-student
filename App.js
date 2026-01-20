@@ -204,6 +204,8 @@ function App() {
                         activeQuiz={activeQuiz} quizState={quizState} setQuizState={setQuizState} 
                         timeLeft={timeLeft} handleSelect={handleSelect} handleFinish={handleFinish} 
                         setActiveQuiz={setActiveQuiz} formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`}
+                        setIsFocus={setIsFocus} 
+                        formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`}
                     />
                 )}
             </main>
