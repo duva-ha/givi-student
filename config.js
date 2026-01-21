@@ -20,29 +20,35 @@ window.auth = firebase.auth();
 const db = window.db;
 const auth = window.auth;
 
-// 4. HÀM GỬI ĐIỂM (QUAN TRỌNG: Để hiện kết quả lên Báo cáo giáo viên)
+// 4. HÀM GỬI ĐIỂM (BẢN CẬP NHẬT ĐỂ NHẬN HỌ TÊN & LỚP TỰ NHẬP)
 window.Database = {
-    sendQuizResult: async (user, grade, title, point, detail) => {
-        if (!user) return;
+    sendQuizResult: async (studentProfile, className, title, point, detail) => {
+        // Kiểm tra an toàn: Nếu không có dữ liệu học sinh thì không gửi
+        if (!studentProfile) return;
+
         try {
-            // Gửi dữ liệu vào đúng ngăn tủ "quiz_results" mà trang Giáo viên đang đọc
             await db.collection("quiz_results").add({
-                uid: user.uid,
-                userName: user.displayName || "Học sinh ẩn danh",
-                userEmail: user.email,
-                grade: String(grade),
+                // Lấy UID từ Google, nếu không có thì lấy ID tạm đã tạo bên App.js
+                uid: studentProfile.uid || "anonymous", 
+                
+                // LẤY TÊN VÀ LỚP TỪ Ô NHẬP TAY CỦA HỌC SINH
+                userName: studentProfile.displayName || "Học sinh ẩn danh",
+                grade: className || "Không rõ lớp", 
+                
                 quizTitle: title,
-                point: parseFloat(point), // Lưu dạng số để tính trung bình cộng
-                detail: detail,           // Lưu dạng "8/10"
+                point: parseFloat(point), 
+                detail: detail,           
+                
+                // Dùng createdAt để đồng bộ với lệnh orderBy bên máy Giáo viên
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            console.log("✅ Đã lưu điểm thành công vào hệ thống!");
+            console.log("✅ Hệ thống: Đã ghi nhận điểm của em " + studentProfile.displayName);
         } catch (error) {
-            console.error("❌ Lỗi lưu điểm:", error);
+            console.error("❌ Lỗi Firebase:", error);
             throw error;
         }
     }
 };
 
-// 5. Cấu hình ổn định kết nối
+// 5. Cấu hình ổn định kết nối trên GitHub Pages
 db.settings({ experimentalForceLongPolling: true });
