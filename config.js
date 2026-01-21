@@ -1,4 +1,4 @@
-// 1. Thông số kết nối Firebase (Dùng chung với bên Giáo viên)
+// 1. Thông số kết nối Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAV-XVaOyUiq1c-29VTaWjLKcEXrssnnTE",
     authDomain: "qlhs10a7.firebaseapp.com",
@@ -14,15 +14,35 @@ if (!firebase.apps.length) {
     console.log("🔥 Firebase Hub: Đã kết nối thành công!");
 }
 
-// 3. KHAI BÁO BIẾN TOÀN CỤC (QUAN TRỌNG NHẤT)
-// Việc dùng window. giúp các file ExamService.js và Database.js 
-// luôn tìm thấy dữ liệu ngay cả khi mạng chậm hoặc nạp file lệch nhau.
+// 3. KHAI BÁO BIẾN TOÀN CỤC
 window.db = firebase.firestore();
 window.auth = firebase.auth();
-
-// Tạo biến tắt để các đoạn code cũ trong App.js vẫn chạy được
 const db = window.db;
 const auth = window.auth;
 
-// 4. Cấu hình bổ sung (nếu cần)
-db.settings({ experimentalForceLongPolling: true }); // Giúp kết nối ổn định hơn trên GitHub Pages
+// 4. HÀM GỬI ĐIỂM (QUAN TRỌNG: Để hiện kết quả lên Báo cáo giáo viên)
+window.Database = {
+    sendQuizResult: async (user, grade, title, point, detail) => {
+        if (!user) return;
+        try {
+            // Gửi dữ liệu vào đúng ngăn tủ "quiz_results" mà trang Giáo viên đang đọc
+            await db.collection("quiz_results").add({
+                uid: user.uid,
+                userName: user.displayName || "Học sinh ẩn danh",
+                userEmail: user.email,
+                grade: String(grade),
+                quizTitle: title,
+                point: parseFloat(point), // Lưu dạng số để tính trung bình cộng
+                detail: detail,           // Lưu dạng "8/10"
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log("✅ Đã lưu điểm thành công vào hệ thống!");
+        } catch (error) {
+            console.error("❌ Lỗi lưu điểm:", error);
+            throw error;
+        }
+    }
+};
+
+// 5. Cấu hình ổn định kết nối
+db.settings({ experimentalForceLongPolling: true });
