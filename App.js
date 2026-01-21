@@ -1,15 +1,22 @@
 const { useState, useEffect, useCallback } = React;
 
+// --- HÀM XÁO TRỘN MẢNG (Sử dụng thuật toán Fisher-Yates) ---
+const shuffleArray = (array) => {
+    const newArr = [...array];
+    for (let i = newArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+};
+
 // --- COMPONENT LÀM BÀI (GIAO DIỆN MOBILE & HIỆN ĐIỂM) ---
 const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
-    
-    // Tự động ẩn menu khi bắt đầu làm bài để rộng màn hình
     useEffect(() => {
         if (setIsFocus) setIsFocus(true);
         return () => { if (setIsFocus) setIsFocus(false); };
     }, [setIsFocus]);
 
-    // MÀN HÌNH BÁO ĐIỂM SAU KHI NỘP
     if (quizState.showResult) {
         return (
             <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-left">
@@ -17,25 +24,16 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                     <div className="text-6xl mb-4">🏆</div>
                     <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase">Hoàn thành!</h2>
                     <p className="text-slate-400 font-bold mb-6 italic text-xs">Kết quả của em đã được gửi tới thầy Hải</p>
-                    
                     <div className="bg-blue-50 py-10 rounded-[2.5rem] mb-8 border-2 border-blue-100 text-left">
                         <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 text-center">Số điểm đạt được</div>
-                        <div className="text-7xl font-black text-blue-600 tracking-tighter text-center">
-                            {quizState.finalScore}
-                        </div>
+                        <div className="text-7xl font-black text-blue-600 tracking-tighter text-center">{quizState.finalScore}</div>
                         <div className="mt-4 text-center">
                             <span className="inline-block bg-white px-4 py-1 rounded-full text-[10px] font-black text-blue-500 shadow-sm">
                                 Đúng {quizState.correctCount} / {activeQuiz.length} câu
                             </span>
                         </div>
                     </div>
-
-                    <button 
-                        onClick={() => setActiveQuiz(null)}
-                        className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-                    >
-                        Đóng & Quay lại
-                    </button>
+                    <button onClick={() => setActiveQuiz(null)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Đóng & Quay lại</button>
                 </div>
             </div>
         );
@@ -46,56 +44,32 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
 
     return (
         <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in duration-300 text-left">
-            {/* Thanh trạng thái Top */}
             <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
                 <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-xl">✕</button>
                 <div className="flex flex-col items-center">
                     <span className="text-[9px] uppercase font-black tracking-widest text-blue-400">Thời gian làm bài</span>
                     <span className={`text-xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>{formatTime(timeLeft)}</span>
                 </div>
-                <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700">
-                    CÂU {quizState.currentQ + 1}/{activeQuiz.length}
-                </div>
+                <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700">CÂU {quizState.currentQ + 1}/{activeQuiz.length}</div>
             </div>
-
-            {/* Nội dung câu hỏi */}
             <div className="flex-1 overflow-y-auto p-5 lg:p-10 bg-slate-50">
                 <div className="max-w-2xl mx-auto">
                     <div className="w-full h-1.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
                         <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
                     </div>
-
-                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
-                        <h2 className="text-lg lg:text-2xl font-bold text-slate-800 leading-relaxed">{q.q}</h2>
-                    </div>
-
+                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6 font-bold text-slate-800 leading-relaxed">{q.q}</div>
                     <div className="grid grid-cols-1 gap-4 mb-20">
                         {q.o.map((opt, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => handleSelect(idx)}
-                                className={`group flex items-center p-5 rounded-3xl border-2 text-left transition-all active:scale-[0.97] 
-                                    ${quizState.answers[quizState.currentQ] === idx ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-white bg-white shadow-sm'}`}
-                            >
-                                <span className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black mr-4 shrink-0 
-                                    ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                    {String.fromCharCode(65 + idx)}
-                                </span>
+                            <button key={idx} onClick={() => handleSelect(idx)} className={`group flex items-center p-5 rounded-3xl border-2 text-left transition-all active:scale-[0.97] ${quizState.answers[quizState.currentQ] === idx ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-white bg-white shadow-sm'}`}>
+                                <span className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black mr-4 shrink-0 ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                 <span className={`font-bold text-sm lg:text-base ${quizState.answers[quizState.currentQ] === idx ? 'text-blue-700' : 'text-slate-600'}`}>{opt}</span>
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
-
-            {/* Điều hướng dưới */}
             <div className="p-4 bg-white border-t flex gap-4 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-                <button 
-                    disabled={quizState.currentQ === 0}
-                    onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})}
-                    className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase bg-slate-100 text-slate-400 disabled:opacity-30"
-                >Quay lại</button>
-                
+                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase bg-slate-100 text-slate-400 disabled:opacity-30">Quay lại</button>
                 {quizState.currentQ === activeQuiz.length - 1 ? (
                     <button onClick={handleFinish} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-green-600 text-white shadow-lg animate-bounce">Nộp bài ngay</button>
                 ) : (
@@ -119,7 +93,6 @@ function App() {
     const [quizState, setQuizState] = useState({ currentQ: 0, answers: [], showResult: false, reviewMode: false });
     const [timeLeft, setTimeLeft] = useState(null);
 
-    // THÔNG TIN HỌC SINH NHẬP TAY
     const [stName, setStName] = useState("");
     const [stClass, setStClass] = useState("");
     const [pendingQuiz, setPendingQuiz] = useState(null);
@@ -176,7 +149,6 @@ function App() {
         setQuizState({ ...quizState, answers: newAns });
     };
 
-    // --- HÀM NỘP BÀI GIA CỐ (CHỐNG LỖI ĐỎ CONSOLE) ---
     const handleFinish = async () => {
         if (!activeQuiz || activeQuiz.length === 0) return;
         try {
@@ -186,20 +158,12 @@ function App() {
             const quizTitle = activeQuiz[0]?.quizTitle || "Kiểm tra";
 
             if (window.Database && window.Database.sendQuizResult) {
-                // Tạo dữ liệu người dùng an toàn
                 const studentProfile = {
                     uid: user?.uid || "hs_" + Date.now(),
                     displayName: stName.trim() || "Học sinh ẩn danh",
                     email: user?.email || "student@gmail.com"
                 };
-
-                await window.Database.sendQuizResult(
-                    studentProfile, 
-                    stClass.trim(), 
-                    quizTitle, 
-                    finalPoint, 
-                    `${score}/${total}`
-                );
+                await window.Database.sendQuizResult(studentProfile, stClass.trim(), quizTitle, finalPoint, `${score}/${total}`);
                 console.log("✅ Điểm đã được gửi lên Firebase!");
             }
             setQuizState(prev => ({ ...prev, showResult: true, finalScore: finalPoint, correctCount: score }));
@@ -222,7 +186,6 @@ function App() {
             <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} />
             <main className="flex-1 flex flex-col overflow-hidden relative text-left">
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
-                
                 <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
                     {tab === 'baigiang' ? (
                         <>
@@ -251,10 +214,7 @@ function App() {
                                         {q.isLive && <div className="absolute top-6 right-6 bg-orange-500 text-white text-[8px] font-black px-3 py-1 rounded-full animate-bounce shadow-lg">ĐỀ TỪ THẦY</div>}
                                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-8 ${q.isLive ? 'bg-orange-500 text-white shadow-lg' : 'bg-blue-50 text-blue-500'}`}>{q.isLive ? '🚀' : '📝'}</div>
                                         <div className="font-black text-slate-800 mb-8 uppercase text-[11px] leading-tight min-h-[40px] text-left">{q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`}</div>
-                                        <button 
-                                            onClick={() => setPendingQuiz(q)} 
-                                            className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest group-hover:bg-blue-600 transition-all shadow-lg active:scale-95"
-                                        >Làm bài ngay</button>
+                                        <button onClick={() => setPendingQuiz(q)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest group-hover:bg-blue-600 transition-all shadow-lg active:scale-95">Làm bài ngay</button>
                                     </div>
                                 ))}
                             </div>
@@ -262,14 +222,13 @@ function App() {
                     )}
                 </div>
 
-                {/* --- POPUP NHẬP THÔNG TIN (HỌ TÊN & LỚP) --- */}
+                {/* --- POPUP NHẬP THÔNG TIN & LOGIC TRỘN ĐỀ --- */}
                 {pendingQuiz && (
                     <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 text-left">
                         <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 lg:p-10 shadow-2xl animate-in zoom-in duration-300 text-center">
                             <div className="text-5xl mb-6">📝</div>
                             <h3 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none">Thông tin thí sinh</h3>
                             <p className="text-slate-400 text-[9px] font-black uppercase mb-8 tracking-widest">Vui lòng điền đúng để thầy ghi điểm</p>
-                            
                             <div className="space-y-4 mb-8">
                                 <div className="text-left">
                                     <label className="text-[9px] font-black text-blue-500 uppercase ml-4 mb-1 block">Họ và tên</label>
@@ -280,47 +239,50 @@ function App() {
                                     <input type="text" placeholder="Ví dụ: 10A7" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700" value={stClass} onChange={(e) => setStClass(e.target.value)} />
                                 </div>
                             </div>
-
                             <div className="flex flex-col gap-2">
                                 <button 
                                     disabled={!stName.trim() || !stClass.trim()} 
                                     onClick={() => {
                                         const q = pendingQuiz;
-                                        const readyQs = (q.questions || []).map(item => ({ 
-                                            ...item, 
-                                            q: item.q || "Lỗi câu hỏi", 
-                                            o: item.a || item.o || ["A", "B", "C", "D"], 
-                                            c: item.c !== undefined ? parseInt(item.c) : 0,
-                                            quizTitle: q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`
-                                        }));
+                                        const rawQs = q.questions || [];
+                                        
+                                        // --- LOGIC TRỘN CÂU HỎI VÀ ĐÁP ÁN ---
+                                        let shuffledQuestions = shuffleArray(rawQs); // Trộn thứ tự câu hỏi
+
+                                        const readyQs = shuffledQuestions.map(item => {
+                                            // Tạo mảng đáp án kèm nhãn đúng/sai để giữ vị trí đáp án đúng sau khi trộn
+                                            let optionsWithFlag = (item.a || item.o || []).map((text, idx) => ({
+                                                text: text,
+                                                isCorrect: idx === item.c
+                                            }));
+
+                                            // Trộn đáp án trong từng câu
+                                            optionsWithFlag = shuffleArray(optionsWithFlag);
+
+                                            return {
+                                                ...item,
+                                                q: item.q || "Lỗi câu hỏi",
+                                                o: optionsWithFlag.map(opt => opt.text),
+                                                c: optionsWithFlag.findIndex(opt => opt.isCorrect), // Tìm lại vị trí mới của đáp án đúng
+                                                quizTitle: q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`
+                                            };
+                                        });
+
                                         setActiveQuiz(readyQs);
                                         setQuizState({currentQ:0, answers: new Array(readyQs.length).fill(null), showResult:false, reviewMode:false});
                                         setTimeLeft(q.time || 15 * 60);
                                         setPendingQuiz(null);
                                     }} 
                                     className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30 active:scale-95 transition-all"
-                                >
-                                    Bắt đầu làm bài
-                                </button>
+                                >Bắt đầu làm bài</button>
                                 <button onClick={() => setPendingQuiz(null)} className="py-3 text-slate-400 font-black uppercase text-[10px] tracking-widest">Quay lại</button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* --- HIỂN THỊ CỬA SỔ LÀM BÀI --- */}
                 {activeQuiz && (
-                    <QuizModal 
-                        activeQuiz={activeQuiz} 
-                        quizState={quizState} 
-                        setQuizState={setQuizState} 
-                        timeLeft={timeLeft} 
-                        handleSelect={handleSelect} 
-                        handleFinish={handleFinish} 
-                        setActiveQuiz={setActiveQuiz} 
-                        setIsFocus={setIsFocus} 
-                        formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`} 
-                    />
+                    <QuizModal activeQuiz={activeQuiz} quizState={quizState} setQuizState={setQuizState} timeLeft={timeLeft} handleSelect={handleSelect} handleFinish={handleFinish} setActiveQuiz={setActiveQuiz} setIsFocus={setIsFocus} formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`} />
                 )}
             </main>
         </div>
