@@ -1,138 +1,97 @@
-function QuizModal({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, formatTime }) {
+const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
     
-    // 1. Chặn lỗi dữ liệu
-    if (!activeQuiz || activeQuiz.length === 0) return null;
+    // Tự động ẩn thanh Menu khi bắt đầu làm bài để rộng chỗ trên điện thoại
+    useEffect(() => {
+        setIsFocus(true);
+        return () => setIsFocus(false);
+    }, []);
 
-    // 2. MÀN HÌNH HIỂN THỊ KẾT QUẢ
-    if (quizState.showResult) {
-        const score = quizState.answers.filter((ans, i) => ans === activeQuiz[i]?.c).length;
-        const point = Math.round((score / activeQuiz.length) * 100) / 10;
-
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4 animate-in zoom-in duration-300">
-                <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl text-center">
-                    <div className="text-6xl mb-6">🎉</div>
-                    <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase">Hoàn thành!</h2>
-                    <p className="text-slate-500 font-medium mb-8">Kết quả của em đã được gửi đến thầy Hải</p>
-                    
-                    <div className="bg-slate-50 rounded-3xl p-6 mb-8 border-2 border-dashed border-slate-200">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Điểm số của em</div>
-                        <div className="text-5xl font-black text-blue-600 text-center">{point}</div>
-                        <div className="text-sm font-bold text-slate-500 mt-2 text-center">Đúng {score} / {activeQuiz.length} câu</div>
-                    </div>
-
-                    <button 
-                        onClick={() => setActiveQuiz(null)} 
-                        className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200"
-                    >
-                        Đóng màn hình
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // 3. GIAO DIỆN LÀM BÀI
     const q = activeQuiz[quizState.currentQ];
-    const options = q.a || q.o || [];
-
-    if (!q || options.length === 0) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 text-white p-10 text-center">
-                <div>
-                    <p className="text-xl mb-6">⚠️ Câu hỏi số {quizState.currentQ + 1} bị lỗi dữ liệu!</p>
-                    <button onClick={() => setActiveQuiz(null)} className="px-8 py-2 bg-white text-slate-900 rounded-xl font-black">QUAY LẠI</button>
-                </div>
-            </div>
-        );
-    }
+    if (!q) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4 animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-4xl max-h-[95vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl">
-                
-                {/* THANH TIÊU ĐỀ */}
-                <div className="p-6 border-b flex items-center justify-between bg-slate-50">
-                    <div>
-                        <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">E-TECH HUB 2026</div>
-                        <div className="font-black text-slate-800 uppercase text-sm truncate max-w-[200px] md:max-w-full">
-                            {q.quizTitle || "Bài kiểm tra"}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className={`px-6 py-2 rounded-2xl font-black text-lg shadow-inner ${timeLeft < 60 ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-900 text-white'}`}>
-                            {formatTime(timeLeft)}
-                        </div>
-                        <button onClick={() => { if(confirm('Thoát? Kết quả sẽ không được lưu.')) setActiveQuiz(null) }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-200 text-slate-500 hover:bg-red-100 hover:text-red-500 transition-all font-bold">✕</button>
-                    </div>
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in duration-300">
+            
+            {/* 1. THANH TRẠNG THÁI CỐ ĐỊNH (TOP BAR) */}
+            <div className="safe-top bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
+                <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400">
+                    ✕
+                </button>
+                <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-blue-400">Thời gian còn lại</span>
+                    <span className={`text-xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>
+                        {formatTime(timeLeft)}
+                    </span>
                 </div>
+                <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700">
+                    CÂU {quizState.currentQ + 1}/{activeQuiz.length}
+                </div>
+            </div>
 
-                {/* NỘI DUNG CÂU HỎI */}
-                <div className="flex-1 overflow-y-auto p-8 lg:p-14">
-                    <div className="mb-10">
-                        <span className="px-5 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase shadow-lg shadow-blue-200">
-                            CÂU {quizState.currentQ + 1} / {activeQuiz.length}
-                        </span>
-                        <h2 className="text-xl md:text-2xl font-bold text-slate-800 mt-8 leading-relaxed">
+            {/* 2. NỘI DUNG CÂU HỎI (CUỘN ĐƯỢC) */}
+            <div className="flex-1 overflow-y-auto p-5 lg:p-10 bg-slate-50">
+                <div className="max-w-2xl mx-auto">
+                    {/* Tiến độ làm bài (Thanh bar nhỏ) */}
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
+                        <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
+                    </div>
+
+                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
+                        <h2 className="text-lg lg:text-2xl font-bold text-slate-800 leading-relaxed">
                             {q.q}
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-5">
-                        {options.map((option, idx) => {
-                            const isSelected = quizState.answers[quizState.currentQ] === idx;
-                            return (
-                                <button 
-                                    key={idx} 
-                                    onClick={() => handleSelect(idx)}
-                                    className={`p-5 rounded-3xl border-2 text-left font-bold transition-all flex items-center gap-5 group ${isSelected ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md scale-[1.01]' : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50 text-slate-600'}`}
-                                >
-                                    <span className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center text-xs font-black border-2 transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-slate-200 text-slate-400 group-hover:border-blue-300'}`}>
-                                        {String.fromCharCode(65 + idx)}
-                                    </span>
-                                    <span className="text-base">{option}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* ĐIỀU HƯỚNG & DANH SÁCH CÂU HỎI NHANH */}
-                <div className="p-6 border-t bg-slate-50 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex gap-2">
-                        <button 
-                            disabled={quizState.currentQ === 0}
-                            onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})}
-                            className="px-6 py-4 rounded-2xl font-bold text-slate-400 disabled:opacity-20 hover:bg-slate-200"
-                        >←</button>
-                        
-                        {/* DANH SÁCH Ô SỐ CÂU HỎI (UX Cải tiến) */}
-                        <div className="hidden lg:flex items-center gap-1.5 px-4 overflow-x-auto max-w-[400px]">
-                            {activeQuiz.map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setQuizState({...quizState, currentQ: i})}
-                                    className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${quizState.currentQ === i ? 'bg-blue-600 text-white scale-110 shadow-lg' : quizState.answers[i] !== null ? 'bg-slate-800 text-white' : 'bg-white border text-slate-400'}`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-                        </div>
-
-                        {quizState.currentQ < activeQuiz.length - 1 ? (
-                            <button 
-                                onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})}
-                                className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all text-xs"
-                            >TIẾP THEO →</button>
-                        ) : (
-                            <button 
-                                onClick={() => { if(confirm('Xác nhận nộp bài?')) handleFinish() }}
-                                className="px-8 py-4 bg-green-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-green-200 hover:bg-green-700 transition-all text-xs"
-                            >NỘP BÀI</button>
-                        )}
+                    {/* 3. DANH SÁCH ĐÁP ÁN (DẠNG NÚT TO) */}
+                    <div className="grid grid-cols-1 gap-4 mb-20">
+                        {(q.o || q.a || []).map((opt, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleSelect(idx)}
+                                className={`group flex items-center p-5 rounded-3xl border-2 text-left transition-all active:scale-[0.97] 
+                                    ${quizState.answers[quizState.currentQ] === idx 
+                                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                        : 'border-white bg-white hover:border-slate-200 shadow-sm'}`}
+                            >
+                                <span className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black mr-4 shrink-0 transition-colors
+                                    ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    {String.fromCharCode(65 + idx)}
+                                </span>
+                                <span className={`font-bold text-sm lg:text-base ${quizState.answers[quizState.currentQ] === idx ? 'text-blue-700' : 'text-slate-600'}`}>
+                                    {opt}
+                                </span>
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
+
+            {/* 4. THANH ĐIỀU HƯỚNG DƯỚI CÙNG (BOTTOM NAV) */}
+            <div className="p-4 bg-white border-t flex gap-4 safe-bottom">
+                <button 
+                    disabled={quizState.currentQ === 0}
+                    onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})}
+                    className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase bg-slate-100 text-slate-400 disabled:opacity-30"
+                >
+                    Quay lại
+                </button>
+                
+                {quizState.currentQ === activeQuiz.length - 1 ? (
+                    <button 
+                        onClick={handleFinish}
+                        className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-green-600 text-white shadow-lg shadow-green-100 animate-bounce"
+                    >
+                        Nộp bài ngay
+                    </button>
+                ) : (
+                    <button 
+                        onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})}
+                        className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-blue-600 text-white shadow-lg shadow-blue-100"
+                    >
+                        Câu tiếp theo
+                    </button>
+                )}
+            </div>
         </div>
     );
-}
+};
