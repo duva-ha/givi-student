@@ -1,6 +1,6 @@
 const { useState, useEffect, useCallback } = React;
 
-// --- COMPONENT LÀM BÀI (TỐI ƯU MOBILE & HIỆN ĐIỂM) ---
+// --- COMPONENT LÀM BÀI (GIAO DIỆN MOBILE & HIỆN ĐIỂM) ---
 const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
     
     useEffect(() => {
@@ -14,15 +14,15 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
             <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6">
                 <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl animate-in zoom-in duration-300">
                     <div className="text-6xl mb-4">🏆</div>
-                    <h2 className="text-2xl font-black text-slate-800 mb-2">HOÀN THÀNH!</h2>
-                    <p className="text-slate-400 font-bold mb-6 italic text-sm">Điểm của em đã được gửi tới thầy Hải</p>
+                    <h2 className="text-2xl font-black text-slate-800 mb-2 italic">HOÀN THÀNH!</h2>
+                    <p className="text-slate-400 font-bold mb-6 italic text-sm text-center">Kết quả của em đã được gửi tới thầy Hải</p>
                     
                     <div className="bg-blue-50 py-10 rounded-[2.5rem] mb-8 border-2 border-blue-100">
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Kết quả bài làm</div>
+                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Số điểm đạt được</div>
                         <div className="text-7xl font-black text-blue-600 tracking-tighter">
                             {quizState.finalScore}
                         </div>
-                        <div className="mt-4 inline-block bg-white px-4 py-1 rounded-full text-xs font-black text-blue-500 shadow-sm">
+                        <div className="mt-4 inline-block bg-white px-4 py-1 rounded-full text-[10px] font-black text-blue-500 shadow-sm">
                             Đúng {quizState.correctCount} / {activeQuiz.length} câu
                         </div>
                     </div>
@@ -38,7 +38,6 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
         );
     }
 
-    // 2. GIAO DIỆN LÀM BÀI TRÊN ĐIỆN THOẠI
     const q = activeQuiz[quizState.currentQ];
     if (!q) return null;
 
@@ -48,11 +47,11 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
             <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
                 <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-xl">✕</button>
                 <div className="flex flex-col items-center">
-                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400">Thời gian</span>
+                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400">Thời gian làm bài</span>
                     <span className={`text-xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>{formatTime(timeLeft)}</span>
                 </div>
                 <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700">
-                    {quizState.currentQ + 1}/{activeQuiz.length}
+                    CÂU {quizState.currentQ + 1}/{activeQuiz.length}
                 </div>
             </div>
 
@@ -63,8 +62,8 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                         <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
                     </div>
 
-                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
-                        <h2 className="text-lg lg:text-2xl font-bold text-slate-800 leading-relaxed text-left">{q.q}</h2>
+                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6 text-left">
+                        <h2 className="text-lg lg:text-2xl font-bold text-slate-800 leading-relaxed">{q.q}</h2>
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 mb-20">
@@ -97,7 +96,7 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                 {quizState.currentQ === activeQuiz.length - 1 ? (
                     <button onClick={handleFinish} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-green-600 text-white shadow-lg animate-bounce">Nộp bài ngay</button>
                 ) : (
-                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
+                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-blue-600 text-white shadow-lg">Tiếp theo</button>
                 )}
             </div>
         </div>
@@ -169,18 +168,26 @@ function App() {
         setQuizState({ ...quizState, answers: newAns });
     };
 
+    // 6. NỘP BÀI (ĐÃ SỬA LỖI TÊN BÀI THI)
     const handleFinish = async () => {
-        if (!activeQuiz) return;
+        if (!activeQuiz || activeQuiz.length === 0) return;
         try {
             const score = quizState.answers.filter((ans, i) => ans === activeQuiz[i]?.c).length;
             const total = activeQuiz.length;
             const finalPoint = Math.round((score / total) * 100) / 10;
-            const quizTitle = activeQuiz[0]?.quizTitle || "Kiểm tra";
+            
+            // LẤY TÊN ĐỀ TỪ CÂU HỎI ĐẦU TIÊN (ĐÃ GẮN Ở BƯỚC CLICK)
+            const quizTitle = activeQuiz[0]?.quizTitle || "Bài kiểm tra";
 
             if (window.Database && window.Database.sendQuizResult) {
                 await window.Database.sendQuizResult(user, grade, quizTitle, finalPoint, `${score}/${total}`);
             }
-            setQuizState(prev => ({ ...prev, showResult: true, finalScore: finalPoint, correctCount: score }));
+            setQuizState(prev => ({ 
+                ...prev, 
+                showResult: true, 
+                finalScore: finalPoint, 
+                correctCount: score 
+            }));
             setTimeLeft(null);
         } catch (e) { alert("Lỗi gửi điểm!"); }
     };
@@ -193,7 +200,7 @@ function App() {
     );
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 flex-col lg:flex-row">
+        <div className="flex h-screen overflow-hidden bg-slate-50 flex-col lg:flex-row text-left">
             <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} />
             <main className="flex-1 flex flex-col overflow-hidden relative">
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
@@ -215,7 +222,7 @@ function App() {
                                         <h2 className="text-2xl lg:text-3xl font-black mb-8 text-slate-900 leading-tight">{ls.title}</h2>
                                         {ls.content}
                                     </div>
-                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black tracking-widest uppercase text-center">📖 Chọn bài học bên trái</div>}
+                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black tracking-widest uppercase text-center px-10">📖 Chọn bài học ở danh sách bên trái</div>}
                             </div>
                         </>
                     ) : (
@@ -230,7 +237,16 @@ function App() {
                                             onClick={() => {
                                                 const rawQs = q.questions || [];
                                                 if (rawQs.length === 0) return alert("Đề chưa có câu hỏi!");
-                                                const readyQs = rawQs.map(item => ({ ...item, q: item.q || "Câu hỏi lỗi", o: item.a || item.o || ["A", "B", "C", "D"], c: item.c !== undefined ? parseInt(item.c) : 0 }));
+                                                
+                                                // CHUẨN HÓA DỮ LIỆU & GẮN TÊN BÀI THI VÀO TỪNG CÂU
+                                                const readyQs = rawQs.map(item => ({ 
+                                                    ...item, 
+                                                    q: item.q || "Nội dung câu hỏi lỗi", 
+                                                    o: item.a || item.o || ["A", "B", "C", "D"], 
+                                                    c: item.c !== undefined ? parseInt(item.c) : 0,
+                                                    quizTitle: q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}` // QUAN TRỌNG
+                                                }));
+
                                                 setActiveQuiz(readyQs);
                                                 setQuizState({currentQ:0, answers: new Array(readyQs.length).fill(null), showResult:false, reviewMode:false});
                                                 setTimeLeft(q.time || 15 * 60);
@@ -249,7 +265,6 @@ function App() {
                         activeQuiz={activeQuiz} quizState={quizState} setQuizState={setQuizState} 
                         timeLeft={timeLeft} handleSelect={handleSelect} handleFinish={handleFinish} 
                         setActiveQuiz={setActiveQuiz} setIsFocus={setIsFocus}
-                        setIsFocus={setIsFocus}
                         formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`}
                     />
                 )}
