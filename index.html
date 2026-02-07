@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>E-TECH Hub 2026 - Mobile Exam</title>
+    <title>E-TECH Hub 2026 - Super Mobile Exam</title>
     
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,82 +42,84 @@
     <script type="text/babel" src="QuizModal.js"></script>
 
     <style>
-        /* TỐI ƯU HÓA TRẢI NGHIỆM DI ĐỘNG (MOBILE-FIRST) */
+        /* THIẾT KẾ SIÊU TO CHO ĐIỆN THOẠI (GIẢM THIỂU NỘI DUNG THỪA) */
         :root {
-            --primary-font: 20px; /* Chữ cực to cho điện thoại */
+            --font-question: 32px; /* Chữ câu hỏi to gấp đôi */
+            --font-option: 24px;   /* Chữ đáp án cực rõ */
         }
 
         body {
-            font-size: var(--primary-font);
+            font-size: 20px;
             background-color: #ffffff;
-            color: #111;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            /* Chống chọn văn bản để copy */
+            color: #000;
+            font-family: -apple-system, sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            /* Loại bỏ bóng mờ khi chạm trên mobile */
-            -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
             margin: 0;
             padding: 0;
         }
 
-        /* Đảm bảo App React chiếm trọn màn hình điện thoại */
-        #root {
-            width: 100vw;
-            min-height: 100vh;
+        /* Tối ưu hóa vùng làm bài từng câu */
+        .quiz-container {
+            padding: 20px;
             display: flex;
             flex-direction: column;
+            gap: 25px;
         }
 
-        /* Watermark bảo mật - Phủ dày hơn để AI không đọc được */
+        /* Câu hỏi: To, đậm, nổi bật */
+        .quiz-question-mobile {
+            font-size: var(--font-question) !important;
+            font-weight: 800 !important;
+            line-height: 1.3;
+            color: #1a202c;
+            margin-bottom: 20px;
+            border-left: 8px solid #3b82f6;
+            padding-left: 15px;
+        }
+
+        /* Đáp án: Dạng thẻ lớn, chữ to, dễ chạm */
+        .quiz-option-mobile {
+            font-size: var(--font-option) !important;
+            padding: 20px !important;
+            margin-bottom: 15px !important;
+            border: 3px solid #e2e8f0 !important;
+            border-radius: 15px !important;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .quiz-option-mobile:active {
+            background-color: #ebf8ff;
+            border-color: #3b82f6 !important;
+        }
+
+        /* Lớp bảo mật Watermark */
         #security-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 9999;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            opacity: 0.08;
+            opacity: 0.1; /* Tăng nhẹ độ đậm để chống AI quét */
         }
         .watermark {
             transform: rotate(-25deg);
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 30px 10px;
-            white-space: nowrap;
+            margin: 40px 10px;
         }
 
-        /* Tối ưu hóa các thành phần UI Mobile */
-        .mobile-card {
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 12px;
-        }
-
-        /* Chữ câu hỏi siêu to */
-        .quiz-question-mobile {
-            font-size: 1.5rem !important;
-            line-height: 1.4;
-            margin-bottom: 20px;
-            color: #000;
-        }
-
-        /* Đáp án dạng nút lớn dễ bấm */
-        .quiz-option-mobile {
-            padding: 16px !important;
-            margin-bottom: 12px !important;
-            font-size: 1.2rem !important;
-            border-radius: 10px !important;
-            background: #f3f4f6;
-            display: block;
-            width: 100%;
-        }
-
-        /* Cố định Header trên mobile để không bị trôi khi cuộn */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
+        /* Nút điều hướng (Câu trước/Câu sau) */
+        .nav-button {
+            font-size: 22px !important;
+            padding: 15px 30px !important;
+            font-weight: bold !important;
+            border-radius: 50px !important;
         }
     </style>
 </head>
@@ -130,41 +132,33 @@
     <script type="text/babel" src="App.js"></script>
 
     <script>
-        // 1. Tạo Watermark động
+        // Watermark động dày đặc
         const layer = document.getElementById('security-layer');
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 100; i++) {
             const div = document.createElement('div');
             div.className = 'watermark';
             div.innerText = 'E-TECH HUB 2026';
             layer.appendChild(div);
         }
 
-        // 2. Logic chống gian lận tập trung vào Mobile
+        // Hệ thống cảnh báo thoát trang
         let violations = 0;
-        const MAX_ALLOWED = 3;
-
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 violations++;
-                // Mobile thường chụp màn hình bằng cách nhấn tổ hợp phím làm trình duyệt mất focus tạm thời
-                if (violations >= MAX_ALLOWED) {
-                    alert("CẢNH BÁO: Bạn vi phạm quá nhiều lần. Hệ thống đã ghi nhận tên và mã số học sinh!");
+                if (violations >= 3) {
+                    alert("CẢNH BÁO: Bạn đã thoát màn hình 3 lần. Hệ thống sẽ khóa bài làm!");
                 } else {
-                    alert("CẢNH BÁO: Không được thoát ứng dụng hoặc chụp màn hình!\nSố lần vi phạm: " + violations + "/" + MAX_ALLOWED);
+                    alert(`KHÔNG ĐƯỢC THOÁT RA! \nVi phạm lần: ${violations}/3 \nMọi hành động chụp màn hình đều bị ghi lại.`);
                 }
             }
         });
 
-        // 3. Chặn Copy/Paste/Select
-        document.addEventListener('copy', (e) => e.preventDefault());
-        document.addEventListener('paste', (e) => e.preventDefault());
-
-        // 4. Cải thiện tốc độ phản hồi trên Mobile (Loại bỏ độ trễ 300ms khi click)
-        if ('addEventListener' in document) {
-            document.addEventListener('DOMContentLoaded', function() {
-                // Có thể thêm FastClick ở đây nếu cần hỗ trợ máy cũ
-            }, false);
-        }
+        // Chặn các phím tắt và thao tác sao chép
+        document.addEventListener('copy', e => e.preventDefault());
+        window.onkeydown = e => {
+            if ([123, 85, 83, 80].includes(e.keyCode) || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode))) return false;
+        };
     </script>
 </body>
 </html>
