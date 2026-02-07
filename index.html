@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-TECH Hub 2026 - Student Official</title>
     
     <link rel="stylesheet" href="styles.css">
@@ -16,7 +16,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
     <script src="config.js"></script>
-    
     <script src="LT10_B1.js"></script>
     <script src="LT10_B2.js"></script>
     <script src="LT11/LT11_C2.js"></script>
@@ -44,107 +43,129 @@
     <script type="text/babel" src="QuizModal.js"></script>
 
     <style>
-        /* CSS tạo Watermark bảo mật để chống chụp ảnh */
-        #security-watermark {
+        /* TỐI ƯU GIAO DIỆN MOBILE & CHỮ TO */
+        :root {
+            --font-main: 18px; /* Kích thước chữ cơ bản to hơn bình thường */
+        }
+
+        body {
+            font-size: var(--font-main);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        /* Tăng cỡ chữ cho các vùng quan trọng của React App */
+        #root {
+            min-height: 100vh;
+        }
+
+        /* Chữ trong câu hỏi (Sẽ áp dụng nếu bạn đặt class này trong QuizModal) */
+        .quiz-text-large {
+            font-size: 1.35rem !important;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        /* Lớp bảo mật Watermark */
+        #security-layer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Không cản trở việc click */
+            pointer-events: none;
             z-index: 9999;
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
             align-content: space-around;
-            opacity: 0.05; /* Độ mờ cực thấp */
-            user-select: none;
+            opacity: 0.06;
+            overflow: hidden;
         }
-        .watermark-text {
-            transform: rotate(-45deg);
-            font-size: 20px;
-            color: gray;
+
+        .watermark {
+            transform: rotate(-30deg);
+            font-size: 14px;
             font-weight: bold;
+            color: #000;
+            margin: 40px;
             white-space: nowrap;
         }
-        /* Chống bôi đen văn bản */
-        body {
-            user-select: none;
-            -webkit-user-select: none;
+
+        /* Tối ưu nút bấm cho ngón tay trên điện thoại */
+        button {
+            touch-action: manipulation;
+            min-height: 44px;
         }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="security-watermark">
-        <div class="watermark-text">E-TECH HUB 2026</div>
-        <div class="watermark-text">E-TECH HUB 2026</div>
-        <div class="watermark-text">E-TECH HUB 2026</div>
-        <div class="watermark-text">E-TECH HUB 2026</div>
-    </div>
+<body oncontextmenu="return false;">
+
+    <div id="security-layer">
+        </div>
 
     <div id="root"></div>
 
     <script type="text/babel" src="App.js"></script>
 
     <script>
+        // 1. Tự động tạo Watermark dày đặc phủ màn hình
+        const securityLayer = document.getElementById('security-layer');
+        for (let i = 0; i < 60; i++) {
+            const span = document.createElement('div');
+            span.className = 'watermark';
+            span.innerText = 'E-TECH HUB 2026';
+            securityLayer.appendChild(span);
+        }
+
+        // 2. Biến theo dõi gian lận
         let violationCount = 0;
         const MAX_VIOLATIONS = 3;
 
-        // 1. Phát hiện chuyển Tab hoặc Chụp màn hình (làm ẩn trình duyệt)
+        // 3. Phát hiện thoát màn hình / Chuyển Tab / Chụp màn hình (làm mất focus)
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 violationCount++;
-                console.warn(`Vi phạm lần ${violationCount}`);
-
+                
                 if (violationCount >= MAX_VIOLATIONS) {
-                    alert("CẢNH BÁO CUỐI CÙNG: Bạn đã vi phạm quá 3 lần. Hệ thống sẽ ghi nhận gian lận!");
-                    // Nếu bạn có hàm nộp bài trong ExamService, hãy gọi ở đây.
-                    // window.location.reload(); // Ví dụ cưỡng chế tải lại hoặc thoát
+                    alert("CẢNH BÁO NGUY HIỂM: Bạn đã thoát màn hình quá 3 lần. Hành vi này đã được gửi về hệ thống giám sát!");
+                    // Bạn có thể thêm lệnh tự động nộp bài ở đây
                 } else {
-                    alert(`CẢNH BÁO: Không được rời khỏi màn hình thi! \nSố lần vi phạm: ${violationCount}/${MAX_VIOLATIONS}`);
+                    alert(`CẢNH BÁO: Không được rời khỏi ứng dụng khi đang làm bài!\nVi phạm lần: ${violationCount}/${MAX_VIOLATIONS}`);
                 }
             }
         });
 
-        // 2. Chặn các phím tắt nguy hiểm (F12, Chụp màn hình, In, Xem code)
+        // 4. Chặn phím tắt (Cho trường hợp dùng máy tính/iPad có bàn phím)
         window.addEventListener('keydown', function(e) {
-            // Chặn F12
-            if (e.key === 'F12' || e.keyCode === 123) {
+            // Chặn F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
+            const forbiddenKeys = [123, 73, 74, 67, 85, 83, 80];
+            if (forbiddenKeys.includes(e.keyCode) || (e.ctrlKey && (forbiddenKeys.includes(e.keyCode)))) {
                 e.preventDefault();
-                return false;
-            }
-            // Chặn Ctrl+Shift+I, J, C
-            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
-                e.preventDefault();
-                return false;
-            }
-            // Chặn Ctrl+U (View Source)
-            if (e.ctrlKey && e.key === 'u') {
-                e.preventDefault();
-                return false;
-            }
-            // Chặn Ctrl+S (Save page)
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                return false;
-            }
-            // Chặn Ctrl+P (Print - một cách để lưu file PDF/Ảnh)
-            if (e.ctrlKey && e.key === 'p') {
-                e.preventDefault();
-                alert("Tính năng in bị vô hiệu hóa trong lúc làm bài!");
                 return false;
             }
         });
 
-        // 3. Chặn hành động Copy (ngăn học sinh dán đề vào AI)
+        // 5. Chặn Copy/Paste
         document.addEventListener('copy', (e) => {
             e.preventDefault();
-            alert("Không được phép sao chép nội dung bài thi!");
+            alert("Vì lý do bảo mật, bạn không thể sao chép nội dung!");
         });
 
-        // 4. Ngăn chặn kéo thả nội dung (Drag & Drop)
-        document.addEventListener('dragstart', (e) => {
+        document.addEventListener('paste', (e) => {
             e.preventDefault();
         });
+
+        // 6. Ngăn chặn tự động zoom khi focus vào ô nhập liệu (Mobile optimization)
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
