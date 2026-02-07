@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>E-TECH Hub 2026 - Ultra Mobile Pro</title>
+    <title>E-TECH Hub 2026 - Student Pro</title>
     
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -36,82 +37,51 @@
     <script src="BG11/bai1-11.js"></script>
     <script src="Database.js"></script>
     <script src="ExamService.js"></script> 
+    
     <script type="text/babel" src="Sidebar.js"></script>
     <script type="text/babel" src="Header.js"></script>
     <script type="text/babel" src="QuizModal.js"></script>
 
     <style>
-        /* 1. RESET & CẤU HÌNH NỀN TẢNG */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            margin: 0; padding: 0;
-            background-color: #f3f4f6;
-            font-family: -apple-system, sans-serif;
-            overflow-x: hidden;
-            user-select: none; -webkit-user-select: none;
+        /* TỐI ƯU CỠ CHỮ CỰC ĐẠI CHO MOBILE */
+        :root {
+            --font-q: 36px; /* Chữ câu hỏi siêu to */
+            --font-o: 26px; /* Chữ đáp án siêu rõ */
         }
 
-        /* 2. CHỮ SIÊU TO CHO CÂU HỎI & ĐÁP ÁN (DÙNG CHO QUIZMODAL) */
+        body {
+            margin: 0; padding: 0;
+            background-color: #f8fafc;
+            font-family: -apple-system, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden; /* Chống cuộn toàn trang để mượt như App */
+        }
+
+        /* Class chữ to dùng trong QuizModal.js */
         .quiz-question-mobile {
-            font-size: 34px !important; /* Cực to cho mobile */
-            font-weight: 800 !important;
-            line-height: 1.2 !important;
+            font-size: var(--font-q) !important;
+            font-weight: 900 !important;
+            line-height: 1.25 !important;
             color: #000;
-            padding: 20px 10px !important;
-            display: block;
-            width: 100%;
-            background: #fff;
-            border-bottom: 5px solid #4f46e5;
+            margin-bottom: 25px !important;
         }
 
         .quiz-option-mobile {
-            font-size: 26px !important; /* To gấp đôi cũ */
+            font-size: var(--font-o) !important;
             font-weight: 600 !important;
-            padding: 25px 20px !important;
-            margin-bottom: 15px !important;
-            border: 3px solid #374151 !important;
-            border-radius: 16px !important;
-            background: #ffffff !important;
+            padding: 22px 18px !important;
+            border: 3px solid #e2e8f0 !important;
+            border-radius: 18px !important;
             width: 100% !important;
             text-align: left;
-            box-shadow: 0 4px 0 #374151; /* Đổ bóng tạo khối dễ bấm */
-        }
-
-        .quiz-option-mobile:active {
-            transform: translateY(4px);
-            box-shadow: none;
-            background-color: #e0f2fe !important;
-        }
-
-        /* 3. SIDEBAR TRƯỢT (DRAWER) */
-        #sidebar-container {
-            position: fixed;
-            top: 0; left: -100%; /* Mặc định ẩn */
-            width: 85%; max-width: 300px;
-            height: 100%;
+            margin-bottom: 12px !important;
             background: white;
-            z-index: 10000;
-            transition: 0.3s ease;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
         }
 
-        #sidebar-container.open { left: 0; }
-
-        /* Nút mở Sidebar */
-        #menu-toggle {
-            position: fixed;
-            top: 15px; left: 15px;
-            z-index: 999;
-            background: #4f46e5;
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        /* 4. WATERMARK BẢO MẬT */
+        /* Lớp bảo mật Watermark chống chụp ảnh/AI quét chữ */
         #security-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -122,18 +92,15 @@
         }
         .watermark {
             transform: rotate(-30deg);
-            font-size: 14px; font-weight: bold;
-            color: #444; margin: 40px 0; text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            margin: 45px 5px;
+            text-align: center;
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
-
-    <div id="menu-toggle" onclick="toggleSidebar()">☰</div>
-
-    <div id="sidebar-container">
-        <div id="sidebar-root"></div> <button onclick="toggleSidebar()" style="position:absolute; top:15px; right:15px; font-size:24px;">✕</button>
-    </div>
 
     <div id="security-layer"></div>
 
@@ -142,32 +109,38 @@
     <script type="text/babel" src="App.js"></script>
 
     <script>
-        // Điều khiển Sidebar trượt
-        function toggleSidebar() {
-            const sb = document.getElementById('sidebar-container');
-            sb.classList.toggle('open');
-        }
-
-        // Tạo Watermark dày đặc
+        // 1. Tự động tạo Watermark dày đặc phủ toàn màn hình
         const layer = document.getElementById('security-layer');
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 90; i++) {
             const div = document.createElement('div');
             div.className = 'watermark';
             div.innerText = 'E-TECH HUB 2026';
             layer.appendChild(div);
         }
 
-        // Chống gian lận AI & Chụp màn hình
+        // 2. Hệ thống cảnh báo gian lận (Chống thoát màn hình/AI)
         let violations = 0;
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 violations++;
-                alert(`CẢNH BÁO: Vi phạm lần ${violations}/3. Không được thoát ứng dụng để tra cứu AI!`);
+                // Alert làm gián đoạn hành vi dùng AI của HS
+                alert(`CẢNH BÁO GIAN LẬN!\nSố lần thoát màn hình: ${violations}/3.\nHệ thống sẽ ghi nhận vi phạm nếu vượt quá giới hạn.`);
             }
         });
 
-        // Vô hiệu hóa Copy
-        document.addEventListener('copy', e => e.preventDefault());
+        // 3. Chống sao chép văn bản để dán vào công cụ giải bài AI
+        document.addEventListener('copy', (e) => {
+            e.preventDefault();
+            alert("Không được phép sao chép nội dung thi!");
+        });
+
+        // 4. Vô hiệu hóa phím tắt (nếu HS dùng máy tính hoặc bàn phím rời)
+        window.addEventListener('keydown', function(e) {
+            if ([123, 85, 83, 80].includes(e.keyCode) || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode))) {
+                e.preventDefault();
+                return false;
+            }
+        });
     </script>
 </body>
 </html>
