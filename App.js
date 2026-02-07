@@ -1,6 +1,6 @@
 const { useState, useEffect, useCallback } = React;
 
-// --- HÀM XÁO TRỘN MẢNG (Sử dụng thuật toán Fisher-Yates) ---
+// --- HÀM XÁO TRỘN MẢNG ---
 const shuffleArray = (array) => {
     const newArr = [...array];
     for (let i = newArr.length - 1; i > 0; i--) {
@@ -10,30 +10,29 @@ const shuffleArray = (array) => {
     return newArr;
 };
 
-// --- COMPONENT LÀM BÀI (GIAO DIỆN MOBILE & HIỆN ĐIỂM) ---
+// --- COMPONENT QUIZMODAL (CHỮ SIÊU TO - MOBILE FIRST) ---
 const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
     useEffect(() => {
-        if (setIsFocus) setIsFocus(true);
+        if (setIsFocus) setIsFocus(true); // Ẩn Sidebar khi thi
         return () => { if (setIsFocus) setIsFocus(false); };
     }, [setIsFocus]);
 
     if (quizState.showResult) {
         return (
-            <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-left">
-                <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl animate-in zoom-in duration-300">
+            <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-center">
+                <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl">
                     <div className="text-6xl mb-4">🏆</div>
                     <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase">Hoàn thành!</h2>
-                    <p className="text-slate-400 font-bold mb-6 italic text-xs">Kết quả của em đã được gửi tới thầy Hải</p>
-                    <div className="bg-blue-50 py-10 rounded-[2.5rem] mb-8 border-2 border-blue-100 text-left">
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 text-center">Số điểm đạt được</div>
-                        <div className="text-7xl font-black text-blue-600 tracking-tighter text-center">{quizState.finalScore}</div>
-                        <div className="mt-4 text-center">
-                            <span className="inline-block bg-white px-4 py-1 rounded-full text-[10px] font-black text-blue-500 shadow-sm">
+                    <div className="bg-blue-50 py-10 rounded-[2.5rem] mb-8 border-2 border-blue-100">
+                        <div className="text-[10px] font-black text-blue-400 uppercase mb-2">Số điểm đạt được</div>
+                        <div className="text-7xl font-black text-blue-600 tracking-tighter">{quizState.finalScore}</div>
+                        <div className="mt-4">
+                            <span className="bg-white px-4 py-1 rounded-full text-[10px] font-black text-blue-500 shadow-sm">
                                 Đúng {quizState.correctCount} / {activeQuiz.length} câu
                             </span>
                         </div>
                     </div>
-                    <button onClick={() => setActiveQuiz(null)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Đóng & Quay lại</button>
+                    <button onClick={() => setActiveQuiz(null)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl">Đóng & Quay lại</button>
                 </div>
             </div>
         );
@@ -43,37 +42,42 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
     if (!q) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in duration-300 text-left">
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col text-left overflow-hidden">
             <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
-                <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-xl">✕</button>
+                <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-2xl font-bold">✕</button>
                 <div className="flex flex-col items-center">
-                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400">Thời gian làm bài</span>
-                    <span className={`text-xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>{formatTime(timeLeft)}</span>
+                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400 italic">Thời gian còn lại</span>
+                    <span className={`text-2xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>{formatTime(timeLeft)}</span>
                 </div>
                 <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700">CÂU {quizState.currentQ + 1}/{activeQuiz.length}</div>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 lg:p-10 bg-slate-50">
-                <div className="max-w-2xl mx-auto">
-                    <div className="w-full h-1.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
-                        <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
-                    </div>
-                    <div className="bg-white p-6 lg:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6 font-bold text-slate-800 leading-relaxed">{q.q}</div>
-                    <div className="grid grid-cols-1 gap-4 mb-20">
+
+            <div className="flex-1 overflow-y-auto bg-white pt-2">
+                <div className="w-full h-2 bg-slate-100 mb-2">
+                    <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
+                </div>
+                <div className="p-4">
+                    <div className="quiz-question-mobile mb-8">{q.q}</div>
+                    <div className="flex flex-col gap-4 mb-32">
                         {q.o.map((opt, idx) => (
-                            <button key={idx} onClick={() => handleSelect(idx)} className={`group flex items-center p-5 rounded-3xl border-2 text-left transition-all active:scale-[0.97] ${quizState.answers[quizState.currentQ] === idx ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-white bg-white shadow-sm'}`}>
-                                <span className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black mr-4 shrink-0 ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                <span className={`font-bold text-sm lg:text-base ${quizState.answers[quizState.currentQ] === idx ? 'text-blue-700' : 'text-slate-600'}`}>{opt}</span>
+                            <button key={idx} onClick={() => handleSelect(idx)} 
+                                className={`quiz-option-mobile ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white border-blue-600 shadow-none' : ''}`}>
+                                <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black mr-6 shrink-0 text-xl ${quizState.answers[quizState.currentQ] === idx ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                                    {String.fromCharCode(65 + idx)}
+                                </span>
+                                <span className="flex-1">{opt}</span>
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
-            <div className="p-4 bg-white border-t flex gap-4 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase bg-slate-100 text-slate-400 disabled:opacity-30">Quay lại</button>
+
+            <div className="p-4 bg-white border-t flex gap-4 shadow-2xl">
+                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase bg-slate-100 text-slate-500">Quay lại</button>
                 {quizState.currentQ === activeQuiz.length - 1 ? (
-                    <button onClick={handleFinish} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-green-600 text-white shadow-lg animate-bounce">Nộp bài ngay</button>
+                    <button onClick={handleFinish} className="flex-[2] py-5 rounded-2xl font-black text-sm uppercase bg-green-600 text-white shadow-lg">Nộp bài ngay</button>
                 ) : (
-                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-4 rounded-2xl font-black text-[10px] uppercase bg-blue-600 text-white shadow-lg">Tiếp theo</button>
+                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-sm uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
                 )}
             </div>
         </div>
@@ -92,7 +96,6 @@ function App() {
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [quizState, setQuizState] = useState({ currentQ: 0, answers: [], showResult: false, reviewMode: false });
     const [timeLeft, setTimeLeft] = useState(null);
-
     const [stName, setStName] = useState("");
     const [stClass, setStClass] = useState("");
     const [pendingQuiz, setPendingQuiz] = useState(null);
@@ -164,57 +167,52 @@ function App() {
                     email: user?.email || "student@gmail.com"
                 };
                 await window.Database.sendQuizResult(studentProfile, stClass.trim(), quizTitle, finalPoint, `${score}/${total}`);
-                console.log("✅ Điểm đã được gửi lên Firebase!");
             }
             setQuizState(prev => ({ ...prev, showResult: true, finalScore: finalPoint, correctCount: score }));
             setTimeLeft(null);
-        } catch (e) { 
-            console.error("Lỗi nộp bài:", e);
-            alert("Lỗi gửi điểm! Em hãy chụp lại màn hình bảng điểm."); 
-        }
+        } catch (e) { console.error("Lỗi:", e); alert("Lỗi gửi điểm!"); }
     };
 
     if (!user) return (
-        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white font-bold p-6 text-center">
-            <div className="text-5xl mb-10 animate-pulse tracking-tighter italic font-black text-blue-400 italic">E-TECH HUB</div>
-            <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-2xl shadow-2xl active:scale-95 transition-all font-black uppercase text-sm">Đăng nhập Google</button>
+        <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
+            <div className="text-5xl mb-10 font-black text-blue-400 italic uppercase">E-TECH HUB</div>
+            <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black uppercase">Đăng nhập Google</button>
         </div>
     );
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 flex-col lg:flex-row text-left">
-            <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} />
-            <main className="flex-1 flex flex-col overflow-hidden relative text-left">
+            <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} setIsFocus={setIsFocus} />
+            <main className="flex-1 flex flex-col overflow-hidden relative">
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
+                
                 <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
                     {tab === 'baigiang' ? (
                         <>
-                            <div className={`w-full lg:w-72 border-r bg-white p-4 overflow-y-auto transition-all ${isFocus ? 'hidden' : 'block'}`}>
+                            <div className={`w-full lg:w-72 border-r bg-white p-4 overflow-y-auto ${isFocus ? 'hidden' : 'block'}`}>
                                 {localLessons[grade].map((l, i) => (
-                                    <div key={i} onClick={() => setLs(l)} className={`p-4 rounded-2xl cursor-pointer mb-2 border-2 transition-all ${ls?.id === l.id ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:bg-slate-50'}`}>
-                                        <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1 text-left italic">Bài {l.lessonIndex}</div>
-                                        <div className="text-xs font-bold text-slate-700 leading-tight text-left">{l.title}</div>
+                                    <div key={i} onClick={() => setLs(l)} className={`p-4 rounded-2xl cursor-pointer mb-2 border-2 ${ls?.id === l.id ? 'border-blue-500 bg-blue-50' : 'border-transparent'}`}>
+                                        <div className="text-[9px] font-black text-blue-500 uppercase italic">Bài {l.lessonIndex}</div>
+                                        <div className="text-xs font-bold text-slate-700 leading-tight">{l.title}</div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex-1 p-4 lg:p-8 overflow-y-auto bg-slate-50/50 text-left">
+                            <div className="flex-1 p-4 lg:p-8 overflow-y-auto bg-slate-50/50">
                                 {ls ? (
-                                    <div className="max-w-3xl mx-auto bg-white p-8 lg:p-12 rounded-[2rem] lg:rounded-[3rem] shadow-sm whitespace-pre-line leading-relaxed text-slate-700 border border-white">
-                                        <h2 className="text-2xl lg:text-3xl font-black mb-8 text-slate-900 leading-tight">{ls.title}</h2>
+                                    <div className="max-w-3xl mx-auto bg-white p-8 rounded-[2rem] shadow-sm whitespace-pre-line leading-relaxed text-slate-700">
+                                        <h2 className="text-2xl font-black mb-8 text-slate-900">{ls.title}</h2>
                                         {ls.content}
                                     </div>
-                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black tracking-widest uppercase text-center px-10">📖 Chọn bài học ở danh sách bên trái</div>}
+                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black uppercase px-10">📖 Chọn bài học bên trái</div>}
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 p-4 lg:p-10 overflow-y-auto bg-slate-50">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+                        <div className="flex-1 p-4 overflow-y-auto bg-slate-50">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                                 {(localQuizzes[grade] || []).map((q, i) => (
-                                    <div key={i} className={`p-8 lg:p-10 rounded-[2.5rem] lg:rounded-[3rem] shadow-xl border-2 transition-all group relative overflow-hidden ${q.isLive ? 'bg-orange-50 border-orange-200 ring-4 ring-orange-100' : 'bg-white border-transparent'}`}>
-                                        {q.isLive && <div className="absolute top-6 right-6 bg-orange-500 text-white text-[8px] font-black px-3 py-1 rounded-full animate-bounce shadow-lg">ĐỀ TỪ THẦY</div>}
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-8 ${q.isLive ? 'bg-orange-500 text-white shadow-lg' : 'bg-blue-50 text-blue-500'}`}>{q.isLive ? '🚀' : '📝'}</div>
-                                        <div className="font-black text-slate-800 mb-8 uppercase text-[11px] leading-tight min-h-[40px] text-left">{q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`}</div>
-                                        <button onClick={() => setPendingQuiz(q)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest group-hover:bg-blue-600 transition-all shadow-lg active:scale-95">Làm bài ngay</button>
+                                    <div key={i} className={`p-8 rounded-[2.5rem] shadow-xl border-2 group relative ${q.isLive ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent'}`}>
+                                        <div className="font-black text-slate-800 mb-8 uppercase text-[11px] min-h-[40px]">{q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`}</div>
+                                        <button onClick={() => setPendingQuiz(q)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase">Làm bài ngay</button>
                                     </div>
                                 ))}
                             </div>
@@ -222,61 +220,29 @@ function App() {
                     )}
                 </div>
 
-                {/* --- POPUP NHẬP THÔNG TIN & LOGIC TRỘN ĐỀ --- */}
                 {pendingQuiz && (
                     <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 text-left">
-                        <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 lg:p-10 shadow-2xl animate-in zoom-in duration-300 text-center">
+                        <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl animate-in zoom-in duration-300 text-center">
                             <div className="text-5xl mb-6">📝</div>
-                            <h3 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none">Thông tin thí sinh</h3>
-                            <p className="text-slate-400 text-[9px] font-black uppercase mb-8 tracking-widest">Vui lòng điền đúng để thầy ghi điểm</p>
+                            <h3 className="text-2xl font-black text-slate-800 uppercase italic mb-8">Thông tin thí sinh</h3>
                             <div className="space-y-4 mb-8">
-                                <div className="text-left">
-                                    <label className="text-[9px] font-black text-blue-500 uppercase ml-4 mb-1 block">Họ và tên</label>
-                                    <input type="text" placeholder="Nguyễn Văn A" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700" value={stName} onChange={(e) => setStName(e.target.value)} />
-                                </div>
-                                <div className="text-left">
-                                    <label className="text-[9px] font-black text-blue-500 uppercase ml-4 mb-1 block">Lớp quản lý</label>
-                                    <input type="text" placeholder="Ví dụ: 10A7" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-700" value={stClass} onChange={(e) => setStClass(e.target.value)} />
-                                </div>
+                                <input type="text" placeholder="Họ và tên" className="w-full p-4 bg-slate-50 border-2 rounded-2xl font-bold" value={stName} onChange={(e) => setStName(e.target.value)} />
+                                <input type="text" placeholder="Lớp (Ví dụ: 10A7)" className="w-full p-4 bg-slate-50 border-2 rounded-2xl font-bold" value={stClass} onChange={(e) => setStClass(e.target.value)} />
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <button 
-                                    disabled={!stName.trim() || !stClass.trim()} 
-                                    onClick={() => {
-                                        const q = pendingQuiz;
-                                        const rawQs = q.questions || [];
-                                        
-                                        // --- LOGIC TRỘN CÂU HỎI VÀ ĐÁP ÁN ---
-                                        let shuffledQuestions = shuffleArray(rawQs); // Trộn thứ tự câu hỏi
-
-                                        const readyQs = shuffledQuestions.map(item => {
-                                            // Tạo mảng đáp án kèm nhãn đúng/sai để giữ vị trí đáp án đúng sau khi trộn
-                                            let optionsWithFlag = (item.a || item.o || []).map((text, idx) => ({
-                                                text: text,
-                                                isCorrect: idx === item.c
-                                            }));
-
-                                            // Trộn đáp án trong từng câu
-                                            optionsWithFlag = shuffleArray(optionsWithFlag);
-
-                                            return {
-                                                ...item,
-                                                q: item.q || "Lỗi câu hỏi",
-                                                o: optionsWithFlag.map(opt => opt.text),
-                                                c: optionsWithFlag.findIndex(opt => opt.isCorrect), // Tìm lại vị trí mới của đáp án đúng
-                                                quizTitle: q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`
-                                            };
-                                        });
-
-                                        setActiveQuiz(readyQs);
-                                        setQuizState({currentQ:0, answers: new Array(readyQs.length).fill(null), showResult:false, reviewMode:false});
-                                        setTimeLeft(q.time || 15 * 60);
-                                        setPendingQuiz(null);
-                                    }} 
-                                    className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl disabled:opacity-30 active:scale-95 transition-all"
-                                >Bắt đầu làm bài</button>
-                                <button onClick={() => setPendingQuiz(null)} className="py-3 text-slate-400 font-black uppercase text-[10px] tracking-widest">Quay lại</button>
-                            </div>
+                            <button disabled={!stName.trim() || !stClass.trim()} onClick={() => {
+                                const q = pendingQuiz;
+                                let shuffledQs = shuffleArray(q.questions || []);
+                                const readyQs = shuffledQs.map(item => {
+                                    let opts = (item.a || item.o || []).map((text, idx) => ({ text, isCorrect: idx === item.c }));
+                                    opts = shuffleArray(opts);
+                                    return { ...item, q: item.q || "Lỗi", o: opts.map(o => o.text), c: opts.findIndex(o => o.isCorrect), quizTitle: q.isLive ? q.title : `Bài ${q.quizIndex}` };
+                                });
+                                setActiveQuiz(readyQs);
+                                setQuizState({currentQ:0, answers: new Array(readyQs.length).fill(null), showResult:false, reviewMode:false});
+                                setTimeLeft(q.time || 15 * 60);
+                                setPendingQuiz(null);
+                            }} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase shadow-xl disabled:opacity-30">Bắt đầu</button>
+                            <button onClick={() => setPendingQuiz(null)} className="mt-4 text-slate-400 font-black uppercase text-[10px]">Quay lại</button>
                         </div>
                     </div>
                 )}
