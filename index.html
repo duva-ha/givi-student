@@ -38,15 +38,113 @@
     <script src="BG11/bai1-11.js"></script>
           
     <script src="Database.js"></script>
-    <script src="ExamService.js"></script> <script type="text/babel" src="Sidebar.js"></script>
+    <script src="ExamService.js"></script> 
+    <script type="text/babel" src="Sidebar.js"></script>
     <script type="text/babel" src="Header.js"></script>
     <script type="text/babel" src="QuizModal.js"></script>
+
+    <style>
+        /* CSS tạo Watermark bảo mật để chống chụp ảnh */
+        #security-watermark {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Không cản trở việc click */
+            z-index: 9999;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            opacity: 0.05; /* Độ mờ cực thấp */
+            user-select: none;
+        }
+        .watermark-text {
+            transform: rotate(-45deg);
+            font-size: 20px;
+            color: gray;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        /* Chống bôi đen văn bản */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="security-watermark">
+        <div class="watermark-text">E-TECH HUB 2026</div>
+        <div class="watermark-text">E-TECH HUB 2026</div>
+        <div class="watermark-text">E-TECH HUB 2026</div>
+        <div class="watermark-text">E-TECH HUB 2026</div>
+    </div>
+
     <div id="root"></div>
 
     <script type="text/babel" src="App.js"></script>
+
+    <script>
+        let violationCount = 0;
+        const MAX_VIOLATIONS = 3;
+
+        // 1. Phát hiện chuyển Tab hoặc Chụp màn hình (làm ẩn trình duyệt)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                violationCount++;
+                console.warn(`Vi phạm lần ${violationCount}`);
+
+                if (violationCount >= MAX_VIOLATIONS) {
+                    alert("CẢNH BÁO CUỐI CÙNG: Bạn đã vi phạm quá 3 lần. Hệ thống sẽ ghi nhận gian lận!");
+                    // Nếu bạn có hàm nộp bài trong ExamService, hãy gọi ở đây.
+                    // window.location.reload(); // Ví dụ cưỡng chế tải lại hoặc thoát
+                } else {
+                    alert(`CẢNH BÁO: Không được rời khỏi màn hình thi! \nSố lần vi phạm: ${violationCount}/${MAX_VIOLATIONS}`);
+                }
+            }
+        });
+
+        // 2. Chặn các phím tắt nguy hiểm (F12, Chụp màn hình, In, Xem code)
+        window.addEventListener('keydown', function(e) {
+            // Chặn F12
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // Chặn Ctrl+Shift+I, J, C
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+                e.preventDefault();
+                return false;
+            }
+            // Chặn Ctrl+U (View Source)
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                return false;
+            }
+            // Chặn Ctrl+S (Save page)
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                return false;
+            }
+            // Chặn Ctrl+P (Print - một cách để lưu file PDF/Ảnh)
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                alert("Tính năng in bị vô hiệu hóa trong lúc làm bài!");
+                return false;
+            }
+        });
+
+        // 3. Chặn hành động Copy (ngăn học sinh dán đề vào AI)
+        document.addEventListener('copy', (e) => {
+            e.preventDefault();
+            alert("Không được phép sao chép nội dung bài thi!");
+        });
+
+        // 4. Ngăn chặn kéo thả nội dung (Drag & Drop)
+        document.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+        });
+    </script>
 </body>
 </html>
-
-
