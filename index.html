@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>E-TECH Hub 2026 - Mobile Pro</title>
+    <title>E-TECH Hub 2026 - Ultra Mobile Pro</title>
     
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,124 +41,133 @@
     <script type="text/babel" src="QuizModal.js"></script>
 
     <style>
-        /* THIẾT KẾ APP DI ĐỘNG CHUYÊN NGHIỆP */
-        * { box-sizing: border-box; }
+        /* 1. RESET & CẤU HÌNH NỀN TẢNG */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            font-family: -apple-system, system-ui, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            overscroll-behavior-y: contain; /* Chống kéo trang gây tải lại */
+            margin: 0; padding: 0;
+            background-color: #f3f4f6;
+            font-family: -apple-system, sans-serif;
+            overflow-x: hidden;
+            user-select: none; -webkit-user-select: none;
         }
 
-        /* Container chính chiếm trọn màn hình không có khoảng trắng */
-        #root {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Tối ưu hóa vùng hiển thị câu hỏi: Siêu to và rõ */
-        .quiz-question-container {
-            background: #fff;
-            padding: 25px 15px !important;
-            border-bottom: 2px solid #e5e7eb;
-            margin-bottom: 10px;
-        }
-
+        /* 2. CHỮ SIÊU TO CHO CÂU HỎI & ĐÁP ÁN (DÙNG CHO QUIZMODAL) */
         .quiz-question-mobile {
-            font-size: 32px !important; /* Cỡ chữ khổng lồ */
-            line-height: 1.3 !important;
+            font-size: 34px !important; /* Cực to cho mobile */
             font-weight: 800 !important;
+            line-height: 1.2 !important;
             color: #000;
+            padding: 20px 10px !important;
             display: block;
             width: 100%;
+            background: #fff;
+            border-bottom: 5px solid #4f46e5;
         }
 
-        /* Danh sách đáp án: Trải dài hết màn hình */
-        .quiz-options-list {
-            padding: 0 10px !important;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        /* Mỗi đáp án là một khối lớn, tách biệt */
         .quiz-option-mobile {
-            width: 100% !important;
-            min-height: 80px !important; /* Đảm bảo đủ cao để dễ bấm */
-            background: #ffffff !important;
-            border: 2px solid #d1d5db !important;
-            border-radius: 16px !important;
-            padding: 15px 20px !important;
-            font-size: 24px !important; /* Chữ đáp án to rõ */
+            font-size: 26px !important; /* To gấp đôi cũ */
             font-weight: 600 !important;
+            padding: 25px 20px !important;
+            margin-bottom: 15px !important;
+            border: 3px solid #374151 !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            width: 100% !important;
             text-align: left;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
+            box-shadow: 0 4px 0 #374151; /* Đổ bóng tạo khối dễ bấm */
         }
 
         .quiz-option-mobile:active {
+            transform: translateY(4px);
+            box-shadow: none;
             background-color: #e0f2fe !important;
-            border-color: #3b82f6 !important;
-            transform: scale(0.98);
         }
 
-        /* Watermark bảo mật mờ ẩn bên dưới */
+        /* 3. SIDEBAR TRƯỢT (DRAWER) */
+        #sidebar-container {
+            position: fixed;
+            top: 0; left: -100%; /* Mặc định ẩn */
+            width: 85%; max-width: 300px;
+            height: 100%;
+            background: white;
+            z-index: 10000;
+            transition: 0.3s ease;
+            box-shadow: 10px 0 20px rgba(0,0,0,0.2);
+        }
+
+        #sidebar-container.open { left: 0; }
+
+        /* Nút mở Sidebar */
+        #menu-toggle {
+            position: fixed;
+            top: 15px; left: 15px;
+            z-index: 999;
+            background: #4f46e5;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 4. WATERMARK BẢO MẬT */
         #security-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 9999;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            opacity: 0.1;
+            opacity: 0.12;
         }
         .watermark {
             transform: rotate(-30deg);
-            font-size: 14px;
-            font-weight: bold;
-            color: #ccc;
-            margin: 50px 0;
-            text-align: center;
-        }
-
-        /* Ẩn bớt các thành phần thừa trên Mobile khi đang thi */
-        @media (max-width: 768px) {
-            header, footer { display: none !important; }
-            .sidebar { display: none !important; }
+            font-size: 14px; font-weight: bold;
+            color: #444; margin: 40px 0; text-align: center;
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
+    <div id="menu-toggle" onclick="toggleSidebar()">☰</div>
+
+    <div id="sidebar-container">
+        <div id="sidebar-root"></div> <button onclick="toggleSidebar()" style="position:absolute; top:15px; right:15px; font-size:24px;">✕</button>
+    </div>
+
     <div id="security-layer"></div>
+
     <div id="root"></div>
 
     <script type="text/babel" src="App.js"></script>
 
     <script>
-        // Tạo Watermark chống AI
+        // Điều khiển Sidebar trượt
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar-container');
+            sb.classList.toggle('open');
+        }
+
+        // Tạo Watermark dày đặc
         const layer = document.getElementById('security-layer');
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 80; i++) {
             const div = document.createElement('div');
             div.className = 'watermark';
             div.innerText = 'E-TECH HUB 2026';
             layer.appendChild(div);
         }
 
-        // Chống gian lận
+        // Chống gian lận AI & Chụp màn hình
         let violations = 0;
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 violations++;
-                alert(`CẢNH BÁO: Không được thoát ứng dụng! (Lần ${violations}/3)`);
+                alert(`CẢNH BÁO: Vi phạm lần ${violations}/3. Không được thoát ứng dụng để tra cứu AI!`);
             }
         });
+
+        // Vô hiệu hóa Copy
+        document.addEventListener('copy', e => e.preventDefault());
     </script>
 </body>
 </html>
