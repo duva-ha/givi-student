@@ -2,11 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-TECH Hub 2026 - Student Official</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-TECH Hub 2026 - Mobile Exam</title>
     
     <link rel="stylesheet" href="styles.css">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -43,129 +42,129 @@
     <script type="text/babel" src="QuizModal.js"></script>
 
     <style>
-        /* TỐI ƯU GIAO DIỆN MOBILE & CHỮ TO */
+        /* TỐI ƯU HÓA TRẢI NGHIỆM DI ĐỘNG (MOBILE-FIRST) */
         :root {
-            --font-main: 18px; /* Kích thước chữ cơ bản to hơn bình thường */
+            --primary-font: 20px; /* Chữ cực to cho điện thoại */
         }
 
         body {
-            font-size: var(--font-main);
+            font-size: var(--primary-font);
+            background-color: #ffffff;
+            color: #111;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            /* Chống chọn văn bản để copy */
             user-select: none;
             -webkit-user-select: none;
+            /* Loại bỏ bóng mờ khi chạm trên mobile */
             -webkit-tap-highlight-color: transparent;
-            background-color: #f8fafc;
-            color: #1e293b;
-            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Tăng cỡ chữ cho các vùng quan trọng của React App */
+        /* Đảm bảo App React chiếm trọn màn hình điện thoại */
         #root {
+            width: 100vw;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Chữ trong câu hỏi (Sẽ áp dụng nếu bạn đặt class này trong QuizModal) */
-        .quiz-text-large {
-            font-size: 1.35rem !important;
-            line-height: 1.6;
-            font-weight: 600;
-        }
-
-        /* Lớp bảo mật Watermark */
+        /* Watermark bảo mật - Phủ dày hơn để AI không đọc được */
         #security-layer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            align-content: space-around;
-            opacity: 0.06;
-            overflow: hidden;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            opacity: 0.08;
         }
-
         .watermark {
-            transform: rotate(-30deg);
-            font-size: 14px;
+            transform: rotate(-25deg);
+            font-size: 12px;
             font-weight: bold;
-            color: #000;
-            margin: 40px;
+            margin: 30px 10px;
             white-space: nowrap;
         }
 
-        /* Tối ưu nút bấm cho ngón tay trên điện thoại */
-        button {
-            touch-action: manipulation;
-            min-height: 44px;
+        /* Tối ưu hóa các thành phần UI Mobile */
+        .mobile-card {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+        }
+
+        /* Chữ câu hỏi siêu to */
+        .quiz-question-mobile {
+            font-size: 1.5rem !important;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            color: #000;
+        }
+
+        /* Đáp án dạng nút lớn dễ bấm */
+        .quiz-option-mobile {
+            padding: 16px !important;
+            margin-bottom: 12px !important;
+            font-size: 1.2rem !important;
+            border-radius: 10px !important;
+            background: #f3f4f6;
+            display: block;
+            width: 100%;
+        }
+
+        /* Cố định Header trên mobile để không bị trôi khi cuộn */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="security-layer">
-        </div>
+    <div id="security-layer"></div>
 
     <div id="root"></div>
 
     <script type="text/babel" src="App.js"></script>
 
     <script>
-        // 1. Tự động tạo Watermark dày đặc phủ màn hình
-        const securityLayer = document.getElementById('security-layer');
-        for (let i = 0; i < 60; i++) {
-            const span = document.createElement('div');
-            span.className = 'watermark';
-            span.innerText = 'E-TECH HUB 2026';
-            securityLayer.appendChild(span);
+        // 1. Tạo Watermark động
+        const layer = document.getElementById('security-layer');
+        for (let i = 0; i < 80; i++) {
+            const div = document.createElement('div');
+            div.className = 'watermark';
+            div.innerText = 'E-TECH HUB 2026';
+            layer.appendChild(div);
         }
 
-        // 2. Biến theo dõi gian lận
-        let violationCount = 0;
-        const MAX_VIOLATIONS = 3;
+        // 2. Logic chống gian lận tập trung vào Mobile
+        let violations = 0;
+        const MAX_ALLOWED = 3;
 
-        // 3. Phát hiện thoát màn hình / Chuyển Tab / Chụp màn hình (làm mất focus)
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
-                violationCount++;
-                
-                if (violationCount >= MAX_VIOLATIONS) {
-                    alert("CẢNH BÁO NGUY HIỂM: Bạn đã thoát màn hình quá 3 lần. Hành vi này đã được gửi về hệ thống giám sát!");
-                    // Bạn có thể thêm lệnh tự động nộp bài ở đây
+                violations++;
+                // Mobile thường chụp màn hình bằng cách nhấn tổ hợp phím làm trình duyệt mất focus tạm thời
+                if (violations >= MAX_ALLOWED) {
+                    alert("CẢNH BÁO: Bạn vi phạm quá nhiều lần. Hệ thống đã ghi nhận tên và mã số học sinh!");
                 } else {
-                    alert(`CẢNH BÁO: Không được rời khỏi ứng dụng khi đang làm bài!\nVi phạm lần: ${violationCount}/${MAX_VIOLATIONS}`);
+                    alert("CẢNH BÁO: Không được thoát ứng dụng hoặc chụp màn hình!\nSố lần vi phạm: " + violations + "/" + MAX_ALLOWED);
                 }
             }
         });
 
-        // 4. Chặn phím tắt (Cho trường hợp dùng máy tính/iPad có bàn phím)
-        window.addEventListener('keydown', function(e) {
-            // Chặn F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
-            const forbiddenKeys = [123, 73, 74, 67, 85, 83, 80];
-            if (forbiddenKeys.includes(e.keyCode) || (e.ctrlKey && (forbiddenKeys.includes(e.keyCode)))) {
-                e.preventDefault();
-                return false;
-            }
-        });
+        // 3. Chặn Copy/Paste/Select
+        document.addEventListener('copy', (e) => e.preventDefault());
+        document.addEventListener('paste', (e) => e.preventDefault());
 
-        // 5. Chặn Copy/Paste
-        document.addEventListener('copy', (e) => {
-            e.preventDefault();
-            alert("Vì lý do bảo mật, bạn không thể sao chép nội dung!");
-        });
-
-        document.addEventListener('paste', (e) => {
-            e.preventDefault();
-        });
-
-        // 6. Ngăn chặn tự động zoom khi focus vào ô nhập liệu (Mobile optimization)
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, { passive: false });
+        // 4. Cải thiện tốc độ phản hồi trên Mobile (Loại bỏ độ trễ 300ms khi click)
+        if ('addEventListener' in document) {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Có thể thêm FastClick ở đây nếu cần hỗ trợ máy cũ
+            }, false);
+        }
     </script>
 </body>
 </html>
