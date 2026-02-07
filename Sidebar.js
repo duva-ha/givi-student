@@ -6,62 +6,73 @@ function Sidebar({ tab, setTab, isFocus, setIsFocus }) {
         {id: 'tulieu', icon: '📚', label: 'Tư liệu', color: 'emerald'}
     ];
 
+    // Hàm đóng sidebar: Chuyển isFocus thành true (trạng thái tập trung làm bài)
+    const closeSidebar = () => {
+        if (setIsFocus) setIsFocus(true);
+    };
+
     return (
-        <>
-            {/* Lớp phủ mờ (Overlay): Bấm vào vùng trống bên ngoài cũng sẽ đóng Sidebar */}
+        <React.Fragment>
+            {/* 1. Lớp phủ mờ (Overlay): Xuất hiện khi Sidebar mở (isFocus = false) */}
             {!isFocus && (
                 <div 
-                    className="fixed inset-0 bg-black/40 z-[9998] md:hidden"
-                    onClick={() => setIsFocus(true)}
+                    className="fixed inset-0 bg-black/60 z-[10000] md:hidden backdrop-blur-sm transition-opacity duration-300"
+                    onClick={closeSidebar}
                 ></div>
             )}
 
-            <aside className={`fixed md:relative top-0 left-0 h-full z-[9999] flex flex-col p-6 bg-white shadow-2xl transition-all duration-500 border-r border-slate-100 
-                ${isFocus ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100 w-[85%] max-w-[320px]'}`}>
-                
-                {/* TIÊU ĐỀ & NÚT X ĐÓNG MENU */}
-                <div className="flex justify-between items-center mb-10 px-2">
-                    <div className="font-black text-3xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 italic uppercase">
+            {/* 2. Thanh bên (Sidebar Drawer) */}
+            <aside 
+                className={`fixed md:relative top-0 left-0 h-screen z-[10001] flex flex-col p-6 bg-white shadow-2xl transition-all duration-500 ease-in-out border-r border-slate-100 
+                ${isFocus ? '-translate-x-full invisible w-0' : 'translate-x-0 visible w-[85%] max-w-[320px]'}`}
+            >
+                {/* Header của Sidebar & Nút X đóng nhanh */}
+                <div className="flex justify-between items-center mb-10">
+                    <div className="font-black text-3xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600 italic uppercase tracking-tighter">
                         E-Tech Hub
                     </div>
                     
-                    {/* NÚT X - Sửa lỗi tại đây */}
+                    {/* Nút X đóng sidebar cực to dễ bấm trên mobile */}
                     <button 
-                        onClick={() => setIsFocus(true)} 
-                        className="text-slate-400 hover:text-slate-600 p-2 md:hidden"
+                        onClick={closeSidebar}
+                        className="p-3 -mr-2 text-slate-400 active:text-indigo-600 transition-colors md:hidden"
                     >
-                        <span className="text-3xl">✕</span>
+                        <span className="text-4xl leading-none">✕</span>
                     </button>
                 </div>
 
-                <nav className="flex-1 space-y-4">
+                {/* Danh sách Menu chính */}
+                <nav className="flex-1 space-y-5 overflow-y-auto pr-2">
                     {menus.map(t => (
                         <button 
                             key={t.id} 
                             onClick={() => { 
                                 setTab(t.id); 
-                                setIsFocus(true); // Tự động đóng sau khi chọn mục
+                                closeSidebar(); // Tự động thu gọn sau khi chọn bài
                             }} 
-                            className={`w-full flex items-center gap-5 px-6 py-5 text-[14px] font-black uppercase tracking-widest rounded-2xl transition-all 
+                            className={`w-full flex items-center gap-5 px-6 py-5 rounded-2xl font-black uppercase tracking-widest transition-all duration-200 active:scale-95
                                 ${tab === t.id 
-                                    ? `bg-${t.color}-600 text-white shadow-xl shadow-${t.color}-200` 
-                                    : 'text-slate-500 bg-slate-50 hover:bg-slate-100'}`}
+                                    ? `bg-indigo-600 text-white shadow-xl shadow-indigo-200` 
+                                    : 'text-slate-500 bg-slate-50 hover:bg-slate-100 border border-transparent hover:border-slate-200'}`}
                         >
-                            <span className="text-2xl">{t.icon}</span> 
-                            {t.label}
+                            <span className="text-3xl">{t.icon}</span> 
+                            <span className="text-sm">{t.label}</span>
                         </button>
                     ))}
                 </nav>
 
+                {/* Chân trang Sidebar */}
                 <div className="mt-auto pt-6 border-t border-slate-100">
                     <button 
-                        onClick={() => auth.signOut()} 
-                        className="w-full py-5 text-rose-500 text-[12px] font-black uppercase tracking-tighter"
+                        onClick={() => {
+                            if(confirm("Bạn muốn đăng xuất?")) auth.signOut();
+                        }} 
+                        className="w-full py-5 text-rose-500 text-[11px] font-black uppercase tracking-widest hover:bg-rose-50 rounded-2xl transition-all"
                     >
-                        Thoát tài khoản
+                        🚪 Thoát tài khoản
                     </button>
                 </div>
             </aside>
-        </>
+        </React.Fragment>
     );
 }
