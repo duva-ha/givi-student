@@ -10,23 +10,22 @@ const shuffleArray = (array) => {
     return newArr;
 };
 
-// --- COMPONENT LÀM BÀI (GIAO DIỆN MOBILE - TỰ ĐỘNG ẨN SIDEBAR) ---
+// --- COMPONENT LÀM BÀI (CẬP NHẬT CHẾ ĐỘ XEM LẠI) ---
 const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
     
-    // Khi mở Modal làm bài, lập tức báo cho App ẩn Sidebar/Header
     useEffect(() => {
-        if (setIsFocus) setIsFocus(true);
+        if (setIsFocus) setIsFocus(true); 
         return () => { if (setIsFocus) setIsFocus(false); };
     }, [setIsFocus]);
 
-    // MÀN HÌNH BÁO ĐIỂM
+    // MÀN HÌNH BÁO ĐIỂM + NÚT XEM LẠI
     if (quizState.showResult) {
         return (
             <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-center">
                 <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl animate-in zoom-in duration-300">
                     <div className="text-6xl mb-4">🏆</div>
                     <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase leading-none">Hoàn thành!</h2>
-                    <p className="text-slate-400 font-bold mb-6 italic text-[10px] uppercase tracking-widest">Kết quả đã được gửi tới thầy Hải</p>
+                    <p className="text-slate-400 font-bold mb-6 italic text-[10px] uppercase tracking-widest text-center">Kết quả đã được gửi tới thầy Hải</p>
                     
                     <div className="bg-blue-50 py-10 rounded-[2.5rem] mb-8 border-2 border-blue-100 text-center">
                         <div className="text-[10px] font-black text-blue-400 uppercase mb-2">Số điểm đạt được</div>
@@ -38,7 +37,15 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                         </div>
                     </div>
 
-                    <button onClick={() => setActiveQuiz(null)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Đóng & Quay lại</button>
+                    <div className="flex flex-col gap-3">
+                        <button 
+                            onClick={() => setQuizState({...quizState, showResult: false, reviewMode: true, currentQ: 0})} 
+                            className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                        >
+                            🔍 Xem lại bài làm
+                        </button>
+                        <button onClick={() => setActiveQuiz(null)} className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px]">Thoát</button>
+                    </div>
                 </div>
             </div>
         );
@@ -48,47 +55,63 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
     if (!q) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-white flex flex-col text-left animate-in fade-in duration-300">
-            {/* Thanh trạng thái Top */}
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col text-left overflow-hidden">
             <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
-                <button onClick={() => confirm("Thoát bài thi sẽ không lưu kết quả?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-2xl font-black">✕</button>
+                <button onClick={() => confirm("Thoát bài thi?") && setActiveQuiz(null)} className="p-2 text-slate-400 text-2xl font-bold">✕</button>
                 <div className="flex flex-col items-center">
-                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400 italic">Thời gian còn lại</span>
-                    <span className={`text-2xl font-mono font-black ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>{formatTime(timeLeft)}</span>
+                    <span className="text-[9px] uppercase font-black tracking-widest text-blue-400 italic">
+                        {quizState.reviewMode ? "CHẾ ĐỘ XEM LẠI" : "Thời gian còn lại"}
+                    </span>
+                    <span className={`text-2xl font-mono font-black ${!quizState.reviewMode && timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>
+                        {quizState.reviewMode ? "---" : formatTime(timeLeft)}
+                    </span>
                 </div>
                 <div className="bg-slate-800 px-4 py-1 rounded-full text-[10px] font-black border border-slate-700 uppercase">CÂU {quizState.currentQ + 1}/{activeQuiz.length}</div>
             </div>
 
-            {/* Nội dung câu hỏi (Mobile First) */}
             <div className="flex-1 overflow-y-auto bg-white pt-2">
                 <div className="w-full h-2 bg-slate-100 mb-2">
                     <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
                 </div>
-                <div className="p-5 max-w-2xl mx-auto">
-                    <div className="text-lg lg:text-2xl font-bold text-slate-800 leading-relaxed mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 italic">{q.q}</div>
+                <div className="p-4 max-w-2xl mx-auto">
+                    <div className="quiz-question-mobile mb-8 italic">{q.q}</div>
                     <div className="flex flex-col gap-4 mb-32">
-                        {q.o.map((opt, idx) => (
-                            <button key={idx} onClick={() => handleSelect(idx)} 
-                                className={`flex items-center p-5 rounded-[1.8rem] border-2 text-left transition-all active:scale-[0.97] shadow-sm 
-                                    ${quizState.answers[quizState.currentQ] === idx ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-slate-50'}`}>
-                                <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black mr-6 shrink-0 text-xl 
-                                    ${quizState.answers[quizState.currentQ] === idx ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-                                    {String.fromCharCode(65 + idx)}
-                                </span>
-                                <span className="flex-1 font-bold text-sm lg:text-base leading-tight">{opt}</span>
-                            </button>
-                        ))}
+                        {q.o.map((opt, idx) => {
+                            // LOGIC MÀU SẮC CHO CHẾ ĐỘ XEM LẠI
+                            let statusClass = "bg-white border-slate-50";
+                            if (quizState.reviewMode) {
+                                if (idx === q.c) statusClass = "bg-green-100 border-green-500 text-green-700 shadow-sm shadow-green-100"; // Đáp án đúng
+                                else if (quizState.answers[quizState.currentQ] === idx) statusClass = "bg-red-50 border-red-300 text-red-600"; // Đáp án em chọn bị sai
+                            } else if (quizState.answers[quizState.currentQ] === idx) {
+                                statusClass = "bg-blue-600 text-white border-blue-600";
+                            }
+
+                            return (
+                                <button key={idx} disabled={quizState.reviewMode} onClick={() => handleSelect(idx)} 
+                                    className={`flex items-center p-5 rounded-[1.8rem] border-2 text-left transition-all active:scale-[0.97] shadow-sm ${statusClass}`}>
+                                    <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black mr-6 shrink-0 text-xl 
+                                        ${quizState.answers[quizState.currentQ] === idx ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                                        {String.fromCharCode(65 + idx)}
+                                    </span>
+                                    <span className="flex-1 font-bold">{opt}</span>
+                                    {quizState.reviewMode && idx === q.c && <span className="text-xl ml-2">✅</span>}
+                                    {quizState.reviewMode && quizState.answers[quizState.currentQ] === idx && idx !== q.c && <span className="text-xl ml-2">❌</span>}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
 
-            {/* Điều hướng dưới */}
-            <div className="p-4 bg-white border-t flex gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-[10px] uppercase bg-slate-100 text-slate-400 disabled:opacity-30">Quay lại</button>
+            <div className="p-4 bg-white border-t flex gap-4 shadow-2xl">
+                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase bg-slate-100 text-slate-500">Quay lại</button>
                 {quizState.currentQ === activeQuiz.length - 1 ? (
-                    <button onClick={handleFinish} className="flex-[2] py-5 rounded-2xl font-black text-[10px] uppercase bg-green-600 text-white shadow-lg animate-bounce">Nộp bài ngay</button>
+                    <button onClick={quizState.reviewMode ? () => setActiveQuiz(null) : handleFinish} 
+                        className={`flex-[2] py-5 rounded-2xl font-black text-sm uppercase text-white shadow-lg ${quizState.reviewMode ? 'bg-slate-900' : 'bg-green-600 animate-bounce'}`}>
+                        {quizState.reviewMode ? "Hoàn tất xem" : "Nộp bài ngay"}
+                    </button>
                 ) : (
-                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-[10px] uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
+                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-sm uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
                 )}
             </div>
         </div>
@@ -111,10 +134,9 @@ function App() {
     const [stClass, setStClass] = useState("");
     const [pendingQuiz, setPendingQuiz] = useState(null);
 
-    // --- LOGIC CHỐNG GIAN LẬN: CHỈ BÁO KHI ĐANG THI ---
+    // --- LOGIC CHỐNG GIAN LẬN: CHỈ BÁO KHI ĐANG THI VÀ CHƯA NỘP ---
     useEffect(() => {
-        // Nếu không có bài thi (null) hoặc đã nộp bài (showResult) -> Không theo dõi
-        if (!activeQuiz || quizState.showResult) return;
+        if (!activeQuiz || quizState.showResult || quizState.reviewMode) return;
 
         const handleCheat = () => {
             if (document.hidden || !document.hasFocus()) {
@@ -129,7 +151,7 @@ function App() {
             document.removeEventListener("visibilitychange", handleCheat);
             window.removeEventListener("blur", handleCheat);
         };
-    }, [activeQuiz, quizState.showResult]);
+    }, [activeQuiz, quizState.showResult, quizState.reviewMode]);
 
     const scanData = useCallback(() => {
         const resLessons = { "10": [], "11": [], "12": [] };
@@ -171,13 +193,13 @@ function App() {
 
     useEffect(() => {
         if (timeLeft === 0) { handleFinish(); return; }
-        if (timeLeft === null || quizState.showResult) return;
+        if (timeLeft === null || quizState.showResult || quizState.reviewMode) return;
         const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
         return () => clearTimeout(timer);
-    }, [timeLeft, quizState.showResult]);
+    }, [timeLeft, quizState.showResult, quizState.reviewMode]);
 
     const handleSelect = (idx) => {
-        if (quizState.showResult && !quizState.reviewMode) return;
+        if (quizState.showResult || quizState.reviewMode) return;
         const newAns = [...quizState.answers];
         newAns[quizState.currentQ] = idx;
         setQuizState({ ...quizState, answers: newAns });
@@ -199,7 +221,7 @@ function App() {
                 };
                 await window.Database.sendQuizResult(studentProfile, stClass.trim(), quizTitle, finalPoint, `${score}/${total}`);
             }
-            setQuizState(prev => ({ ...prev, showResult: true, finalScore: finalPoint, correctCount: score }));
+            setQuizState(prev => ({ ...prev, showResult: true, finalScore: finalPoint, correctCount: score, reviewMode: false }));
             setTimeLeft(null);
         } catch (e) { console.error("Lỗi:", e); alert("Lỗi gửi điểm!"); }
     };
