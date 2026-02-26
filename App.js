@@ -10,19 +10,19 @@ const shuffleArray = (array) => {
     return newArr;
 };
 
-// --- COMPONENT LÀM BÀI (CẬP NHẬT CHẾ ĐỘ XEM LẠI) ---
-const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime }) => {
+// --- COMPONENT LÀM BÀI ---
+const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect, handleFinish, setActiveQuiz, setIsFocus, formatTime, allowReview }) => {
     
     useEffect(() => {
         if (setIsFocus) setIsFocus(true); 
         return () => { if (setIsFocus) setIsFocus(false); };
     }, [setIsFocus]);
 
-    // MÀN HÌNH BÁO ĐIỂM + NÚT XEM LẠI
+    // MÀN HÌNH BÁO ĐIỂM + NÚT XEM LẠI (CÓ RÀNG BUỘC ALLOWREVIEW)
     if (quizState.showResult) {
         return (
             <div className="fixed inset-0 z-[150] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 text-center">
-                <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl animate-in zoom-in duration-300">
+                <div className="bg-white w-full max-sm rounded-[3rem] p-10 text-center shadow-2xl animate-in zoom-in duration-300">
                     <div className="text-6xl mb-4">🏆</div>
                     <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase leading-none">Hoàn thành!</h2>
                     <p className="text-slate-400 font-bold mb-6 italic text-[10px] uppercase tracking-widest text-center">Kết quả đã được gửi tới thầy Hải</p>
@@ -38,12 +38,19 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <button 
-                            onClick={() => setQuizState({...quizState, showResult: false, reviewMode: true, currentQ: 0})} 
-                            className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-                        >
-                            🔍 Xem lại bài làm
-                        </button>
+                        {/* CHỈ HIỆN NÚT XEM LẠI NẾU THẦY CHO PHÉP TRÊN FIREBASE */}
+                        {allowReview ? (
+                            <button 
+                                onClick={() => setQuizState({...quizState, showResult: false, reviewMode: true, currentQ: 0})} 
+                                className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                            >
+                                🔍 Xem lại bài làm
+                            </button>
+                        ) : (
+                            <div className="py-4 bg-orange-50 rounded-2xl border border-orange-100">
+                                <p className="text-orange-500 text-[10px] font-black uppercase tracking-widest">Thầy chưa mở quyền xem đáp án</p>
+                            </div>
+                        )}
                         <button onClick={() => setActiveQuiz(null)} className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px]">Thoát</button>
                     </div>
                 </div>
@@ -74,16 +81,15 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                     <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${((quizState.currentQ + 1) / activeQuiz.length) * 100}%`}}></div>
                 </div>
                 <div className="p-4 max-w-2xl mx-auto">
-                    <div className="quiz-question-mobile mb-8 italic">{q.q}</div>
+                    <div className="quiz-question-mobile mb-8 italic font-bold text-slate-800 leading-relaxed bg-slate-50 p-6 rounded-[2rem] border border-slate-100 text-lg lg:text-xl text-left">{q.q}</div>
                     <div className="flex flex-col gap-4 mb-32">
                         {q.o.map((opt, idx) => {
-                            // LOGIC MÀU SẮC CHO CHẾ ĐỘ XEM LẠI
                             let statusClass = "bg-white border-slate-50";
                             if (quizState.reviewMode) {
-                                if (idx === q.c) statusClass = "bg-green-100 border-green-500 text-green-700 shadow-sm shadow-green-100"; // Đáp án đúng
-                                else if (quizState.answers[quizState.currentQ] === idx) statusClass = "bg-red-50 border-red-300 text-red-600"; // Đáp án em chọn bị sai
+                                if (idx === q.c) statusClass = "bg-green-100 border-green-500 text-green-700 shadow-sm shadow-green-100";
+                                else if (quizState.answers[quizState.currentQ] === idx) statusClass = "bg-red-50 border-red-300 text-red-600";
                             } else if (quizState.answers[quizState.currentQ] === idx) {
-                                statusClass = "bg-blue-600 text-white border-blue-600";
+                                statusClass = "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100";
                             }
 
                             return (
@@ -93,7 +99,7 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                                         ${quizState.answers[quizState.currentQ] === idx ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
                                         {String.fromCharCode(65 + idx)}
                                     </span>
-                                    <span className="flex-1 font-bold">{opt}</span>
+                                    <span className="flex-1 font-bold text-sm leading-tight">{opt}</span>
                                     {quizState.reviewMode && idx === q.c && <span className="text-xl ml-2">✅</span>}
                                     {quizState.reviewMode && quizState.answers[quizState.currentQ] === idx && idx !== q.c && <span className="text-xl ml-2">❌</span>}
                                 </button>
@@ -104,14 +110,14 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
             </div>
 
             <div className="p-4 bg-white border-t flex gap-4 shadow-2xl">
-                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase bg-slate-100 text-slate-500">Quay lại</button>
+                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-xs uppercase bg-slate-100 text-slate-500">Quay lại</button>
                 {quizState.currentQ === activeQuiz.length - 1 ? (
                     <button onClick={quizState.reviewMode ? () => setActiveQuiz(null) : handleFinish} 
-                        className={`flex-[2] py-5 rounded-2xl font-black text-sm uppercase text-white shadow-lg ${quizState.reviewMode ? 'bg-slate-900' : 'bg-green-600 animate-bounce'}`}>
+                        className={`flex-[2] py-5 rounded-2xl font-black text-xs uppercase text-white shadow-lg ${quizState.reviewMode ? 'bg-slate-900' : 'bg-green-600 animate-bounce'}`}>
                         {quizState.reviewMode ? "Hoàn tất xem" : "Nộp bài ngay"}
                     </button>
                 ) : (
-                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-sm uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
+                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-xs uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
                 )}
             </div>
         </div>
@@ -133,20 +139,39 @@ function App() {
     const [stName, setStName] = useState("");
     const [stClass, setStClass] = useState("");
     const [pendingQuiz, setPendingQuiz] = useState(null);
+    const [allowReview, setAllowReview] = useState(false); // Trạng thái cho phép xem đáp án
 
-    // --- LOGIC CHỐNG GIAN LẬN: CHỈ BÁO KHI ĐANG THI VÀ CHƯA NỘP ---
+    // --- LẮNG NGHE NÚT GẠT TỪ FIREBASE ---
+    useEffect(() => {
+        const unsub = db.collection("settings").doc("quiz_config")
+            .onSnapshot(doc => {
+                if (doc.exists) setAllowReview(doc.data().allowReview);
+            });
+        return () => unsub();
+    }, []);
+
+    // --- HÀM KIỂM TRA LƯỢT LÀM (RÀNG BUỘC 1 LẦN) ---
+    const checkExamAttempt = async (email, quizTitle) => {
+        try {
+            const snapshot = await db.collection("quiz_results")
+                .where("email", "==", email)
+                .where("quizTitle", "==", quizTitle)
+                .get();
+            return !snapshot.empty;
+        } catch (e) {
+            console.error(e); return false;
+        }
+    };
+
     useEffect(() => {
         if (!activeQuiz || quizState.showResult || quizState.reviewMode) return;
-
         const handleCheat = () => {
             if (document.hidden || !document.hasFocus()) {
-                alert("⚠️ CẢNH BÁO GIAN LẬN!\nHệ thống ghi nhận em vừa thoát màn hình làm bài. Mọi hành vi rời khỏi tab đều bị ghi lại.");
+                alert("⚠️ CẢNH BÁO GIAN LẬN!\nHệ thống ghi nhận em vừa thoát màn hình làm bài.");
             }
         };
-
         document.addEventListener("visibilitychange", handleCheat);
         window.addEventListener("blur", handleCheat);
-
         return () => {
             document.removeEventListener("visibilitychange", handleCheat);
             window.removeEventListener("blur", handleCheat);
@@ -238,7 +263,6 @@ function App() {
             <Sidebar tab={tab} setTab={setTab} isFocus={isFocus} setIsFocus={setIsFocus} />
             <main className="flex-1 flex flex-col overflow-hidden relative">
                 <Header grade={grade} setGrade={setGrade} user={user} isFocus={isFocus} setIsFocus={setIsFocus} />
-                
                 <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
                     {tab === 'baigiang' ? (
                         <>
@@ -256,7 +280,7 @@ function App() {
                                         <h2 className="text-2xl font-black mb-8 text-slate-900 leading-tight italic border-b-2 border-blue-100 pb-4">{ls.title}</h2>
                                         {ls.content}
                                     </div>
-                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black uppercase px-10 italic">📖 Chọn bài học ở danh sách bên trái</div>}
+                                ) : <div className="h-full flex items-center justify-center text-slate-300 font-black uppercase px-10 italic text-center">📖 Chọn bài học ở danh sách bên trái</div>}
                             </div>
                         </>
                     ) : (
@@ -273,7 +297,7 @@ function App() {
                     )}
                 </div>
 
-                {/* POPUP NHẬP THÔNG TIN TRƯỚC KHI THI */}
+                {/* POPUP NHẬP THÔNG TIN (KIỂM TRA LƯỢT LÀM) */}
                 {pendingQuiz && (
                     <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 text-left">
                         <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 shadow-2xl animate-in zoom-in duration-300 text-center">
@@ -285,13 +309,23 @@ function App() {
                                 <label className="text-[9px] font-black text-blue-500 uppercase ml-4 mt-4 mb-1 block">Lớp quản lý</label>
                                 <input type="text" placeholder="Ví dụ: 10A7" className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold outline-none focus:border-blue-500" value={stClass} onChange={(e) => setStClass(e.target.value)} />
                             </div>
-                            <button disabled={!stName.trim() || !stClass.trim()} onClick={() => {
+                            <button disabled={!stName.trim() || !stClass.trim()} onClick={async (e) => {
+                                const btn = e.target; btn.disabled = true;
                                 const q = pendingQuiz;
+                                const title = q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`;
+                                
+                                // --- KIỂM TRA LÀM 1 LẦN ---
+                                const hasDone = await checkExamAttempt(user.email, title);
+                                if (hasDone) {
+                                    alert(`⛔ THÔNG BÁO:\nEm đã hoàn thành bài thi này rồi. Mỗi học sinh chỉ được làm bài 1 lần duy nhất.`);
+                                    setPendingQuiz(null); return;
+                                }
+
                                 let shuffledQs = shuffleArray(q.questions || []);
                                 const readyQs = shuffledQs.map(item => {
                                     let opts = (item.a || item.o || []).map((text, idx) => ({ text, isCorrect: idx === item.c }));
                                     opts = shuffleArray(opts);
-                                    return { ...item, q: item.q || "Lỗi", o: opts.map(o => o.text), c: opts.findIndex(o => o.isCorrect), quizTitle: q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}` };
+                                    return { ...item, q: item.q || "Lỗi", o: opts.map(o => o.text), c: opts.findIndex(o => o.isCorrect), quizTitle: title };
                                 });
                                 setActiveQuiz(readyQs);
                                 setQuizState({currentQ:0, answers: new Array(readyQs.length).fill(null), showResult:false, reviewMode:false});
@@ -303,9 +337,8 @@ function App() {
                     </div>
                 )}
 
-                {/* HIỂN THỊ CỬA SỔ LÀM BÀI */}
                 {activeQuiz && (
-                    <QuizModal activeQuiz={activeQuiz} quizState={quizState} setQuizState={setQuizState} timeLeft={timeLeft} handleSelect={handleSelect} handleFinish={handleFinish} setActiveQuiz={setActiveQuiz} setIsFocus={setIsFocus} formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`} />
+                    <QuizModal activeQuiz={activeQuiz} quizState={quizState} setQuizState={setQuizState} timeLeft={timeLeft} handleSelect={handleSelect} handleFinish={handleFinish} setActiveQuiz={setActiveQuiz} setIsFocus={setIsFocus} formatTime={(s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`} allowReview={allowReview} />
                 )}
             </main>
         </div>
