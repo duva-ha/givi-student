@@ -38,7 +38,6 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        {/* CHỈ HIỆN NÚT XEM LẠI NẾU THẦY CHO PHÉP TRÊN FIREBASE */}
                         {allowReview ? (
                             <button 
                                 onClick={() => setQuizState({...quizState, showResult: false, reviewMode: true, currentQ: 0})} 
@@ -85,7 +84,9 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                     <div className="flex flex-col gap-4 mb-32">
                         {q.o.map((opt, idx) => {
                             let statusClass = "bg-white border-slate-50";
-                            if (quizState.reviewMode) {
+                            
+                            // CHỈ HIỆN MÀU ĐÚNG SAI NẾU THẦY MỞ KHÓA (allowReview)
+                            if (quizState.reviewMode && allowReview) {
                                 if (idx === q.c) statusClass = "bg-green-100 border-green-500 text-green-700 shadow-sm shadow-green-100";
                                 else if (quizState.answers[quizState.currentQ] === idx) statusClass = "bg-red-50 border-red-300 text-red-600";
                             } else if (quizState.answers[quizState.currentQ] === idx) {
@@ -100,8 +101,10 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
                                         {String.fromCharCode(65 + idx)}
                                     </span>
                                     <span className="flex-1 font-bold text-sm leading-tight">{opt}</span>
-                                    {quizState.reviewMode && idx === q.c && <span className="text-xl ml-2">✅</span>}
-                                    {quizState.reviewMode && quizState.answers[quizState.currentQ] === idx && idx !== q.c && <span className="text-xl ml-2">❌</span>}
+                                    
+                                    {/* CHỈ HIỆN ICON NẾU THẦY MỞ KHÓA (allowReview) */}
+                                    {quizState.reviewMode && allowReview && idx === q.c && <span className="text-xl ml-2">✅</span>}
+                                    {quizState.reviewMode && allowReview && quizState.answers[quizState.currentQ] === idx && idx !== q.c && <span className="text-xl ml-2">❌</span>}
                                 </button>
                             );
                         })}
@@ -110,14 +113,14 @@ const QuizModal = ({ activeQuiz, quizState, setQuizState, timeLeft, handleSelect
             </div>
 
             <div className="p-4 bg-white border-t flex gap-4 shadow-2xl">
-                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-xs uppercase bg-slate-100 text-slate-500">Quay lại</button>
+                <button disabled={quizState.currentQ === 0} onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ - 1})} className="flex-1 py-5 rounded-2xl font-black text-sm uppercase bg-slate-100 text-slate-500">Quay lại</button>
                 {quizState.currentQ === activeQuiz.length - 1 ? (
                     <button onClick={quizState.reviewMode ? () => setActiveQuiz(null) : handleFinish} 
-                        className={`flex-[2] py-5 rounded-2xl font-black text-xs uppercase text-white shadow-lg ${quizState.reviewMode ? 'bg-slate-900' : 'bg-green-600 animate-bounce'}`}>
+                        className={`flex-[2] py-5 rounded-2xl font-black text-sm uppercase text-white shadow-lg ${quizState.reviewMode ? 'bg-slate-900' : 'bg-green-600 animate-bounce'}`}>
                         {quizState.reviewMode ? "Hoàn tất xem" : "Nộp bài ngay"}
                     </button>
                 ) : (
-                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-xs uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
+                    <button onClick={() => setQuizState({...quizState, currentQ: quizState.currentQ + 1})} className="flex-[2] py-5 rounded-2xl font-black text-sm uppercase bg-blue-600 text-white shadow-lg">Câu tiếp theo</button>
                 )}
             </div>
         </div>
@@ -139,18 +142,27 @@ function App() {
     const [stName, setStName] = useState("");
     const [stClass, setStClass] = useState("");
     const [pendingQuiz, setPendingQuiz] = useState(null);
-    const [allowReview, setAllowReview] = useState(false); // Trạng thái cho phép xem đáp án
+    const [allowReview, setAllowReview] = useState(false);
 
-    // --- LẮNG NGHE NÚT GẠT TỪ FIREBASE ---
+    // 1. LẮNG NGHE NÚT GẠT TỪ FIREBASE
     useEffect(() => {
         const unsub = db.collection("settings").doc("quiz_config")
             .onSnapshot(doc => {
-                if (doc.exists) setAllowReview(doc.data().allowReview);
+                if (doc.exists) {
+                    const status = doc.data().allowReview;
+                    setAllowReview(status);
+                    
+                    // NẾU THẦY KHÓA ĐỘT NGỘT KHI HS ĐANG XEM -> ĐẨY HS RA NGOÀI
+                    if (status === false && quizState.reviewMode === true) {
+                        setQuizState(prev => ({ ...prev, reviewMode: false, showResult: true }));
+                        alert("Thầy đã đóng quyền xem lại đáp án.");
+                    }
+                }
             });
         return () => unsub();
-    }, []);
+    }, [quizState.reviewMode]);
 
-    // --- HÀM KIỂM TRA LƯỢT LÀM (RÀNG BUỘC 1 LẦN) ---
+    // 2. HÀM KIỂM TRA LÀM 1 LẦN
     const checkExamAttempt = async (email, quizTitle) => {
         try {
             const snapshot = await db.collection("quiz_results")
@@ -314,7 +326,6 @@ function App() {
                                 const q = pendingQuiz;
                                 const title = q.isLive ? q.title : `Luyện tập Bài ${q.quizIndex}`;
                                 
-                                // --- KIỂM TRA LÀM 1 LẦN ---
                                 const hasDone = await checkExamAttempt(user.email, title);
                                 if (hasDone) {
                                     alert(`⛔ THÔNG BÁO:\nEm đã hoàn thành bài thi này rồi. Mỗi học sinh chỉ được làm bài 1 lần duy nhất.`);
